@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CF144DE4-8034-47E0-8C57-88CA3073F1B9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{819DEA23-725D-490C-8314-3DA7483F9553}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2Store.Api", "src\D2Store.Api\D2Store.Api.csproj", "{C8F98435-9719-481B-9F23-8BB74C683F42}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C8F98435-9719-481B-9F23-8BB74C683F42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8F98435-9719-481B-9F23-8BB74C683F42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8F98435-9719-481B-9F23-8BB74C683F42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8F98435-9719-481B-9F23-8BB74C683F42}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C8F98435-9719-481B-9F23-8BB74C683F42} = {CF144DE4-8034-47E0-8C57-88CA3073F1B9}
+	EndGlobalSection
+EndGlobal
