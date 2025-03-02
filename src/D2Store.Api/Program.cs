@@ -1,18 +1,44 @@
+using D2Store.Api.Config;
+using D2Store.Api.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+
+builder.Configuration
+       .SetBasePath(Directory.GetCurrentDirectory())
+       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+       .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
+
+var connectionString = builder.Configuration.GetConnectionString("D2Store");
+Console.WriteLine($"Connection String: {connectionString}");
+
+builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
+
+var assembly = typeof(Program).Assembly;
+
+builder.Services.Configure<ConnectionStringsConfig>(
+    builder.Configuration.GetSection(ConnectionStringsConfig.SectionName));
+var connectionStringsConfig = new ConnectionStringsConfig();
+builder.Configuration.GetSection(ConnectionStringsConfig.SectionName).Bind(connectionStringsConfig);
+builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<AppDbContext>(o =>
+o.UseSqlServer(connectionStringsConfig.D2Store));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 
