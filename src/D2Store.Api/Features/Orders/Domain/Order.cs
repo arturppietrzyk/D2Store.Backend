@@ -2,12 +2,21 @@
 
 public class Order
 {
-    public Guid Id { get; set; }
-    public Guid CustomerId { get; set; }
-    public DateTime OrderDate { get; set; }
-    public decimal TotalAmount { get; set; }
-    public string Status { get; set; }
+    public Guid Id { get; private set; }
+    public Guid CustomerId { get; private set; }
+    public DateTime OrderDate { get; private set; }
+    public decimal TotalAmount { get; private set; }
+    public string Status { get; private set; }
 
+    public Order(Guid customerId, decimal totalAmount)
+    {
+        Id = Guid.NewGuid();
+        CustomerId = customerId;
+        OrderDate = DateTime.UtcNow;
+        TotalAmount = totalAmount;
+        Status = "Paid";
+    }
+}
     //private Order() { }
 
     //public Order(Guid id, string customerId, decimal totalAmount)
@@ -30,4 +39,4 @@ public class Order
     //        throw new InvalidOperationException("Order is already paid.");
     //    Status = "Paid";
     //}
-}
+//}
