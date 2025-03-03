@@ -16,8 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Customers\" />
-    <Folder Include="Features\Products\" />
     <Folder Include="Infrastructure\SQL\" />
     <Folder Include="Shared\" />
   </ItemGroup>
