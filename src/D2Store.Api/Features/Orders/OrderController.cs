@@ -1,6 +1,6 @@
-﻿using MediatR;
+﻿using D2Store.Api.Features.Orders.Dto;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-
 
 namespace D2Store.Api.Features.Orders;
 
@@ -47,5 +47,18 @@ public class OrderController : ControllerBase
         }
         return Ok(orders);
     }
-}
 
+    [HttpPut("order/{id}")]
+    public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] WriteOrderDto writeOrderDto)
+    {
+        var updatedOrder = await _mediator.Send(new UpdateOrderCommand(id, writeOrderDto.TotalAmount, writeOrderDto.Status));
+        return Ok(updatedOrder);
+    }
+
+    [HttpDelete("order/{id}")]
+    public async Task<IActionResult> DeleteOrder(Guid id)
+    {
+        var orderId = await _mediator.Send(new DeleteOrderCommand(id));
+        return Ok(orderId);
+    }
+}

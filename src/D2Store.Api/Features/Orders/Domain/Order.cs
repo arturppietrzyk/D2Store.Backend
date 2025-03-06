@@ -5,8 +5,8 @@ public class Order
     public Guid Id { get; private set; }
     public Guid CustomerId { get; private set; }
     public DateTime OrderDate { get; private set; }
-    public decimal TotalAmount { get; private set; }
-    public string Status { get; private set; }
+    public decimal TotalAmount { get; set; }
+    public string Status { get; set; }
 
     public Order(Guid customerId, decimal totalAmount)
     {
