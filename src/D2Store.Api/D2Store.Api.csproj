@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <Folder Include="Infrastructure\SQL\" />
-    <Folder Include="Shared\" />
   </ItemGroup>
 
 </Project>
