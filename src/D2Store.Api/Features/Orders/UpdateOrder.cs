@@ -19,14 +19,8 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, ReadOrderD
     public async Task<ReadOrderDto> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
     {
         var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.Id == request.Id, cancellationToken);
-        if (request.TotalAmount.HasValue)
-        {
-            order.TotalAmount = request.TotalAmount.Value;
-        }
-        if (!string.IsNullOrWhiteSpace(request.Status))
-        {
-            order.Status = request.Status;
-        }
+        order.UpdateTotalAmount(request.TotalAmount);
+        order.UpdateStatus(request.Status);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status);
     }

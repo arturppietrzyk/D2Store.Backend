@@ -7,7 +7,6 @@ namespace D2Store.Api.Features.Orders;
 
 public record GetOrderQuery() : IRequest<List<Order?>>;
 
-
 public class GetOrderHandler : IRequestHandler<GetOrderQuery, List<Order?>>
 {
     private readonly AppDbContext _dbContext;

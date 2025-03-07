@@ -17,12 +17,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Guid>
 
     public async Task<Guid> Handle(DeleteOrderCommand request, CancellationToken cancellationToken) 
     {
-        var order = await _dbContext.Orders
-           .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
-        //if (order == null)
-        //{
-        //    throw new KeyNotFoundException($"Order with ID {request.OrderId} not found.");
-        //}
+        var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
         _dbContext.Orders.Remove(order);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return order.Id;

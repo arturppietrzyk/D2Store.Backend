@@ -16,40 +16,32 @@ public class OrderController : ControllerBase
     }
 
     [HttpPost("order")]
-    public async Task<IActionResult> CreateOrder([FromBody] CreateOrderCommand command)
+    public async Task<IActionResult> CreateOrder([FromBody] WriteOrderDtoCreate writeOrderDto)
     {
-        if (command == null)
-        {
-            return BadRequest("Invalid order data.");
-        }
-        var orderId = await _mediator.Send(command);
+        var orderId = await _mediator.Send(new CreateOrderCommand(writeOrderDto.CustomerId, writeOrderDto.TotalAmount));
         return Ok(orderId);
     }
 
     [HttpGet("order/{id}")]
     public async Task<IActionResult> GetOrderById(Guid id)
     {
-        var order = await _mediator.Send(new GetOrderByIdQuery(id));
-        if (order == null)
+        var result = await _mediator.Send(new GetOrderByIdQuery(id));
+        if (result.IsFailure)
         {
-            return NotFound($"Order with ID {id} not found.");
+            return NotFound(result.Error);
         }
-        return Ok(order);
+        return Ok(result.Value);
     }
 
     [HttpGet("orders")]
     public async Task<IActionResult> GetOrders()
     {
         var orders = await _mediator.Send(new GetOrderQuery());
-        if (orders == null || orders.Count == 0)
-        {
-            return NotFound("No orders found.");
-        }
         return Ok(orders);
     }
 
     [HttpPut("order/{id}")]
-    public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] WriteOrderDto writeOrderDto)
+    public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] WriteOrderDtoUpdate writeOrderDto)
     {
         var updatedOrder = await _mediator.Send(new UpdateOrderCommand(id, writeOrderDto.TotalAmount, writeOrderDto.Status));
         return Ok(updatedOrder);
