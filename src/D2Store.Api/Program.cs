@@ -13,7 +13,6 @@ builder.Configuration
        .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
 
 var connectionString = builder.Configuration.GetConnectionString("D2Store");
-Console.WriteLine($"Connection String: {connectionString}");
 
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 

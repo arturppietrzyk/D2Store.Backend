@@ -1,4 +1,4 @@
-﻿using D2Store.Api.Features.Orders.Domain;
+﻿using D2Store.Api.Features.Orders.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using MediatR;
@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record GetOrderByIdQuery(Guid id) : IRequest<Result<Order?>>;
+public record GetOrderByIdQuery(Guid Id) : IRequest<Result<ReadOrderDto?>>;
 
-public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Order?>>
+public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<ReadOrderDto?>>
 {
     private readonly AppDbContext _dbContext;
 
@@ -17,13 +17,14 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Ord
         _dbContext = dbContext;
     }
 
-    public async Task<Result<Order?>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<ReadOrderDto?>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
     {
-        var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.Id == request.id, cancellationToken);
-        if(order is null) 
+        var order = await _dbContext.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == request.Id, cancellationToken);
+        if (order is null)
         {
-            return Result.Failure<Order?>(new Error("GetOrderById.Null","The order with the specified Id was not found"));
+            return Result.Failure<ReadOrderDto?>(new Error("GetOrderById.Null", "The order with the specified Id was not found"));
         }
-        return Result.Success<Order?>(order);
+        var dto = new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status.ToString());
+        return Result.Success<ReadOrderDto?>(dto);
     }
 }
