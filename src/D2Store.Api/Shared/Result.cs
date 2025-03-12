@@ -13,7 +13,6 @@ public class Result
         {
             throw new InvalidOperationException();
         }
-
         IsSuccess = isSuccess;
         Error = error;
     }

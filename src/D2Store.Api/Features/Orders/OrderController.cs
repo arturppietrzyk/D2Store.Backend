@@ -18,8 +18,12 @@ public class OrderController : ControllerBase
     [HttpPost("order")]
     public async Task<IActionResult> CreateOrder([FromBody] WriteOrderDtoCreate writeOrderDto)
     {
-        var orderId = await _mediator.Send(new CreateOrderCommand(writeOrderDto.CustomerId, writeOrderDto.TotalAmount));
-        return Ok(orderId);
+        var result = await _mediator.Send(new CreateOrderCommand(writeOrderDto.CustomerId, writeOrderDto.TotalAmount));
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error.Message);
+        }
+        return Ok(result.Value);
     }
 
     [HttpGet("order/{id}")]
@@ -28,7 +32,7 @@ public class OrderController : ControllerBase
         var result = await _mediator.Send(new GetOrderByIdQuery(id));
         if (result.IsFailure)
         {
-            return NotFound(result.Error);
+            return NotFound(result.Error.Message);
         }
         return Ok(result.Value);
     }
@@ -36,21 +40,33 @@ public class OrderController : ControllerBase
     [HttpGet("orders")]
     public async Task<IActionResult> GetOrders()
     {
-        var orders = await _mediator.Send(new GetOrderQuery());
-        return Ok(orders);
+        var result = await _mediator.Send(new GetOrderQuery());
+        if (result.IsFailure)
+        {
+            return NotFound(result.Error.Message);
+        }
+        return Ok(result.Value);
     }
 
     [HttpPut("order/{id}")]
     public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] WriteOrderDtoUpdate writeOrderDto)
     {
-        var updatedOrder = await _mediator.Send(new UpdateOrderCommand(id, writeOrderDto.TotalAmount, writeOrderDto.Status));
-        return Ok(updatedOrder);
+        var result = await _mediator.Send(new UpdateOrderCommand(id, writeOrderDto.TotalAmount, writeOrderDto.Status));
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error.Message);
+        }
+        return Ok(result.Value);
     }
 
     [HttpDelete("order/{id}")]
     public async Task<IActionResult> DeleteOrder(Guid id)
     {
-        var orderId = await _mediator.Send(new DeleteOrderCommand(id));
-        return Ok(orderId);
+        var result = await _mediator.Send(new DeleteOrderCommand(id));
+        if (result.IsFailure)
+        {
+            return NotFound(result.Error.Message);
+        }
+        return Ok(result.Value);
     }
 }
