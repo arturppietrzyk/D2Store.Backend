@@ -1,5 +1,4 @@
-﻿using D2Store.Api.Features.Orders.Dto;
-using D2Store.Api.Infrastructure;
+﻿using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
