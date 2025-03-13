@@ -21,7 +21,7 @@ public class OrderController : ControllerBase
         var result = await _mediator.Send(new CreateOrderCommand(writeOrderDto.CustomerId, writeOrderDto.TotalAmount));
         if (result.IsFailure)
         {
-            return BadRequest(result.Error.Message);
+            return BadRequest(result.Error);
         }
         return Ok(result.Value);
     }
