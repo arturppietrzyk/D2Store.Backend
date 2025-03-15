@@ -23,8 +23,11 @@ builder.Services.Configure<ConnectionStringsConfig>(
     builder.Configuration.GetSection(ConnectionStringsConfig.SectionName));
 var connectionStringsConfig = new ConnectionStringsConfig();
 builder.Configuration.GetSection(ConnectionStringsConfig.SectionName).Bind(connectionStringsConfig);
+
 builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
+
 builder.Services.AddValidatorsFromAssembly(assembly);
+
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 

@@ -28,4 +28,3 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
         return Result.Success(order.Id);
     }
 }
-

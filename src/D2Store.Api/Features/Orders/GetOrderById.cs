@@ -24,7 +24,7 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
         {
             return Result.Failure<ReadOrderDto?>(new Error("GetOrderById.Null", "The order with the specified Id was not found"));
         }
-        var dto = new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status.ToString());
+        var dto = new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status);
         return Result.Success<ReadOrderDto?>(dto);
     }
 }

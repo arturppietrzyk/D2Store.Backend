@@ -40,7 +40,7 @@ public class OrderController : ControllerBase
     [HttpGet("orders")]
     public async Task<IActionResult> GetOrders()
     {
-        var result = await _mediator.Send(new GetOrderQuery());
+        var result = await _mediator.Send(new GetOrdersQuery());
         if (result.IsFailure)
         {
             return NotFound(result.Error.Message);
@@ -65,7 +65,7 @@ public class OrderController : ControllerBase
         var result = await _mediator.Send(new DeleteOrderCommand(id));
         if (result.IsFailure)
         {
-            return NotFound(result.Error.Message);
+            return NotFound(result.Error);
         }
         return Ok(result.Value);
     }
