@@ -20,7 +20,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Gui
     }
     public async Task<Result<Guid>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
-        var validationResult = _validator.Validate(request);
+        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
             return Result.Failure<Guid>(new Error(

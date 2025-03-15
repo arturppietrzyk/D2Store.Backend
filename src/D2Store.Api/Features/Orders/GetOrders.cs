@@ -6,18 +6,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record GetOrderQuery() : IRequest <Result<List<ReadOrderDto>>>;
+public record GetOrdersQuery() : IRequest <Result<List<ReadOrderDto>>>;
 
-public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<List<ReadOrderDto>>>
+public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<ReadOrderDto>>>
 {
     private readonly AppDbContext _dbContext;
 
-    public GetOrderHandler(AppDbContext dbContext)
+    public GetOrdersHandler(AppDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
-    public async Task<Result<List<ReadOrderDto>>> Handle(GetOrderQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<ReadOrderDto>>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
     {
         var orders = await _dbContext.Orders.AsNoTracking().ToListAsync(cancellationToken);
         if (orders is null || !orders.Any())
