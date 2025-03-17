@@ -13,11 +13,13 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<UpdateOrderCommand> _validator;
+    private readonly ILogger<UpdateOrderHandler> _logger;
 
-    public UpdateOrderHandler(AppDbContext dbContext, IValidator<UpdateOrderCommand> validator)
+    public UpdateOrderHandler(AppDbContext dbContext, IValidator<UpdateOrderCommand> validator, ILogger<UpdateOrderHandler> logger)
     {
         _dbContext = dbContext;
         _validator = validator;
+        _logger = logger;
     }
 
     public async Task<Result<ReadOrderDto>> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
@@ -25,19 +27,22 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<ReadOrderDto>(new Error(
-                "Update.Validation",
-                validationResult.ToString()));
+            var inputValidationResult = Result.Failure<ReadOrderDto>(new Error("Update.Validation",validationResult.ToString()));
+            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateOrderHandler), nameof(Handle), inputValidationResult.Error.Code, inputValidationResult.Error.Message);
+            return inputValidationResult;
         }
         var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.Id == request.Id, cancellationToken);
         if (order is null)
         {
-            return Result.Failure<ReadOrderDto>(new Error("UpdateOrder.NotFound", "Order not found."));
+            var result = Result.Failure<ReadOrderDto>(new Error("UpdateOrder.NotFound", "Order not found."));
+            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateOrderHandler), nameof(Handle), result.Error.Code, result.Error.Message);
+            return result;
         }
         order.UpdateTotalAmount(request.TotalAmount);
         order.UpdateStatus(request.Status);
         await _dbContext.SaveChangesAsync(cancellationToken);
         var updatedOrder = new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status);
+        _logger.LogInformation("{Class}: {Method} - Success, updated: {orderId}.", nameof(UpdateOrderHandler), nameof(Handle), updatedOrder.Id.ToString());
         return Result.Success(updatedOrder);
     }
 }

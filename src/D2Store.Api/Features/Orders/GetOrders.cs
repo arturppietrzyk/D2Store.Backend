@@ -11,10 +11,12 @@ public record GetOrdersQuery() : IRequest <Result<List<ReadOrderDto>>>;
 public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<ReadOrderDto>>>
 {
     private readonly AppDbContext _dbContext;
+    private readonly ILogger<GetOrdersHandler> _logger;
 
-    public GetOrdersHandler(AppDbContext dbContext)
+    public GetOrdersHandler(AppDbContext dbContext, ILogger<GetOrdersHandler> logger)
     {
         _dbContext = dbContext;
+        _logger = logger;
     }
 
     public async Task<Result<List<ReadOrderDto>>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
@@ -22,9 +24,12 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
         var orders = await _dbContext.Orders.AsNoTracking().ToListAsync(cancellationToken);
         if (orders is null || !orders.Any())
         {
-            return Result.Failure<List<ReadOrderDto>>(new Error("GetOrders.NotFound", "No orders found."));
+            var result = Result.Failure<List<ReadOrderDto>>(new Error("GetOrders.NotFound", "No orders found."));
+            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(GetOrdersHandler), nameof(Handle), result.Error.Code, result.Error.Message);
+            return result;
         }
-        var orderDto = orders.Select(order => new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status.ToString())).ToList();
-        return Result.Success(orderDto);
+        var ordersDto = orders.Select(order => new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status.ToString())).ToList();
+        _logger.LogInformation("{Class}: {Method} - Success, retrieved: {OrderCount} orders.",nameof(GetOrdersHandler), nameof(Handle), ordersDto.Count);
+        return Result.Success(ordersDto);
     }
 }

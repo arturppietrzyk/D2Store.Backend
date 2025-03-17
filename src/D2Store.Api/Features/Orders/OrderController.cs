@@ -32,7 +32,7 @@ public class OrderController : ControllerBase
         var result = await _mediator.Send(new GetOrderByIdQuery(id));
         if (result.IsFailure)
         {
-            return NotFound(result.Error.Message);
+            return NotFound(result.Error);
         }
         return Ok(result.Value);
     }
@@ -43,7 +43,7 @@ public class OrderController : ControllerBase
         var result = await _mediator.Send(new GetOrdersQuery());
         if (result.IsFailure)
         {
-            return NotFound(result.Error.Message);
+            return NotFound(result.Error);
         }
         return Ok(result.Value);
     }
@@ -54,7 +54,7 @@ public class OrderController : ControllerBase
         var result = await _mediator.Send(new UpdateOrderCommand(id, writeOrderDto.TotalAmount, writeOrderDto.Status));
         if (result.IsFailure)
         {
-            return BadRequest(result.Error.Message);
+            return BadRequest(result.Error);
         }
         return Ok(result.Value);
     }
