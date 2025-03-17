@@ -11,10 +11,11 @@ public record GetOrderByIdQuery(Guid Id) : IRequest<Result<ReadOrderDto?>>;
 public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<ReadOrderDto?>>
 {
     private readonly AppDbContext _dbContext;
-
-    public GetOrderByIdHandler(AppDbContext dbContext)
+    private readonly ILogger<GetOrderByIdHandler> _logger;
+    public GetOrderByIdHandler(AppDbContext dbContext, ILogger<GetOrderByIdHandler> logger)
     {
         _dbContext = dbContext;
+        _logger = logger;
     }
 
     public async Task<Result<ReadOrderDto?>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
@@ -22,9 +23,12 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
         var order = await _dbContext.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == request.Id, cancellationToken);
         if (order is null)
         {
-            return Result.Failure<ReadOrderDto?>(new Error("GetOrderById.Null", "The order with the specified Id was not found"));
+            var result = Result.Failure<ReadOrderDto?>(new Error("GetOrderById.Null", "The order with the specified Id was not found."));
+            _logger.LogWarning("{Class}: {Method}- Warning: {ErrorCode} - {ErrorMessage}", nameof(GetOrderByIdHandler), nameof(Handle), result.Error.Code, result.Error.Message);
+            return result;
         }
-        var dto = new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status);
-        return Result.Success<ReadOrderDto?>(dto);
+        var orderdDto = new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status);
+        _logger.LogInformation("{Class}: {Method} - Success, retrieved: {orderId}.", nameof(GetOrdersHandler), nameof(Handle), orderdDto.Id.ToString());
+        return Result.Success<ReadOrderDto?>(orderdDto);
     }
 }

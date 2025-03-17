@@ -10,7 +10,7 @@ public class Order
 
     public Order(Guid customerId, decimal totalAmount)
     {
-        Id = Guid.NewGuid();
+        Id = Guid.CreateVersion7();
         CustomerId = customerId;
         OrderDate = DateTime.UtcNow;
         TotalAmount = totalAmount;
