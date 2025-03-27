@@ -2,26 +2,46 @@
 
 public class Customer
 {
-    public Guid Id { get; set; }  
-    public string Name { get; set; }
-    public string Email { get; set; }
-    public string Address { get; set; }
+    public Guid CustomerId { get; private set; }
+    public string FirstName { get; private set; }
+    public string LastName { get; private set; }
+    public string Email { get; private set; }
+    public string PhoneNumber { get; private set; }
+    public string Address { get; private set; }
+    public DateTime CreatedAt { get; private set; }
 
-    // For the sake of simplicity, I'm assuming a customer might just have these properties
-    // Add methods here as business logic requirements grow
+    public Customer(string firstName, string lastName, string email, string phoneNumber, string address)
+    {
+        CustomerId = Guid.CreateVersion7();
+        FirstName = firstName;
+        LastName = lastName;
+        Email = email;
+        PhoneNumber = phoneNumber;
+        Address = address;
+        CreatedAt = DateTime.UtcNow;
+    }
 
-    //public Customer(Guid id, string name, string email, string address)
-    //{
-    //    Id = id;
-    //    Name = name;
-    //    Email = email;
-    //    Address = address;
-    //}
-
-    //// Example method: This could later become a domain method if you need customer-specific logic
-    //public void UpdateEmail(string newEmail)
-    //{
-    //    // Add domain logic to validate the new email, if needed
-    //    Email = newEmail;
-    //}
+    public void UpdateCustomerInfo(string? firstname, string? lastName, string? email, string? phoneNumber, string? address)
+    {
+        if (!string.IsNullOrWhiteSpace(firstname))
+        {
+            FirstName = firstname;
+        }
+        if (!string.IsNullOrWhiteSpace(lastName))
+        {
+            LastName = lastName;
+        }
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            Email = email;
+        }
+        if (!string.IsNullOrWhiteSpace(phoneNumber))
+        {
+            PhoneNumber = phoneNumber;
+        }
+        if (!string.IsNullOrWhiteSpace(address))
+        {
+            Address = address;
+        }
+    }
 }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record GetOrderByIdQuery(Guid Id) : IRequest<Result<ReadOrderDto?>>;
+public record GetOrderByIdQuery(Guid OrderId) : IRequest<Result<ReadOrderDto?>>;
 
 public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<ReadOrderDto?>>
 {
@@ -20,15 +20,15 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
 
     public async Task<Result<ReadOrderDto?>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
     {
-        var order = await _dbContext.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == request.Id, cancellationToken);
+        var order = await _dbContext.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
         if (order is null)
         {
             var result = Result.Failure<ReadOrderDto?>(new Error("GetOrderById.Null", "The order with the specified Id was not found."));
             _logger.LogWarning("{Class}: {Method}- Warning: {ErrorCode} - {ErrorMessage}", nameof(GetOrderByIdHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
-        var orderdDto = new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status);
-        _logger.LogInformation("{Class}: {Method} - Success, retrieved: {orderId}.", nameof(GetOrdersHandler), nameof(Handle), orderdDto.Id.ToString());
+        var orderdDto = new ReadOrderDto(order.OrderId, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status);
+        _logger.LogInformation("{Class}: {Method} - Success, retrieved: {orderId}.", nameof(GetOrdersHandler), nameof(Handle), orderdDto.OrderId.ToString());
         return Result.Success<ReadOrderDto?>(orderdDto);
     }
 }

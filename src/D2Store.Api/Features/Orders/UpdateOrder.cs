@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record UpdateOrderCommand(Guid Id, decimal? TotalAmount, string? Status) : IRequest<Result<ReadOrderDto>>;
+public record UpdateOrderCommand(Guid OrderId, decimal? TotalAmount, string? Status) : IRequest<Result<ReadOrderDto>>;
 
 public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<ReadOrderDto>>
 {
@@ -31,7 +31,7 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
             _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateOrderHandler), nameof(Handle), inputValidationResult.Error.Code, inputValidationResult.Error.Message);
             return inputValidationResult;
         }
-        var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.Id == request.Id, cancellationToken);
+        var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
         if (order is null)
         {
             var result = Result.Failure<ReadOrderDto>(new Error("UpdateOrder.NotFound", "Order not found."));
@@ -41,8 +41,8 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
         order.UpdateTotalAmount(request.TotalAmount);
         order.UpdateStatus(request.Status);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        var updatedOrder = new ReadOrderDto(order.Id, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status);
-        _logger.LogInformation("{Class}: {Method} - Success, updated: {orderId}.", nameof(UpdateOrderHandler), nameof(Handle), updatedOrder.Id.ToString());
+        var updatedOrder = new ReadOrderDto(order.OrderId, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status);
+        _logger.LogInformation("{Class}: {Method} - Success, updated: {orderId}.", nameof(UpdateOrderHandler), nameof(Handle), updatedOrder.OrderId.ToString());
         return Result.Success(updatedOrder);
     }
 }
