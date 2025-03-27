@@ -2,7 +2,7 @@
 
 public class Order
 {
-    public Guid Id { get; private set; }
+    public Guid OrderId { get; private set; }
     public Guid CustomerId { get; private set; }
     public DateTime OrderDate { get; private set; }
     public decimal TotalAmount { get; private set; }
@@ -10,7 +10,7 @@ public class Order
 
     public Order(Guid customerId, decimal totalAmount)
     {
-        Id = Guid.CreateVersion7();
+        OrderId = Guid.CreateVersion7();
         CustomerId = customerId;
         OrderDate = DateTime.UtcNow;
         TotalAmount = totalAmount;

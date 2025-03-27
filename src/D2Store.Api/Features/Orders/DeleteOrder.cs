@@ -20,7 +20,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
 
     public async Task<Result<Guid>> Handle(DeleteOrderCommand request, CancellationToken cancellationToken) 
     {
-        var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
+        var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
         if (order is null)
         {
             var result = Result.Failure<Guid>(new Error("DeleteOrder.NotFound", "Order not found."));
@@ -29,7 +29,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
         }
         _dbContext.Orders.Remove(order);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("{Class}: {Method} - Success, deleted {orderId}.", nameof(GetOrdersHandler), nameof(Handle), order.Id);
-        return Result.Success(order.Id);
+        _logger.LogInformation("{Class}: {Method} - Success, deleted {orderId}.", nameof(GetOrdersHandler), nameof(Handle), order.OrderId);
+        return Result.Success(order.OrderId);
     }
 }
