@@ -26,10 +26,10 @@ public class OrderController : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpGet("order/{id}")]
-    public async Task<IActionResult> GetOrderById(Guid id)
+    [HttpGet("order/{orderId}")]
+    public async Task<IActionResult> GetOrderById(Guid orderId)
     {
-        var result = await _mediator.Send(new GetOrderByIdQuery(id));
+        var result = await _mediator.Send(new GetOrderByIdQuery(orderId));
         if (result.IsFailure)
         {
             return NotFound(result.Error);
@@ -48,10 +48,10 @@ public class OrderController : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpPut("order/{id}")]
-    public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] WriteOrderDtoUpdate writeOrderDto)
+    [HttpPut("order/{orderId}")]
+    public async Task<IActionResult> UpdateOrder(Guid orderId, [FromBody] WriteOrderDtoUpdate writeOrderDto)
     {
-        var result = await _mediator.Send(new UpdateOrderCommand(id, writeOrderDto.TotalAmount, writeOrderDto.Status));
+        var result = await _mediator.Send(new UpdateOrderCommand(orderId, writeOrderDto.TotalAmount, writeOrderDto.Status));
         if (result.IsFailure)
         {
             return BadRequest(result.Error);
@@ -59,10 +59,10 @@ public class OrderController : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpDelete("order/{id}")]
-    public async Task<IActionResult> DeleteOrder(Guid id)
+    [HttpDelete("order/{orderId}")]
+    public async Task<IActionResult> DeleteOrder(Guid orderId)
     {
-        var result = await _mediator.Send(new DeleteOrderCommand(id));
+        var result = await _mediator.Send(new DeleteOrderCommand(orderId));
         if (result.IsFailure)
         {
             return NotFound(result.Error);
