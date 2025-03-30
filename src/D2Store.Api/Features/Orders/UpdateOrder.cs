@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record UpdateOrderCommand(Guid OrderId, decimal TotalAmount) : IRequest<Result<ReadOrderDto>>;
+public record UpdateOrderCommand(Guid OrderId, decimal? TotalAmount) : IRequest<Result<ReadOrderDto>>;
 
 public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<ReadOrderDto>>
 {
@@ -50,6 +50,6 @@ public class UpdateOrderCommandValidator : AbstractValidator<UpdateOrderCommand>
 {
     public UpdateOrderCommandValidator()
     {
-        RuleFor(o => o.TotalAmount).GreaterThan(0).WithMessage("TotalAmount must be greater than zero.");
+        RuleFor(o => o.TotalAmount).GreaterThan(0).When(o => o.TotalAmount is not null).WithMessage("TotalAmount must be greater than zero.");
     }
 }

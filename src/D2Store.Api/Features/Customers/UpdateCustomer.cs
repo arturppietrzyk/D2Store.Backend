@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Customers;
 
-public record UpdateCustomerCommand(Guid CustomerId, string FirstName, string LastName, string Email, string PhoneNumber, string Address) : IRequest<Result<ReadCustomerDto>>;
+public record UpdateCustomerCommand(Guid CustomerId, string? FirstName, string? LastName, string? Email, string? PhoneNumber, string? Address) : IRequest<Result<ReadCustomerDto>>;
 
 public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Result<ReadCustomerDto>>
 {
@@ -51,10 +51,24 @@ public class UpdateCustomerCommandValidator : AbstractValidator<UpdateCustomerCo
 {
     public UpdateCustomerCommandValidator()
     {
-        RuleFor(c => c.FirstName).NotEmpty().WithMessage("First Name is required.");
-        RuleFor(o => o.LastName).NotEmpty().WithMessage("Last Name is required.");
-        RuleFor(o => o.Email).NotEmpty().WithMessage("Email is required.");
-        RuleFor(o => o.PhoneNumber).NotEmpty().WithMessage("Phone Number is required.");
-        RuleFor(o => o.Address).NotEmpty().WithMessage("Address is required.");
+        RuleFor(c => c.FirstName)
+            .NotEmpty().When(c => c.FirstName is not null)
+            .WithMessage("First Name cannot be empty if provided.");
+
+        RuleFor(o => o.LastName)
+            .NotEmpty().When(o => o.LastName is not null)
+            .WithMessage("Last Name cannot be empty if provided.");
+
+        RuleFor(o => o.Email)
+            .NotEmpty().When(o => o.Email is not null)
+            .WithMessage("Email cannot be empty if provided.");
+
+        RuleFor(o => o.PhoneNumber)
+            .NotEmpty().When(o => o.PhoneNumber is not null)
+            .WithMessage("Phone Number cannot be empty if provided.");
+
+        RuleFor(o => o.Address)
+            .NotEmpty().When(o => o.Address is not null)
+            .WithMessage("Address cannot be empty if provided.");
     }
 }
