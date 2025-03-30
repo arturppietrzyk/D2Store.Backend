@@ -22,13 +22,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     public async Task<Result<List<ReadOrderDto>>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
     {
         var orders = await _dbContext.Orders.AsNoTracking().ToListAsync(cancellationToken);
-        if (orders is null || !orders.Any())
-        {
-            var result = Result.Failure<List<ReadOrderDto>>(new Error("GetOrders.NotFound", "No orders found."));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(GetOrdersHandler), nameof(Handle), result.Error.Code, result.Error.Message);
-            return result;
-        }
-        var ordersDto = orders.Select(order => new ReadOrderDto(order.OrderId, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status.ToString())).ToList();
+        var ordersDto = orders.Select(order => new ReadOrderDto(order.OrderId, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status.ToString(), order.LastModified)).ToList();
         _logger.LogInformation("{Class}: {Method} - Success, retrieved: {OrderCount} orders.",nameof(GetOrdersHandler), nameof(Handle), ordersDto.Count);
         return Result.Success(ordersDto);
     }

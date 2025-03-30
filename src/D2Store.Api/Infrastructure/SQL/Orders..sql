@@ -1,7 +1,7 @@
 USE [D2Store]
 GO
 
-/****** Object:  Table [dbo].[Orders]    Script Date: 17/03/2025 16:47:54 ******/
+/****** Object:  Table [dbo].[Orders]    Script Date: 30/03/2025 15:21:20 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -14,6 +14,7 @@ CREATE TABLE [dbo].[Orders](
 	[OrderDate] [datetime] NOT NULL,
 	[TotalAmount] [decimal](18, 2) NOT NULL,
 	[Status] [nvarchar](20) NOT NULL,
+	[LastModified] [datetime] NOT NULL
 PRIMARY KEY CLUSTERED 
 (
 	[OrderId] ASC
@@ -30,11 +31,3 @@ GO
 
 ALTER TABLE [dbo].[Orders] CHECK CONSTRAINT [FK_Orders_Customers]
 GO
-
-ALTER TABLE [dbo].[Orders]  WITH CHECK ADD CHECK  (([Status]='Cancelled' OR [Status]='Paid' OR [Status]='Pending'))
-GO
-
-ALTER TABLE [dbo].[Orders]  WITH CHECK ADD CHECK  (([TotalAmount]>(0)))
-GO
-
-

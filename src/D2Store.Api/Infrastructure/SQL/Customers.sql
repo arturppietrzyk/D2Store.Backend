@@ -1,7 +1,7 @@
 USE [D2Store]
 GO
 
-/****** Object:  Table [dbo].[Customers]    Script Date: 17/03/2025 16:48:57 ******/
+/****** Object:  Table [dbo].[Customers]    Script Date: 30/03/2025 15:21:31 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -16,6 +16,7 @@ CREATE TABLE [dbo].[Customers](
 	[PhoneNumber] [nvarchar](20) NULL,
 	[Address] [nvarchar](255) NULL,
 	[CreatedAt] [datetime] NOT NULL,
+	[LastModified] [datetime] NOT NULL
 PRIMARY KEY CLUSTERED 
 (
 	[CustomerId] ASC

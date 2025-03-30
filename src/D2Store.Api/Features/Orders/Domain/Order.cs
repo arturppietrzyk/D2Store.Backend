@@ -7,7 +7,8 @@ public class Order
     public DateTime OrderDate { get; private set; }
     public decimal TotalAmount { get; private set; }
     public string Status { get; private set; }
-
+    public DateTime LastModified { get; private set; }  
+    
     public Order(Guid customerId, decimal totalAmount)
     {
         OrderId = Guid.CreateVersion7();
@@ -15,21 +16,20 @@ public class Order
         OrderDate = DateTime.UtcNow;
         TotalAmount = totalAmount;
         Status = "Paid";
+        LastModified = DateTime.UtcNow;
     }
 
-    public void UpdateTotalAmount(decimal? totalAmount)
+    public void UpdateOrderInfo(decimal? totalAmount)
     {
-        if (totalAmount.HasValue)
+        bool isUpdated = false;
+        if (totalAmount.HasValue && totalAmount != TotalAmount)
         {
             TotalAmount = totalAmount.Value;
+            isUpdated = true;
         }
-    }
-
-    public void UpdateStatus(string? status)
-    {
-        if (!string.IsNullOrWhiteSpace(status))
+        if (isUpdated)
         {
-            Status = status;
+            LastModified = DateTime.UtcNow;
         }
     }
 }

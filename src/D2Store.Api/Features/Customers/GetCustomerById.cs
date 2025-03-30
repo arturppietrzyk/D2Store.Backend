@@ -29,7 +29,7 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
             _logger.LogWarning("{Class}: {Method}- Warning: {ErrorCode} - {ErrorMessage}", nameof(GetCustomerByIdHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
-        var customerDto = new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedAt);
+        var customerDto = new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedAt, customer.LastModified);
         _logger.LogInformation("{Class}: {Method} - Success, retrieved: {orderId}.", nameof(GetOrdersHandler), nameof(Handle), customerDto.CustomerId.ToString());
         return Result.Success<ReadCustomerDto?>(customerDto);
     }
