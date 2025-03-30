@@ -23,30 +23,30 @@ public class Customer
         LastModified = DateTime.UtcNow;
     }
 
-    public void UpdateCustomerInfo(string firstName, string lastName, string email, string phoneNumber, string address)
+    public void UpdateCustomerInfo(string? firstName, string? lastName, string? email, string? phoneNumber, string? address)
     {
         bool isUpdated = false;
-        if (firstName != FirstName)
+        if (!string.IsNullOrEmpty(firstName) && firstName != FirstName)
         {
             FirstName = firstName;
             isUpdated = true;
         }
-        if (lastName != LastName)
+        if (!string.IsNullOrEmpty(lastName) && lastName != LastName)
         {
             LastName = lastName;
             isUpdated = true;
         }
-        if (email != Email)
+        if (!string.IsNullOrEmpty(email) && email != Email)
         {
             Email = email;
             isUpdated = true;
         }
-        if (phoneNumber != PhoneNumber)
+        if (!string.IsNullOrEmpty(phoneNumber) && phoneNumber != PhoneNumber)
         {
             PhoneNumber = phoneNumber;
             isUpdated = true;
         }
-        if (address != Address)
+        if (!string.IsNullOrEmpty(address) && address != Address)
         {
             Address = address;
             isUpdated = true;
@@ -56,4 +56,38 @@ public class Customer
             LastModified = DateTime.UtcNow;
         }
     }
+
+    //public void UpdateCustomerInfo(string? firstName, string? lastName, string? email, string? phoneNumber, string? address)
+    //{
+    //    bool isUpdated = false;
+    //    if (firstName != FirstName)
+    //    {
+    //        FirstName = firstName;
+    //        isUpdated = true;
+    //    }
+    //    if (lastName != LastName)
+    //    {
+    //        LastName = lastName;
+    //        isUpdated = true;
+    //    }
+    //    if (email != Email)
+    //    {
+    //        Email = email;
+    //        isUpdated = true;
+    //    }
+    //    if (phoneNumber != PhoneNumber)
+    //    {
+    //        PhoneNumber = phoneNumber;
+    //        isUpdated = true;
+    //    }
+    //    if (address != Address)
+    //    {
+    //        Address = address;
+    //        isUpdated = true;
+    //    }
+    //    if (isUpdated)
+    //    {
+    //        LastModified = DateTime.UtcNow;
+    //    }
+    //}
 }
