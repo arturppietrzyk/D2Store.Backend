@@ -23,28 +23,37 @@ public class Customer
         LastModified = DateTime.UtcNow;
     }
 
-    public void UpdateCustomerInfo(string? firstname, string? lastName, string? email, string? phoneNumber, string? address)
+    public void UpdateCustomerInfo(string? firstName, string? lastName, string? email, string? phoneNumber, string? address)
     {
-        if (!string.IsNullOrWhiteSpace(firstname))
+        bool isUpdated = false;
+        if (!string.IsNullOrWhiteSpace(firstName) && firstName != FirstName)
         {
-            FirstName = firstname;
+            FirstName = firstName;
+            isUpdated = true;
         }
-        if (!string.IsNullOrWhiteSpace(lastName))
+        if (!string.IsNullOrWhiteSpace(lastName) && lastName != LastName)
         {
             LastName = lastName;
+            isUpdated = true;
         }
-        if (!string.IsNullOrWhiteSpace(email))
+        if (!string.IsNullOrWhiteSpace(email) && email != Email)
         {
             Email = email;
+            isUpdated = true;
         }
-        if (!string.IsNullOrWhiteSpace(phoneNumber))
+        if (!string.IsNullOrWhiteSpace(phoneNumber) && phoneNumber != PhoneNumber)
         {
             PhoneNumber = phoneNumber;
+            isUpdated = true;
         }
-        if (!string.IsNullOrWhiteSpace(address))
+        if (!string.IsNullOrWhiteSpace(address) && address != Address)
         {
             Address = address;
+            isUpdated = true;
         }
-        LastModified = DateTime.UtcNow;
+        if (isUpdated)
+        {
+            LastModified = DateTime.UtcNow;
+        }
     }
 }
