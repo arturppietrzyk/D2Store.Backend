@@ -48,7 +48,7 @@ public class CustomerController : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpPut("customer/{customerId}")]
+    [HttpPatch("customer/{customerId}")]
     public async Task<IActionResult> UpdateCustomer(Guid customerId, [FromBody] WriteCustomerDtoUpdate writeCustomerDto)
     {
         var result = await _mediator.Send(new UpdateCustomerCommand(customerId, writeCustomerDto.FirstName, writeCustomerDto.LastName, writeCustomerDto.Email, writeCustomerDto.PhoneNumber, writeCustomerDto.Address));

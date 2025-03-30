@@ -48,7 +48,7 @@ public class OrderController : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpPut("order/{orderId}")]
+    [HttpPatch("order/{orderId}")]
     public async Task<IActionResult> UpdateOrder(Guid orderId, [FromBody] WriteOrderDtoUpdate writeOrderDto)
     {
         var result = await _mediator.Send(new UpdateOrderCommand(orderId, writeOrderDto.TotalAmount));
