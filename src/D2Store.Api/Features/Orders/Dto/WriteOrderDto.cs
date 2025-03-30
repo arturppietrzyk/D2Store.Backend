@@ -8,5 +8,5 @@ public class WriteOrderDtoCreate
 
 public class WriteOrderDtoUpdate
 {
-    public decimal? TotalAmount { get; set; }
+    public decimal TotalAmount { get; set; }
 }
