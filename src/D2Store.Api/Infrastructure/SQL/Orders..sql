@@ -1,7 +1,7 @@
 USE [D2Store]
 GO
 
-/****** Object:  Table [dbo].[Orders]    Script Date: 17/03/2025 16:47:54 ******/
+/****** Object:  Table [dbo].[Orders]    Script Date: 30/03/2025 14:44:28 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -30,11 +30,3 @@ GO
 
 ALTER TABLE [dbo].[Orders] CHECK CONSTRAINT [FK_Orders_Customers]
 GO
-
-ALTER TABLE [dbo].[Orders]  WITH CHECK ADD CHECK  (([Status]='Cancelled' OR [Status]='Paid' OR [Status]='Pending'))
-GO
-
-ALTER TABLE [dbo].[Orders]  WITH CHECK ADD CHECK  (([TotalAmount]>(0)))
-GO
-
-

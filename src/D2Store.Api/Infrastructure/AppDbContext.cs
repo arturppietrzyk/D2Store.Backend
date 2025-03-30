@@ -12,4 +12,13 @@ public class AppDbContext : DbContext
     }
     public DbSet<Order> Orders { get; set; }
     public DbSet<Customer> Customers { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Order>()
+            .Property(o => o.TotalAmount)
+            .HasColumnType("decimal(18,2)");
+
+        base.OnModelCreating(modelBuilder);
+    }
 }
