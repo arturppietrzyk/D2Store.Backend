@@ -41,7 +41,7 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
         order.UpdateTotalAmount(request.TotalAmount);
         order.UpdateStatus(request.Status);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        var updatedOrder = new ReadOrderDto(order.OrderId, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status);
+        var updatedOrder = new ReadOrderDto(order.OrderId, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status, order.LastModified);
         _logger.LogInformation("{Class}: {Method} - Success, updated: {orderId}.", nameof(UpdateOrderHandler), nameof(Handle), updatedOrder.OrderId.ToString());
         return Result.Success(updatedOrder);
     }

@@ -9,6 +9,7 @@ public class Customer
     public string PhoneNumber { get; private set; }
     public string Address { get; private set; }
     public DateTime CreatedAt { get; private set; }
+    public DateTime LastModified {  get; private set; }
 
     public Customer(string firstName, string lastName, string email, string phoneNumber, string address)
     {
@@ -19,6 +20,7 @@ public class Customer
         PhoneNumber = phoneNumber;
         Address = address;
         CreatedAt = DateTime.UtcNow;
+        LastModified = DateTime.UtcNow;
     }
 
     public void UpdateCustomerInfo(string? firstname, string? lastName, string? email, string? phoneNumber, string? address)
@@ -43,5 +45,6 @@ public class Customer
         {
             Address = address;
         }
+        LastModified = DateTime.UtcNow;
     }
 }

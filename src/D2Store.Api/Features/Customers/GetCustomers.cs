@@ -22,7 +22,7 @@ public class GetCustomersHandler : IRequestHandler<GetCustomersQuery, Result<Lis
     public async Task<Result<List<ReadCustomerDto>>> Handle(GetCustomersQuery request, CancellationToken cancellationToken)
     {
         var customers = await _dbContext.Customers.AsNoTracking().ToListAsync(cancellationToken);
-        var customersDto = customers.Select(customer => new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedAt)).ToList();
+        var customersDto = customers.Select(customer => new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedAt, customer.LastModified)).ToList();
         _logger.LogInformation("{Class}: {Method} - Success, retrieved: {CustomerCount} customers.", nameof(GetCustomersHandler), nameof(Handle), customersDto.Count);
         return Result.Success(customersDto);
     }

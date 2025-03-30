@@ -1,7 +1,7 @@
 USE [D2Store]
 GO
 
-/****** Object:  Table [dbo].[Orders]    Script Date: 30/03/2025 14:44:28 ******/
+/****** Object:  Table [dbo].[Orders]    Script Date: 30/03/2025 15:21:20 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -14,6 +14,7 @@ CREATE TABLE [dbo].[Orders](
 	[OrderDate] [datetime] NOT NULL,
 	[TotalAmount] [decimal](18, 2) NOT NULL,
 	[Status] [nvarchar](20) NOT NULL,
+	[LastModified] [datetime] NOT NULL
 PRIMARY KEY CLUSTERED 
 (
 	[OrderId] ASC
