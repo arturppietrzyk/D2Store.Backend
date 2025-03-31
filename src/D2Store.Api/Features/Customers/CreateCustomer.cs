@@ -27,9 +27,9 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            var result = Result.Failure<Guid>(new Error("CreateCustomer.Validation", validationResult.ToString()));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(CreateCustomerHandler), nameof(Handle), result.Error.Code, result.Error.Message);
-            return result;
+            var inputValidationResult = Result.Failure<Guid>(new Error("CreateCustomer.Validation", validationResult.ToString()));
+            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(CreateCustomerHandler), nameof(Handle), inputValidationResult.Error.Code, inputValidationResult.Error.Message);
+            return inputValidationResult;
         }
         var customerExists = await _dbContext.Customers.AnyAsync(c => c.Email == request.Email, cancellationToken);
         if (customerExists)
@@ -51,9 +51,9 @@ public class CreateCustomerCommandValidator : AbstractValidator<CreateCustomerCo
     public CreateCustomerCommandValidator()
     {
         RuleFor(c => c.FirstName).NotEmpty().WithMessage("First Name is required.");
-        RuleFor(o => o.LastName).NotEmpty().WithMessage("Last Name is required.");
-        RuleFor(o => o.Email).NotEmpty().WithMessage("Email is required.");
-        RuleFor(o => o.PhoneNumber).NotEmpty().WithMessage("Phone Number is required.");
-        RuleFor(o => o.Address).NotEmpty().WithMessage("Address is required.");
+        RuleFor(c => c.LastName).NotEmpty().WithMessage("Last Name is required.");
+        RuleFor(c => c.Email).NotEmpty().WithMessage("Email is required.");
+        RuleFor(c => c.PhoneNumber).NotEmpty().WithMessage("Phone Number is required.");
+        RuleFor(c => c.Address).NotEmpty().WithMessage("Address is required.");
     }
 }

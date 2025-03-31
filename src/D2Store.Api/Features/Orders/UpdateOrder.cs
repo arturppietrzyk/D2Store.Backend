@@ -50,6 +50,6 @@ public class UpdateOrderCommandValidator : AbstractValidator<UpdateOrderCommand>
 {
     public UpdateOrderCommandValidator()
     {
-        RuleFor(o => o.TotalAmount).GreaterThan(0).When(o => o.TotalAmount is not null).WithMessage("TotalAmount must be greater than zero.");
+        RuleFor(o => o.TotalAmount).GreaterThan(0).When(o => o.TotalAmount is not null).WithMessage("Total Amount must be greater than zero.");
     }
 }

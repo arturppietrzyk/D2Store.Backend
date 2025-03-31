@@ -26,9 +26,9 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Gui
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            var result = Result.Failure<Guid>(new Error("CreateOrder.Validation",validationResult.ToString()));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(CreateOrderHandler), nameof(Handle), result.Error.Code, result.Error.Message);
-            return result;
+            var inputValidationResult = Result.Failure<Guid>(new Error("CreateOrder.Validation",validationResult.ToString()));
+            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(CreateOrderHandler), nameof(Handle), inputValidationResult.Error.Code, inputValidationResult.Error.Message);
+            return inputValidationResult;
         }
         var customerExists = await _dbContext.Customers.AnyAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
         if (!customerExists)
@@ -50,7 +50,7 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
     public CreateOrderCommandValidator()
     {
         RuleFor(c => c.CustomerId).NotEmpty().WithMessage("CustomerId is required.");
-        RuleFor(o => o.TotalAmount).NotEmpty().WithMessage("TotalAmount is required.");
-        RuleFor(o => o.TotalAmount).GreaterThan(0).WithMessage("TotalAmount must be greater than zero.");
+        RuleFor(c => c.TotalAmount).NotEmpty().WithMessage("Total Amount is required.");
+        RuleFor(c => c.TotalAmount).GreaterThan(0).WithMessage("Total Amount must be greater than zero.");
     }
 }
