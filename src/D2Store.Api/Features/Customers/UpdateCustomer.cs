@@ -55,20 +55,20 @@ public class UpdateCustomerCommandValidator : AbstractValidator<UpdateCustomerCo
             .NotEmpty().When(c => c.FirstName is not null)
             .WithMessage("First Name cannot be empty if provided.");
 
-        RuleFor(o => o.LastName)
-            .NotEmpty().When(o => o.LastName is not null)
+        RuleFor(c => c.LastName)
+            .NotEmpty().When(c => c.LastName is not null)
             .WithMessage("Last Name cannot be empty if provided.");
 
-        RuleFor(o => o.Email)
-            .NotEmpty().When(o => o.Email is not null)
+        RuleFor(c => c.Email)
+            .NotEmpty().When(c => c.Email is not null)
             .WithMessage("Email cannot be empty if provided.");
 
-        RuleFor(o => o.PhoneNumber)
-            .NotEmpty().When(o => o.PhoneNumber is not null)
+        RuleFor(c => c.PhoneNumber)
+            .NotEmpty().When(c => c.PhoneNumber is not null)
             .WithMessage("Phone Number cannot be empty if provided.");
 
-        RuleFor(o => o.Address)
-            .NotEmpty().When(o => o.Address is not null)
+        RuleFor(c => c.Address)
+            .NotEmpty().When(c => c.Address is not null)
             .WithMessage("Address cannot be empty if provided.");
     }
 }

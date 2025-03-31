@@ -38,9 +38,9 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet("orders")]
-    public async Task<IActionResult> GetOrders()
+    public async Task<IActionResult> GetOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
-        var result = await _mediator.Send(new GetOrdersQuery());
+        var result = await _mediator.Send(new GetOrdersQuery(pageNumber, pageSize));
         if (result.IsFailure)
         {
             return NotFound(result.Error);
