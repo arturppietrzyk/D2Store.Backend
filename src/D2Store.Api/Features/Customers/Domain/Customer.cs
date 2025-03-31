@@ -56,38 +56,4 @@ public class Customer
             LastModified = DateTime.UtcNow;
         }
     }
-
-    //public void UpdateCustomerInfo(string? firstName, string? lastName, string? email, string? phoneNumber, string? address)
-    //{
-    //    bool isUpdated = false;
-    //    if (firstName != FirstName)
-    //    {
-    //        FirstName = firstName;
-    //        isUpdated = true;
-    //    }
-    //    if (lastName != LastName)
-    //    {
-    //        LastName = lastName;
-    //        isUpdated = true;
-    //    }
-    //    if (email != Email)
-    //    {
-    //        Email = email;
-    //        isUpdated = true;
-    //    }
-    //    if (phoneNumber != PhoneNumber)
-    //    {
-    //        PhoneNumber = phoneNumber;
-    //        isUpdated = true;
-    //    }
-    //    if (address != Address)
-    //    {
-    //        Address = address;
-    //        isUpdated = true;
-    //    }
-    //    if (isUpdated)
-    //    {
-    //        LastModified = DateTime.UtcNow;
-    //    }
-    //}
 }
