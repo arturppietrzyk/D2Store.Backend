@@ -21,6 +21,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Gui
         _validator = validator;
         _logger = logger;
     }
+
     public async Task<Result<Guid>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
@@ -49,7 +50,7 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 {
     public CreateOrderCommandValidator()
     {
-        RuleFor(c => c.CustomerId).NotEmpty().WithMessage("CustomerId is required.");
+        RuleFor(c => c.CustomerId).NotEmpty().WithMessage("Customer Id is required.");
         RuleFor(c => c.TotalAmount).NotEmpty().WithMessage("Total Amount is required.");
         RuleFor(c => c.TotalAmount).GreaterThan(0).WithMessage("Total Amount must be greater than zero.");
     }

@@ -6,11 +6,11 @@ namespace D2Store.Api.Features.Products;
 
 [ApiController]
 [Route("api/")]
-public class ProductsController : ControllerBase
+public class ProductController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public ProductsController(IMediator mediator)
+    public ProductController(IMediator mediator)
     {
         _mediator = mediator;
     }
@@ -43,7 +43,7 @@ public class ProductsController : ControllerBase
         var result = await _mediator.Send(new GetProductsQuery(pageNumber, pageSize));
         if (result.IsFailure)
         {
-            return NotFound(result.Error);
+            return BadRequest(result.Error);
         }
         return Ok(result.Value);
     }

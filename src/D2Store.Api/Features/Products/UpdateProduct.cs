@@ -28,14 +28,14 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            var inputValidationResult = Result.Failure<ReadProductDto>(new Error("Update.Validation", validationResult.ToString()));
+            var inputValidationResult = Result.Failure<ReadProductDto>(new Error("UpdateProduct.Validation", validationResult.ToString()));
             _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateProductHandler), nameof(Handle), inputValidationResult.Error.Code, inputValidationResult.Error.Message);
             return inputValidationResult;
         }
         var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.ProductId == request.ProductId, cancellationToken);
         if (product is null)
         {
-            var result = Result.Failure<ReadProductDto>(new Error("UpdateProduct.NotFound", "Product not found."));
+            var result = Result.Failure<ReadProductDto>(new Error("UpdateProduct.Validation", "Product not found."));
             _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateProductHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }

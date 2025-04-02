@@ -7,7 +7,7 @@ using MediatR;
 
 namespace D2Store.Api.Features.Products;
 
-public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity): IRequest<Result<Guid>>;
+public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity) : IRequest<Result<Guid>>;
 
 public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result<Guid>>
 {
@@ -34,7 +34,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
         var product = new Product(request.Name, request.Description, request.Price, request.StockQuantity);
         _dbContext.Products.Add(product);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("{Class}: {Method} - Success, created: {orderId}.", nameof(CreateOrderHandler), nameof(Handle), product.ProductId.ToString());
+        _logger.LogInformation("{Class}: {Method} - Success, created: {productId}.", nameof(CreateOrderHandler), nameof(Handle), product.ProductId.ToString());
         return Result.Success(product.ProductId);
     }
 }
