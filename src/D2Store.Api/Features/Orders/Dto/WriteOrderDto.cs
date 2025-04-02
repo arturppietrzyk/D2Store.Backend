@@ -3,7 +3,7 @@
 public class WriteOrderDtoCreate
 {
     public Guid CustomerId { get; set; }
-    public decimal TotalAmount { get; set; }
+    public required decimal TotalAmount { get; set; }
 }
 
 public class WriteOrderDtoUpdate

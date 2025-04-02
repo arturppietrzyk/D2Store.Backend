@@ -23,7 +23,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
         var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
         if (order is null)
         {
-            var result = Result.Failure<Guid>(new Error("DeleteOrder.NotFound", "Order not found."));
+            var result = Result.Failure<Guid>(new Error("DeleteOrder.Validation", "Order not found."));
             _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(DeleteOrderHander), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }

@@ -43,7 +43,7 @@ public class CustomerController : ControllerBase
         var result = await _mediator.Send(new GetCustomersQuery(pageNumber, pageSize));
         if (result.IsFailure)
         {
-            return NotFound(result.Error);
+            return BadRequest(result.Error);
         }
         return Ok(result.Value);
     }

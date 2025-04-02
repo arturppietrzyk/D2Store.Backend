@@ -27,14 +27,14 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            var inputValidationResult = Result.Failure<ReadOrderDto>(new Error("Update.Validation", validationResult.ToString()));
+            var inputValidationResult = Result.Failure<ReadOrderDto>(new Error("UpdateOrder.Validation", validationResult.ToString()));
             _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateOrderHandler), nameof(Handle), inputValidationResult.Error.Code, inputValidationResult.Error.Message);
             return inputValidationResult;
         }
         var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
         if (order is null)
         {
-            var result = Result.Failure<ReadOrderDto>(new Error("UpdateOrder.NotFound", "Order not found."));
+            var result = Result.Failure<ReadOrderDto>(new Error("UpdateOrder.Validation", "Order not found."));
             _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateOrderHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }

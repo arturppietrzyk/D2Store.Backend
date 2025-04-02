@@ -23,7 +23,7 @@ public class DeleteCustomerHandler : IRequestHandler<DeleteCustomerCommand, Resu
         var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
         if (customer is null)
         {
-            var result = Result.Failure<Guid>(new Error("DeleteCustomer.NotFound", "Customer not found."));
+            var result = Result.Failure<Guid>(new Error("DeleteCustomer.Validation", "Customer not found."));
             _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(DeleteCustomerHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }

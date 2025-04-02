@@ -27,14 +27,14 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            var inputValidationResult = Result.Failure<ReadCustomerDto>(new Error("Update.Validation", validationResult.ToString()));
+            var inputValidationResult = Result.Failure<ReadCustomerDto>(new Error("UpdateCustomer.Validation", validationResult.ToString()));
             _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateCustomerHandler), nameof(Handle), inputValidationResult.Error.Code, inputValidationResult.Error.Message);
             return inputValidationResult;
         }
         var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
         if (customer is null)
         {
-            var result = Result.Failure<ReadCustomerDto>(new Error("UpdateCustomer.NotFound", "Customer not found."));
+            var result = Result.Failure<ReadCustomerDto>(new Error("UpdateCustomer.Validation", "Customer not found."));
             _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateCustomerHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
@@ -51,24 +51,10 @@ public class UpdateCustomerCommandValidator : AbstractValidator<UpdateCustomerCo
 {
     public UpdateCustomerCommandValidator()
     {
-        RuleFor(c => c.FirstName)
-            .NotEmpty().When(c => c.FirstName is not null)
-            .WithMessage("First Name cannot be empty if provided.");
-
-        RuleFor(c => c.LastName)
-            .NotEmpty().When(c => c.LastName is not null)
-            .WithMessage("Last Name cannot be empty if provided.");
-
-        RuleFor(c => c.Email)
-            .NotEmpty().When(c => c.Email is not null)
-            .WithMessage("Email cannot be empty if provided.");
-
-        RuleFor(c => c.PhoneNumber)
-            .NotEmpty().When(c => c.PhoneNumber is not null)
-            .WithMessage("Phone Number cannot be empty if provided.");
-
-        RuleFor(c => c.Address)
-            .NotEmpty().When(c => c.Address is not null)
-            .WithMessage("Address cannot be empty if provided.");
+        RuleFor(c => c.FirstName).NotEmpty().When(c => c.FirstName is not null).WithMessage("First Name cannot be empty if provided.");
+        RuleFor(c => c.LastName).NotEmpty().When(c => c.LastName is not null).WithMessage("Last Name cannot be empty if provided.");
+        RuleFor(c => c.Email).NotEmpty().When(c => c.Email is not null).WithMessage("Email cannot be empty if provided.");
+        RuleFor(c => c.PhoneNumber).NotEmpty().When(c => c.PhoneNumber is not null).WithMessage("Phone Number cannot be empty if provided.");
+        RuleFor(c => c.Address).NotEmpty().When(c => c.Address is not null).WithMessage("Address cannot be empty if provided.");
     }
 }
