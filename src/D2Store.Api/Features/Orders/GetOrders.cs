@@ -33,7 +33,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
         }
         var orders = await _dbContext.Orders.AsNoTracking().OrderByDescending(o => o.OrderDate).Skip((request.PageNumber - 1) * request.PageSize).Take(request.PageSize).ToListAsync(cancellationToken);
         var ordersDto = orders.Select(order => new ReadOrderDto(order.OrderId, order.CustomerId, order.OrderDate, order.TotalAmount, order.Status, order.LastModified)).ToList();
-        _logger.LogInformation("{Class}: {Method} - Success, retrieved: {OrderCount} orders.",nameof(GetOrdersHandler), nameof(Handle), ordersDto.Count);
+        _logger.LogInformation("{Class}: {Method} - Success, retrieved: {OrderCount} orders.", nameof(GetOrdersHandler), nameof(Handle), ordersDto.Count);
         return Result.Success(ordersDto);
     }
 }

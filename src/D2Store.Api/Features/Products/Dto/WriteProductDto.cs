@@ -7,3 +7,11 @@ public class WriteProductDtoCreate
     public required decimal Price { get; set; }
     public required int StockQuantity { get; set; }
 }
+
+public class WriteProductDtoUpdate
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public decimal? Price { get; set; }
+    public int? StockQuantity { get; set; }
+}

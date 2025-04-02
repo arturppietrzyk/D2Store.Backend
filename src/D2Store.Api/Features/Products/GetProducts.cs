@@ -1,6 +1,4 @@
-﻿using D2Store.Api.Features.Orders.Dto;
-using D2Store.Api.Features.Orders;
-using D2Store.Api.Features.Products.Dto;
+﻿using D2Store.Api.Features.Products.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
@@ -29,13 +27,13 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<List<
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            var result = Result.Failure<List<ReadProductDto>>(new Error("GetOrders.Validation", validationResult.ToString()));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(GetOrdersHandler), nameof(Handle), result.Error.Code, result.Error.Message);
+            var result = Result.Failure<List<ReadProductDto>>(new Error("GetProducts.Validation", validationResult.ToString()));
+            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(GetProductsHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
         var products = await _dbContext.Products.AsNoTracking().OrderByDescending(p => p.AddedDate).Skip((request.PageNumber - 1) * request.PageSize).Take(request.PageSize).ToListAsync(cancellationToken);
         var productsDto = products.Select(product => new ReadProductDto(product.ProductId, product.Name, product.Description, product.Price, product.StockQuantity, product.AddedDate, product.LastModified)).ToList();
-        _logger.LogInformation("{Class}: {Method} - Success, retrieved: {OrderCount} orders.", nameof(GetOrdersHandler), nameof(Handle), productsDto.Count);
+        _logger.LogInformation("{Class}: {Method} - Success, retrieved: {ProductCount} orders.", nameof(GetProductsHandler), nameof(Handle), productsDto.Count);
         return Result.Success(productsDto);
     }
 }

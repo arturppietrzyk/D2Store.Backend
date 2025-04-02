@@ -12,6 +12,7 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
 {
     private readonly AppDbContext _dbContext;
     private readonly ILogger<GetOrderByIdHandler> _logger;
+
     public GetOrderByIdHandler(AppDbContext dbContext, ILogger<GetOrderByIdHandler> logger)
     {
         _dbContext = dbContext;
