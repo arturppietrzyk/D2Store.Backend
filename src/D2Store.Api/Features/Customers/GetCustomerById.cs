@@ -2,7 +2,7 @@
 using D2Store.Api.Features.Orders;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Customers;
@@ -20,7 +20,7 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
         _logger = logger;
     }
 
-    public async Task<Result<ReadCustomerDto>> Handle(GetCustomerByIdQuery request, CancellationToken cancellationToken)
+    public async ValueTask<Result<ReadCustomerDto>> Handle(GetCustomerByIdQuery request, CancellationToken cancellationToken)
     {
         var customer = await _dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(o => o.CustomerId == request.CustomerId, cancellationToken);
         if (customer is null)

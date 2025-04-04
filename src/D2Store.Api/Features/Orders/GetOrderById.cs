@@ -1,7 +1,7 @@
 ﻿using D2Store.Api.Features.Orders.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
@@ -19,7 +19,7 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
         _logger = logger;
     }
 
-    public async Task<Result<ReadOrderDto>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
+    public async ValueTask<Result<ReadOrderDto>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
     {
         var order = await _dbContext.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
         if (order is null)

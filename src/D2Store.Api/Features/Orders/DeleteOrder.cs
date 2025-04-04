@@ -1,6 +1,6 @@
 ﻿using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
@@ -18,7 +18,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
         _logger = logger;
     }
 
-    public async Task<Result<Guid>> Handle(DeleteOrderCommand request, CancellationToken cancellationToken) 
+    public async ValueTask<Result<Guid>> Handle(DeleteOrderCommand request, CancellationToken cancellationToken) 
     {
         var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
         if (order is null)

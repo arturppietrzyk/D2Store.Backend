@@ -21,7 +21,7 @@ public class Product
         LastModified = DateTime.UtcNow;
     }
 
-    public void UpdateProductInfo(string? name, string description, decimal? price, int? stockQuantity)
+    public void UpdateProductInfo(string? name, string? description, decimal? price, int? stockQuantity)
     {
         bool isUpdated = false;
         if (!string.IsNullOrEmpty(name) && name != Name)
