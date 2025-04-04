@@ -2,7 +2,7 @@
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Customers;
@@ -22,7 +22,7 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
         _logger = logger;
     }
 
-    public async Task<Result<Guid>> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result<Guid>> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)

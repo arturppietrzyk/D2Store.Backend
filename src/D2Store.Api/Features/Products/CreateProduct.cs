@@ -3,7 +3,7 @@ using D2Store.Api.Features.Products.Domain;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
-using MediatR;
+using Mediator;
 
 namespace D2Store.Api.Features.Products;
 
@@ -22,7 +22,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
         _logger = logger;
     }
 
-    public async Task<Result<Guid>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result<Guid>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)

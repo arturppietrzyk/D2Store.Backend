@@ -1,5 +1,5 @@
 ﻿using D2Store.Api.Features.Products.Dto;
-using MediatR;
+using Mediator;
 using Microsoft.AspNetCore.Mvc;
 
 namespace D2Store.Api.Features.Products;

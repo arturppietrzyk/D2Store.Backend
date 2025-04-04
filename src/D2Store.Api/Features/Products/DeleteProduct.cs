@@ -1,6 +1,6 @@
 ﻿using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
@@ -18,7 +18,7 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
         _logger = logger;
     }
 
-    public async Task<Result<Guid>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result<Guid>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
     {
         var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.ProductId == request.ProductId, cancellationToken);
         if (product == null)

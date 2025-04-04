@@ -1,6 +1,6 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using D2Store.Api.Features.Customers.Dto;
+using Mediator;
 
 namespace D2Store.Api.Features.Customers;
 

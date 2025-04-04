@@ -1,6 +1,6 @@
 ﻿using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Customers;
@@ -18,7 +18,7 @@ public class DeleteCustomerHandler : IRequestHandler<DeleteCustomerCommand, Resu
         _logger = logger;
     }
 
-    public async Task<Result<Guid>> Handle(DeleteCustomerCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result<Guid>> Handle(DeleteCustomerCommand request, CancellationToken cancellationToken)
     {
         var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
         if (customer is null)

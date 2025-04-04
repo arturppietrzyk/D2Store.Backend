@@ -24,7 +24,7 @@ builder.Services.Configure<ConnectionStringsConfig>(
 var connectionStringsConfig = new ConnectionStringsConfig();
 builder.Configuration.GetSection(ConnectionStringsConfig.SectionName).Bind(connectionStringsConfig);
 
-builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(assembly));
+builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 
 builder.Services.AddValidatorsFromAssembly(assembly);
 
