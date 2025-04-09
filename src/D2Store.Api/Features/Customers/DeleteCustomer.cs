@@ -10,12 +10,10 @@ public record DeleteCustomerCommand(Guid CustomerId) : IRequest<Result<Guid>>;
 public class DeleteCustomerHandler : IRequestHandler<DeleteCustomerCommand, Result<Guid>>
 {
     private readonly AppDbContext _dbContext;
-    private readonly ILogger<DeleteCustomerHandler> _logger;
 
-    public DeleteCustomerHandler(AppDbContext dbContext, ILogger<DeleteCustomerHandler> logger)
+    public DeleteCustomerHandler(AppDbContext dbContext)
     {
         _dbContext = dbContext;
-        _logger = logger;
     }
 
     public async ValueTask<Result<Guid>> Handle(DeleteCustomerCommand request, CancellationToken cancellationToken)
@@ -24,19 +22,16 @@ public class DeleteCustomerHandler : IRequestHandler<DeleteCustomerCommand, Resu
         if (customer is null)
         {
             var result = Result.Failure<Guid>(new Error("DeleteCustomer.Validation", "Customer not found."));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(DeleteCustomerHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
         var orderExists = await _dbContext.Orders.AnyAsync(o => o.CustomerId == request.CustomerId, cancellationToken);
         if (orderExists)
         {
             var result = Result.Failure<Guid>(new Error("DeleteCustomer.Validation", "Orders exist for this customer."));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(DeleteCustomerHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
         _dbContext.Customers.Remove(customer);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("{Class}: {Method} - Success, deleted {customerId}.", nameof(DeleteCustomerHandler), nameof(Handle), customer.CustomerId);
         return Result.Success(customer.CustomerId);
     }
 }

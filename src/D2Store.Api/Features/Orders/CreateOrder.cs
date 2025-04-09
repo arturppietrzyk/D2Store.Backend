@@ -15,13 +15,11 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<CreateOrderCommand> _validator;
-    private readonly ILogger<CreateOrderHandler> _logger;
 
-    public CreateOrderHandler(AppDbContext dbContext, IValidator<CreateOrderCommand> validator, ILogger<CreateOrderHandler> logger)
+    public CreateOrderHandler(AppDbContext dbContext, IValidator<CreateOrderCommand> validator)
     {
         _dbContext = dbContext;
         _validator = validator;
-        _logger = logger;
     }
 
     public async ValueTask<Result<Order>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)

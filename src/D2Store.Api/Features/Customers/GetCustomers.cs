@@ -13,13 +13,11 @@ public class GetCustomersHandler : IRequestHandler<GetCustomersQuery, Result<Lis
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<GetCustomersQuery> _validator;
-    private readonly ILogger<GetCustomersHandler> _logger;
 
-    public GetCustomersHandler(AppDbContext dbContext, IValidator<GetCustomersQuery> validator, ILogger<GetCustomersHandler> logger)
+    public GetCustomersHandler(AppDbContext dbContext, IValidator<GetCustomersQuery> validator)
     {
         _dbContext = dbContext;
         _validator = validator;
-        _logger = logger;
     }
 
     public async ValueTask<Result<List<ReadCustomerDto>>> Handle(GetCustomersQuery request, CancellationToken cancellationToken)
@@ -28,12 +26,10 @@ public class GetCustomersHandler : IRequestHandler<GetCustomersQuery, Result<Lis
         if (!validationResult.IsValid)
         {
             var result = Result.Failure<List<ReadCustomerDto>>(new Error("GetCustomers.Validation", validationResult.ToString()));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(GetCustomersHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
         var customers = await _dbContext.Customers.AsNoTracking().OrderByDescending(c => c.CreatedAt).Skip((request.PageNumber -1) * request.PageSize).Take(request.PageSize).ToListAsync(cancellationToken);
         var customersDto = customers.Select(customer => new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedAt, customer.LastModified)).ToList();
-        _logger.LogInformation("{Class}: {Method} - Success, retrieved: {CustomerCount} customers.", nameof(GetCustomersHandler), nameof(Handle), customersDto.Count);
         return Result.Success(customersDto);
     }
 }

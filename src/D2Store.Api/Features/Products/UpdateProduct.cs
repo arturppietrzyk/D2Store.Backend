@@ -1,5 +1,4 @@
-﻿using D2Store.Api.Features.Customers;
-using D2Store.Api.Features.Products.Dto;
+﻿using D2Store.Api.Features.Products.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
@@ -14,13 +13,11 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<UpdateProductCommand> _validator;
-    private readonly ILogger<UpdateProductHandler> _logger;
 
-    public UpdateProductHandler(AppDbContext dbContext, IValidator<UpdateProductCommand> validator, ILogger<UpdateProductHandler> logger)
+    public UpdateProductHandler(AppDbContext dbContext, IValidator<UpdateProductCommand> validator)
     {
         _dbContext = dbContext;
         _validator = validator;
-        _logger = logger;
     }
 
     public async ValueTask<Result<ReadProductDto>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
@@ -29,20 +26,17 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         if (!validationResult.IsValid)
         {
             var inputValidationResult = Result.Failure<ReadProductDto>(new Error("UpdateProduct.Validation", validationResult.ToString()));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateProductHandler), nameof(Handle), inputValidationResult.Error.Code, inputValidationResult.Error.Message);
             return inputValidationResult;
         }
         var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.ProductId == request.ProductId, cancellationToken);
         if (product is null)
         {
             var result = Result.Failure<ReadProductDto>(new Error("UpdateProduct.Validation", "Product not found."));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateProductHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
         product.UpdateProductInfo(request.Name, request.Description, request.Price, request.StockQuantity);
         await _dbContext.SaveChangesAsync(cancellationToken);
         var updatedProduct = new ReadProductDto(product.ProductId, product.Name, product.Description, product.Price, product.StockQuantity, product.AddedDate, product.LastModified);
-        _logger.LogInformation("{Class}: {Method} - Success, updated: {productId}.", nameof(UpdateCustomerHandler), nameof(Handle), updatedProduct.ProductId);
         return Result.Success(updatedProduct);
     }
 }

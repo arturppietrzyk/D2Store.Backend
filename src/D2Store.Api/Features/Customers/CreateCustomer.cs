@@ -13,13 +13,11 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<CreateCustomerCommand> _validator;
-    private readonly ILogger<CreateCustomerHandler> _logger;
 
-    public CreateCustomerHandler(AppDbContext dbContext, IValidator<CreateCustomerCommand> validator, ILogger<CreateCustomerHandler> logger)
+    public CreateCustomerHandler(AppDbContext dbContext, IValidator<CreateCustomerCommand> validator)
     {
         _dbContext = dbContext;
         _validator = validator;
-        _logger = logger;
     }
 
     public async ValueTask<Result<Guid>> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
@@ -28,20 +26,17 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
         if (!validationResult.IsValid)
         {
             var inputValidationResult = Result.Failure<Guid>(new Error("CreateCustomer.Validation", validationResult.ToString()));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(CreateCustomerHandler), nameof(Handle), inputValidationResult.Error.Code, inputValidationResult.Error.Message);
             return inputValidationResult;
         }
         var customerExists = await _dbContext.Customers.AnyAsync(c => c.Email == request.Email, cancellationToken);
         if (customerExists)
         {
             var result = Result.Failure<Guid>(new Error("CreateCustomer.Validation", "Customer already exist."));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(CreateCustomerHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
         var customer = new Customer(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
         _dbContext.Customers.Add(customer);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("{Class}: {Method} - Success, created: {customerId}.", nameof(CreateCustomerHandler), nameof(Handle), customer.CustomerId.ToString());
         return Result.Success(customer.CustomerId);
     }
 }
