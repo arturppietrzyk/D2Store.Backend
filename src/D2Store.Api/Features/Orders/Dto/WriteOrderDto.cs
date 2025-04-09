@@ -2,14 +2,14 @@
 
 public class WriteOrderDtoCreate
 {
-    public Guid CustomerId { get; set; }
+    public required Guid CustomerId { get; set; }
     public required List<WriteOrderProductDtoCreate> Products { get; set; }
 }
 
 public class WriteOrderProductDtoCreate
 {
-    public Guid ProductId { get; set; }
-    public int Quantity { get; set; }
+    public required Guid ProductId { get; set; }
+    public required int Quantity { get; set; }
 }
 
 public class WriteOrderDtoUpdate
