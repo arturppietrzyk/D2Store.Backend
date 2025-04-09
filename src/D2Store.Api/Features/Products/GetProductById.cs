@@ -1,5 +1,4 @@
-﻿using D2Store.Api.Features.Orders;
-using D2Store.Api.Features.Products.Dto;
+﻿using D2Store.Api.Features.Products.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using Mediator;
@@ -11,14 +10,11 @@ public record GetProductByIdQuery(Guid ProductId) : IRequest<Result<ReadProductD
 
 public class GetProductByIdHandler : IRequestHandler<GetProductByIdQuery, Result<ReadProductDto>>
 {
-
     private readonly AppDbContext _dbContext;
-    private readonly ILogger<GetProductByIdHandler> _logger;
 
-    public GetProductByIdHandler(AppDbContext dbContext, ILogger<GetProductByIdHandler> logger)
+    public GetProductByIdHandler(AppDbContext dbContext)
     {
         _dbContext = dbContext;
-        _logger = logger;
     }
 
     public async ValueTask<Result<ReadProductDto>> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
@@ -27,11 +23,9 @@ public class GetProductByIdHandler : IRequestHandler<GetProductByIdQuery, Result
         if (product == null)
         {
             var result = Result.Failure<ReadProductDto>(new Error("GetProductById.Validation", "The product with the specified Product Id was not found."));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}", nameof(GetProductByIdHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
         var productDto = new ReadProductDto(product.ProductId, product.Name, product.Description, product.Price, product.StockQuantity, product.AddedDate, product.LastModified);
-        _logger.LogInformation("{Class}: {Method} - Success, retrieved: {orderId}.", nameof(GetOrdersHandler), nameof(Handle), productDto.ProductId.ToString());
         return Result.Success<ReadProductDto>(productDto);
     }
 }

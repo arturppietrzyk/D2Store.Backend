@@ -13,13 +13,11 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<UpdateCustomerCommand> _validator;
-    private readonly ILogger<UpdateCustomerHandler> _logger;
 
-    public UpdateCustomerHandler(AppDbContext dbContext, IValidator<UpdateCustomerCommand> validator, ILogger<UpdateCustomerHandler> logger)
+    public UpdateCustomerHandler(AppDbContext dbContext, IValidator<UpdateCustomerCommand> validator)
     {
         _dbContext = dbContext;
         _validator = validator;
-        _logger = logger;
     }
 
     public async ValueTask<Result<ReadCustomerDto>> Handle(UpdateCustomerCommand request, CancellationToken cancellationToken)
@@ -28,21 +26,18 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
         if (!validationResult.IsValid)
         {
             var inputValidationResult = Result.Failure<ReadCustomerDto>(new Error("UpdateCustomer.Validation", validationResult.ToString()));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateCustomerHandler), nameof(Handle), inputValidationResult.Error.Code, inputValidationResult.Error.Message);
             return inputValidationResult;
         }
         var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
         if (customer is null)
         {
             var result = Result.Failure<ReadCustomerDto>(new Error("UpdateCustomer.Validation", "Customer not found."));
-            _logger.LogWarning("{Class}: {Method} - Warning: {ErrorCode} - {ErrorMessage}.", nameof(UpdateCustomerHandler), nameof(Handle), result.Error.Code, result.Error.Message);
             return result;
         }
         customer.UpdateCustomerInfo(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
         await _dbContext.SaveChangesAsync(cancellationToken);
         var updatedCustomer = new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedAt, customer.LastModified
         );
-        _logger.LogInformation("{Class}: {Method} - Success, updated: {customerId}.", nameof(UpdateCustomerHandler), nameof(Handle), updatedCustomer.CustomerId);
         return Result.Success(updatedCustomer);
     }
 }
