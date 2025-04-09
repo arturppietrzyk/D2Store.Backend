@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record CreateOrderCommand(Guid CustomerId, List<WriteProductOrderDtoCreate> Products) : IRequest<Result<Order>>;
+public record CreateOrderCommand(Guid CustomerId, List<WriteOrderProductDtoCreate> Products) : IRequest<Result<Order>>;
 
 public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Order>>
 {
@@ -77,17 +77,17 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
     /// <param name="products"></param>
     /// <param name="productsDict"></param>
     /// <returns></returns>
-    private Result<decimal> CalculateTotalAmount(List<WriteProductOrderDtoCreate> products, Dictionary<Guid, Product> productsDict)
+    private Result<decimal> CalculateTotalAmount(List<WriteOrderProductDtoCreate> orderProducts, Dictionary<Guid, Product> productsDict)
     {
         decimal totalAmount = 0;
-        foreach (var productOrder in products)
+        foreach (var orderProduct in orderProducts)
         {
-            var validationResult = ValidateProductAvailability(productOrder, productsDict);
+            var validationResult = ValidateProductAvailability(orderProduct, productsDict);
             if (validationResult.IsFailure)
             {
                 return Result.Failure<decimal>(validationResult.Error);
             }
-            totalAmount += validationResult.Value.Price * productOrder.Quantity;
+            totalAmount += validationResult.Value.Price * orderProduct.Quantity;
         }
         return Result.Success(totalAmount);
     }
@@ -98,13 +98,13 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
     /// <param name="productOrder"></param>
     /// <param name="productsDict"></param>
     /// <returns></returns>
-    private Result<Product> ValidateProductAvailability(WriteProductOrderDtoCreate productOrder, Dictionary<Guid, Product> productsDict)
+    private Result<Product> ValidateProductAvailability(WriteOrderProductDtoCreate orderProduct, Dictionary<Guid, Product> productsDict)
     {
-        if (!productsDict.TryGetValue(productOrder.ProductId, out var product))
+        if (!productsDict.TryGetValue(orderProduct.ProductId, out var product))
         {
-            return Result.Failure<Product>(new Error("CreateOrder.Validation", $"Product {productOrder.ProductId} does not exist."));
+            return Result.Failure<Product>(new Error("CreateOrder.Validation", $"Product {orderProduct.ProductId} does not exist."));
         }
-        if (product.StockQuantity < productOrder.Quantity)
+        if (product.StockQuantity < orderProduct.Quantity)
         {
             return Result.Failure<Product>(new Error("CreateOrder.Validation", $"Not enough stock of product {product.ProductId} to fulfill the order."));
         }
@@ -130,11 +130,11 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
             var order = new Order(request.CustomerId, totalAmount);
             _dbContext.Orders.Add(order);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            foreach (var productOrder in request.Products)
+            foreach (var orderProd in request.Products)
             {
-                var product = productsDict[productOrder.ProductId];
-                product.UpdateProductInfo(null, null, null, product.StockQuantity - productOrder.Quantity);
-                var orderProduct = new OrderProduct(order.OrderId, product.ProductId, productOrder.Quantity);
+                var product = productsDict[orderProd.ProductId];
+                product.UpdateProductInfo(null, null, null, product.StockQuantity - orderProd.Quantity);
+                var orderProduct = new OrderProduct(order.OrderId, product.ProductId, orderProd.Quantity);
                 _dbContext.OrderProducts.Add(orderProduct);
             }
             await _dbContext.SaveChangesAsync(cancellationToken);
