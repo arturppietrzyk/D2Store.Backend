@@ -18,12 +18,13 @@ public class OrderController : ControllerBase
     [HttpPost("order")]
     public async Task<IActionResult> CreateOrder([FromBody] WriteOrderDtoCreate writeOrderDto)
     {
-        var result = await _mediator.Send(new CreateOrderCommand(writeOrderDto.CustomerId, writeOrderDto.TotalAmount));
+        var result = await _mediator.Send(new CreateOrderCommand(writeOrderDto.CustomerId, writeOrderDto.Products));
         if (result.IsFailure)
         {
             return BadRequest(result.Error);
         }
-        return Ok(result.Value);
+        var createdOrder = result.Value;
+        return CreatedAtAction(nameof(GetOrderById), new { orderId = createdOrder.OrderId }, createdOrder);
     }
 
     [HttpGet("order/{orderId}")]
