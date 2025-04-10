@@ -24,24 +24,24 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
 
     public async ValueTask<Result<Order>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
-        var validationResult = await ValidateRequest(request, cancellationToken);
+        var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
             return Result.Failure<Order>(validationResult.Error);
         }
-        var customerExists = await CustomerExists(request.CustomerId, cancellationToken);
+        var customerExists = await CustomerExistsAsync(request.CustomerId, cancellationToken);
         if (!customerExists)
         {
             return Result.Failure<Order>(new Error("CreateOrder.Validation", "Customer does not exist."));
         }
-        var productsDict = await GetProductsDictionary(request.Products.Select(p => p.ProductId).Distinct().ToList(), cancellationToken);
+        var productsDict = await GetProductsDictionaryAsync(request.Products.Select(p => p.ProductId).Distinct().ToList(), cancellationToken);
         var totalAmountResult = CalculateTotalAmount(request.Products, productsDict);
         if (totalAmountResult.IsFailure)
         {
             return Result.Failure<Order>(totalAmountResult.Error); 
         }
         decimal totalAmount = totalAmountResult.Value;
-        return await CreateOrderAndOrderProducts(request, productsDict, totalAmount, cancellationToken);
+        return await CreateOrderAndOrderProductsAsync(request, productsDict, totalAmount, cancellationToken);
     }
 
     /// <summary>
@@ -50,7 +50,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result> ValidateRequest(CreateOrderCommand request, CancellationToken cancellationToken)
+    private async Task<Result> ValidateRequestAsync(CreateOrderCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -66,7 +66,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
     /// <param name="customerId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<bool> CustomerExists(Guid customerId, CancellationToken cancellationToken)
+    private async Task<bool> CustomerExistsAsync(Guid customerId, CancellationToken cancellationToken)
     {
         return await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.CustomerId == customerId, cancellationToken);
     }
@@ -122,7 +122,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
     /// <param name="totalAmount"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Order>> CreateOrderAndOrderProducts(CreateOrderCommand request, Dictionary<Guid, Product> productsDict, decimal totalAmount, CancellationToken cancellationToken)
+    private async Task<Result<Order>> CreateOrderAndOrderProductsAsync(CreateOrderCommand request, Dictionary<Guid, Product> productsDict, decimal totalAmount, CancellationToken cancellationToken)
     {
         using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -154,7 +154,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
     /// <param name="productIds"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Dictionary<Guid, Product>> GetProductsDictionary(List<Guid> productIds, CancellationToken cancellationToken)
+    private async Task<Dictionary<Guid, Product>> GetProductsDictionaryAsync(List<Guid> productIds, CancellationToken cancellationToken)
     {
         return await _dbContext.Products.Where(p => productIds.Contains(p.ProductId)).ToDictionaryAsync(p => p.ProductId, cancellationToken);
     }
