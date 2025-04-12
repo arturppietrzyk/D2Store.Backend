@@ -28,6 +28,12 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
         return await DeleteOrderAsync(order, cancellationToken);
     }
 
+    /// <summary>
+    /// Wraps the deletion of OrderProducts of a specific order as well as the order itself in a transaction so everything can be rolled back if an error occurs.
+    /// </summary>
+    /// <param name="order"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<Result<Guid>> DeleteOrderAsync(Order order, CancellationToken cancellationToken)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
