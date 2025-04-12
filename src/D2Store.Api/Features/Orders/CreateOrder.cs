@@ -124,7 +124,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
     /// <returns></returns>
     private async Task<Result<Order>> CreateOrderAndOrderProductsAsync(CreateOrderCommand request, Dictionary<Guid, Product> productsDict, decimal totalAmount, CancellationToken cancellationToken)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var order = new Order(request.CustomerId, totalAmount);
