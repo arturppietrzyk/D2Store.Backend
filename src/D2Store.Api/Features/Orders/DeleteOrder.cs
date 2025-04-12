@@ -1,4 +1,5 @@
-﻿using D2Store.Api.Infrastructure;
+﻿using D2Store.Api.Features.Orders.Domain;
+using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -18,14 +19,40 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
 
     public async ValueTask<Result<Guid>> Handle(DeleteOrderCommand request, CancellationToken cancellationToken) 
     {
-        var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
+        var order = await _dbContext.Orders.Include(o => o.Products).FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
         if (order is null)
         {
             var result = Result.Failure<Guid>(new Error("DeleteOrder.Validation", "Order not found."));
             return result;
         }
-        _dbContext.Orders.Remove(order);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(order.OrderId);
+        return await DeleteOrderAsync(order, cancellationToken);
+    }
+
+    /// <summary>
+    /// Wraps the deletion of OrderProducts of a specific order as well as the order itself in a transaction so everything can be rolled back if an error occurs.
+    /// </summary>
+    /// <param name="order"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Result<Guid>> DeleteOrderAsync(Order order, CancellationToken cancellationToken)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            if (order.Products != null && order.Products.Any())
+            {
+                _dbContext.OrderProducts.RemoveRange(order.Products);
+                await _dbContext.SaveChangesAsync();
+            }
+            _dbContext.Orders.Remove(order);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return Result.Success(order.OrderId);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }
