@@ -20,12 +20,12 @@ public class Order
         LastModified = DateTime.UtcNow;
     }
 
-    public void UpdateOrderInfo(decimal? totalAmount)
+    public void UpdateOrderInfo(string? status)
     {
         bool isUpdated = false;
-        if (totalAmount.HasValue && totalAmount != TotalAmount)
+        if(!string.IsNullOrEmpty(status) && status != Status)
         {
-            TotalAmount = totalAmount.Value;
+            Status = status;
             isUpdated = true;
         }
         if (isUpdated)

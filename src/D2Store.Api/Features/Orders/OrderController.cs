@@ -52,7 +52,7 @@ public class OrderController : ControllerBase
     [HttpPatch("order/{orderId}")]
     public async Task<IActionResult> UpdateOrder(Guid orderId, [FromBody] WriteOrderDtoUpdate writeOrderDto)
     {
-        var result = await _mediator.Send(new UpdateOrderCommand(orderId, writeOrderDto.TotalAmount));
+        var result = await _mediator.Send(new UpdateOrderCommand(orderId, writeOrderDto.Status));
         if (result.IsFailure)
         {
             return BadRequest(result.Error);

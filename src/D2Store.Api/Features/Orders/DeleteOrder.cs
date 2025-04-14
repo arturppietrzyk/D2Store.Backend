@@ -19,13 +19,34 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
 
     public async ValueTask<Result<Guid>> Handle(DeleteOrderCommand request, CancellationToken cancellationToken) 
     {
-        var order = await _dbContext.Orders.Include(o => o.Products).FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
+        var order = await GetOrderAsync(request.OrderId, cancellationToken);
         if (order is null)
         {
-            var result = Result.Failure<Guid>(new Error("DeleteOrder.Validation", "Order not found."));
-            return result;
+            return CreateOrderNotFoundResult();
         }
         return await DeleteOrderAsync(order, cancellationToken);
+    }
+
+    /// <summary>
+    /// Find the specific order based on OrderId.
+    /// </summary>
+    /// <param name="orderId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Order?> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Orders.Include(o => o.Products).FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Create a failure result for when a specific order could not be found in the orders table. 
+    /// </summary>
+    /// <returns></returns>
+    private static Result<Guid> CreateOrderNotFoundResult()
+    {
+        return Result.Failure<Guid>(new Error(
+            "DeleteOrder.Validation",
+            "The order with the specified Order Id was not found."));
     }
 
     /// <summary>
