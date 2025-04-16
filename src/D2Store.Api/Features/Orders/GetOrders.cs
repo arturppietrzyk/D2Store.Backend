@@ -27,21 +27,11 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
         {
             return Result.Failure<List<ReadOrderDto>>(validationResult.Error);
         }
-        var orders = await GetPaginatedOrdersAsync(request.PageNumber, request.PageSize, cancellationToken);
-        var orderIds = orders.Select(o => o.OrderId).ToList();
-        var orderProducts = await GetOrderProductsForOrdersAsync(orderIds, cancellationToken);
-        var orderDtos = orders.Select(order => MapToReadOrderDto(order, orderProducts
-            .GetValueOrDefault(order.OrderId, new List<ReadOrderProductDto>())))
-            .ToList();
+        var orders = await GetPaginatedOrdersWithIncludesAsync(request.PageNumber, request.PageSize, cancellationToken);
+        var orderDtos = orders.Select(MapToReadOrderDto).ToList();
         return Result.Success(orderDtos);
     }
 
-    /// <summary>
-    /// Executes the input validation relating to page number and page size, done by the Fluent Validation class CreateOrderCommandValidator. 
-    /// </summary>
-    /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     private async Task<Result> ValidateRequestAsync(GetOrdersQuery request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
@@ -53,16 +43,14 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     }
 
     /// <summary>
-    /// Retrieves the specific orders based on the pagination parameters. 
+    /// Retrieves paginated orders and includes related OrderProducts and Products.
     /// </summary>
-    /// <param name="pageNumber"></param>
-    /// <param name="pageSize"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    private async Task<List<Order>> GetPaginatedOrdersAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
+    private async Task<List<Order>> GetPaginatedOrdersWithIncludesAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
     {
         return await _dbContext.Orders
             .AsNoTracking()
+            .Include(o => o.Products)
+                .ThenInclude(op => op.Product)
             .OrderByDescending(o => o.OrderDate)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -70,46 +58,20 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     }
 
     /// <summary>
-    /// Takes a list of OrderIds and grabs all the OrderProducts with those OrderIds, it then joins to the Products table using the ProductId. Once the joins are established, a ReadOrderProductDto is assembled a and a key is created which is the order guid while the value is the list of products for that order. 
+    /// Maps an order and its related products to a DTO.
     /// </summary>
-    /// <param name="orderIds"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    private async Task<Dictionary<Guid, List<ReadOrderProductDto>>> GetOrderProductsForOrdersAsync(List<Guid> orderIds, CancellationToken cancellationToken)
+    private static ReadOrderDto MapToReadOrderDto(Order order)
     {
-        return await _dbContext.OrderProducts
-            .AsNoTracking()
-            .Where(op => orderIds.Contains(op.OrderId))
-            .Join(_dbContext.Products,
-                op => op.ProductId,
-                p => p.ProductId,
-                (op, p) => new
-                {
-                    op.OrderId,
-                    ProductDto = new ReadOrderProductDto(
-                        p.ProductId,
-                        p.Name,
-                        p.Description,
-                        p.Price,
-                        op.Quantity)
-                })
-            .GroupBy(x => x.OrderId)
-            .ToDictionaryAsync(g => g.Key, g => g
-            .Select(x => x.ProductDto).ToList(), cancellationToken);
-    }
-
-    /// <summary>
-    /// Maps the order fields to the ReadOrderDto. 
-    /// </summary>
-    /// <param name="order"></param>
-    /// <param name="products"></param>
-    /// <returns></returns>
-    private static ReadOrderDto MapToReadOrderDto(Order order, List<ReadOrderProductDto> products)
-    {
+        var productDtos = order.Products.Select(op => new ReadOrderProductDto(
+            op.Product.ProductId,
+            op.Product.Name,
+            op.Product.Description,
+            op.Product.Price,
+            op.Quantity)).ToList();
         return new ReadOrderDto(
             order.OrderId,
             order.CustomerId,
-            products,
+            productDtos,
             order.OrderDate,
             order.TotalAmount,
             order.Status,
