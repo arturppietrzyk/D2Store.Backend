@@ -35,7 +35,10 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     /// <returns></returns>
     private async Task<Order?> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Orders.Include(o => o.Products).FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
+        return await _dbContext.Orders
+         .Include(o => o.Products)
+         .ThenInclude(op => op.Product)
+         .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
     }
 
     /// <summary>
