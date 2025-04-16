@@ -14,6 +14,7 @@ public class Order
     {
         OrderId = Guid.CreateVersion7();
         CustomerId = customerId;
+        Products = new List<OrderProduct>();
         OrderDate = DateTime.UtcNow;
         TotalAmount = totalAmount;
         Status = "Paid";
