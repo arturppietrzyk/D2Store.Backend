@@ -76,6 +76,11 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
             "The order with the specified Order Id was not found."));
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="orderProducts"></param>
+    /// <returns></returns>
     private List<ReadOrderProductDto> MapOrderProductsToDto(List<OrderProduct> orderProducts)
     {
         return orderProducts.Select(op => new ReadOrderProductDto(
