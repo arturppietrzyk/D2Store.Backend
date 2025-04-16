@@ -64,7 +64,6 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
     private async Task<Order?> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
         return await _dbContext.Orders
-            .AsNoTracking()
             .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
     }
 
