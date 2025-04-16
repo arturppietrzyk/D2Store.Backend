@@ -45,7 +45,6 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
             "The order with the specified Order Id was not found."));
     }
 
-
     private List<ReadOrderProductDto> MapOrderProductsToDto(List<OrderProduct> orderProducts)
     {
         return orderProducts.Select(op => new ReadOrderProductDto(
