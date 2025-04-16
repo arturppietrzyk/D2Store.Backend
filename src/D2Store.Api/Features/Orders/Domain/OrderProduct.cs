@@ -1,4 +1,6 @@
-﻿namespace D2Store.Api.Features.Orders.Domain;
+﻿using D2Store.Api.Features.Products.Domain;
+
+namespace D2Store.Api.Features.Orders.Domain;
 
 public class OrderProduct
 {
@@ -7,6 +9,8 @@ public class OrderProduct
     public Guid ProductId { get; private set; }
     public int Quantity { get; private set; }
     public DateTime LastModified { get; private set; }
+    public Product Product { get; private set; } = null!;
+    public Order Order { get; private set; } = null!;
 
     public OrderProduct(Guid orderId, Guid productId, int quantity)
     {
@@ -16,4 +20,6 @@ public class OrderProduct
         Quantity = quantity;
         LastModified = DateTime.UtcNow;
     }
+
+    private OrderProduct() { }
 }

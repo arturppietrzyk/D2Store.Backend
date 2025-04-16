@@ -27,6 +27,13 @@ public class AppDbContext : DbContext
            .Property(p => p.Price)
            .HasColumnType("decimal(18,2)");
 
-        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Order>()
+      .HasMany(o => o.Products)
+      .WithOne(op => op.Order)
+      .HasForeignKey(op => op.OrderId)
+      .OnDelete(DeleteBehavior.Cascade);
+
+       base.OnModelCreating(modelBuilder);
     }
 }

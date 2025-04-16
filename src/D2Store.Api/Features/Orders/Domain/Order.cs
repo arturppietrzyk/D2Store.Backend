@@ -4,7 +4,7 @@ public class Order
 {
     public Guid OrderId { get; private set; }
     public Guid CustomerId { get; private set; }
-    public List<OrderProduct> Products { get; private set; }
+    public List<OrderProduct> Products { get; set; } 
     public DateTime OrderDate { get; private set; }
     public decimal TotalAmount { get; private set; }
     public string Status { get; private set; }
@@ -33,5 +33,11 @@ public class Order
         {
             LastModified = DateTime.UtcNow;
         }
+    }
+
+    private Order() 
+    {
+        Status = "Paid";
+        Products = new List<OrderProduct>();
     }
 }
