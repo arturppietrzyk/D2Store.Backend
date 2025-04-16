@@ -35,8 +35,8 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
         }
         order.UpdateOrderInfo(request.Status);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        var orderProducts = await GetOrderProductsAsync(order.OrderId, cancellationToken);
-        return Result.Success(MapToReadOrderDto(order, orderProducts));
+        var productDtos = MapOrderProductsToDto(order.Products);
+        return Result.Success(MapToReadOrderDto(order, productDtos));
     }
 
     /// <summary>
@@ -64,39 +64,11 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
     private async Task<Order?> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
         return await _dbContext.Orders
+            .Include(o => o.Products)
+                .ThenInclude(op => op.Product)
             .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
     }
 
-    /// <summary>
-    /// Get all the OrderProducts by a specified OrderId, a join it up to the Products table using the ProductIds to create a list of order products for a given order. 
-    /// </summary>
-    /// <param name="orderId"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    private async Task<List<ReadOrderProductDto>> GetOrderProductsAsync(Guid orderId, CancellationToken cancellationToken)
-    {
-        return await _dbContext.OrderProducts
-            .AsNoTracking()
-            .Where(op => op.OrderId == orderId)
-            .Join(
-                _dbContext.Products,
-                op => op.ProductId,
-                p => p.ProductId,
-                (op, p) => new ReadOrderProductDto(
-                    p.ProductId,
-                    p.Name,
-                    p.Description,
-                    p.Price,
-                    op.Quantity
-                )
-            )
-            .ToListAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// Create a failure result for when a specific order could not be found in the orders table. 
-    /// </summary>
-    /// <returns></returns>
     private static Result<ReadOrderDto> CreateOrderNotFoundResult()
     {
         return Result.Failure<ReadOrderDto>(new Error(
@@ -105,11 +77,21 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Create the Response dto object that the GetOrderById endpoint comes back with after it is queried. 
+    /// 
     /// </summary>
-    /// <param name="order"></param>
-    /// <param name="products"></param>
+    /// <param name="orderProducts"></param>
     /// <returns></returns>
+    private List<ReadOrderProductDto> MapOrderProductsToDto(List<OrderProduct> orderProducts)
+    {
+        return orderProducts.Select(op => new ReadOrderProductDto(
+            op.Product.ProductId,
+            op.Product.Name,
+            op.Product.Description,
+            op.Product.Price,
+            op.Quantity
+        )).ToList();
+    }
+
     private static ReadOrderDto MapToReadOrderDto(Order order, List<ReadOrderProductDto> products)
     {
         return new ReadOrderDto(

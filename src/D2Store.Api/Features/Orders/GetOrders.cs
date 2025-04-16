@@ -43,7 +43,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     }
 
     /// <summary>
-    /// Retrieves paginated orders and includes related OrderProducts and Products..
+    /// Retrieves paginated orders and includes related OrderProducts and Products.
     /// </summary>
     private async Task<List<Order>> GetPaginatedOrdersWithIncludesAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
     {
