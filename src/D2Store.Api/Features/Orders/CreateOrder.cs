@@ -9,9 +9,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record CreateOrderCommand(Guid CustomerId, List<WriteOrderProductDtoCreate> Products) : IRequest<Result<Order>>;
+public record CreateOrderCommand(Guid CustomerId, List<WriteOrderProductDtoCreate> Products) : IRequest<Result<ReadOrderDto>>;
 
-public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Order>>
+public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<ReadOrderDto>>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<CreateOrderCommand> _validator;
@@ -22,26 +22,33 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
         _validator = validator;
     }
 
-    public async ValueTask<Result<Order>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result<ReadOrderDto>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<Order>(validationResult.Error);
+            return Result.Failure<ReadOrderDto>(validationResult.Error);
         }
         var customerExists = await CustomerExistsAsync(request.CustomerId, cancellationToken);
         if (!customerExists)
         {
-            return Result.Failure<Order>(new Error("CreateOrder.Validation", "Customer does not exist."));
+            return Result.Failure<ReadOrderDto>(new Error("CreateOrder.Validation", "Customer does not exist."));
         }
         var productsDict = await GetProductsDictionaryAsync(request.Products.Select(p => p.ProductId).Distinct().ToList(), cancellationToken);
         var totalAmountResult = CalculateTotalAmount(request.Products, productsDict);
         if (totalAmountResult.IsFailure)
         {
-            return Result.Failure<Order>(totalAmountResult.Error); 
+            return Result.Failure<ReadOrderDto>(totalAmountResult.Error);
         }
         decimal totalAmount = totalAmountResult.Value;
-        return await CreateOrderAndOrderProductsAsync(request, productsDict, totalAmount, cancellationToken);
+        var createOrder = await CreateOrderAndOrderProductsAsync(request, productsDict, totalAmount, cancellationToken);
+        var order = await GetOrderAsync(createOrder.Value.OrderId, cancellationToken);
+        if (order is null)
+        {
+            return CreateOrderNotFoundResult();
+        }
+        var orderProducts = await GetOrderProductsAsync(order.OrderId, cancellationToken);
+        return Result.Success(MapToReadOrderDto(order, orderProducts));
     }
 
     /// <summary>
@@ -156,7 +163,79 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Ord
     /// <returns></returns>
     private async Task<Dictionary<Guid, Product>> GetProductsDictionaryAsync(List<Guid> productIds, CancellationToken cancellationToken)
     {
-        return await _dbContext.Products.Where(p => productIds.Contains(p.ProductId)).ToDictionaryAsync(p => p.ProductId, cancellationToken);
+        return await _dbContext.Products
+            .Where(p => productIds
+            .Contains(p.ProductId))
+            .ToDictionaryAsync(p => p.ProductId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Create a failure result for when a specific order could not be found in the orders table. 
+    /// </summary>
+    /// <returns></returns>
+    private static Result<ReadOrderDto> CreateOrderNotFoundResult()
+    {
+        return Result.Failure<ReadOrderDto>(new Error(
+            "GetOrderById.Validation",
+            "The order with the specified Order Id was not found."));
+    }
+
+    ///
+    /// <summary>
+    /// Find the specific order based on OrderId.
+    /// </summary>
+    /// <param name="orderId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Order?> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Orders
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get all the OrderProducts by a specified OrderId, a join it up to the Products table using the ProductIds to create a list of order products for a given order. 
+    /// </summary>
+    /// <param name="orderId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<List<ReadOrderProductDto>> GetOrderProductsAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        return await _dbContext.OrderProducts
+            .AsNoTracking()
+            .Where(op => op.OrderId == orderId)
+            .Join(
+                _dbContext.Products,
+                op => op.ProductId,
+                p => p.ProductId,
+                (op, p) => new ReadOrderProductDto(
+                    p.ProductId,
+                    p.Name,
+                    p.Description,
+                    p.Price,
+                    op.Quantity
+                )
+            )
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Create the Response dto object that the GetOrderById endpoint comes back with after it is queried. 
+    /// </summary>
+    /// <param name="order"></param>
+    /// <param name="products"></param>
+    /// <returns></returns>
+    private static ReadOrderDto MapToReadOrderDto(Order order, List<ReadOrderProductDto> products)
+    {
+        return new ReadOrderDto(
+            order.OrderId,
+            order.CustomerId,
+            products,
+            order.OrderDate,
+            order.TotalAmount,
+            order.Status,
+            order.LastModified);
     }
 }
 
