@@ -20,6 +20,12 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
         _validator = validator;
     }
 
+    /// <summary>
+    /// Coordinates validation, retrieval and mapping of the specific orders and its products into a response DTO.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async ValueTask<Result<List<ReadOrderDto>>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
     {
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
@@ -32,6 +38,12 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
         return Result.Success(orderDtos);
     }
 
+    /// <summary>
+    /// Validates the PageNumber and PageSize Pagination parameters. 
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<Result> ValidateRequestAsync(GetOrdersQuery request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
@@ -43,14 +55,18 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     }
 
     /// <summary>
-    /// Retrieves paginated orders and includes related OrderProducts and Products.
+    /// Loads the order objects based on the Pagination parameters, and eagerly loads its associated order products along with the product details for each item.
     /// </summary>
+    /// <param name="pageNumber"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<List<Order>> GetPaginatedOrdersWithIncludesAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
     {
         return await _dbContext.Orders
             .AsNoTracking()
             .Include(o => o.Products)
-                .ThenInclude(op => op.Product)
+            .ThenInclude(op => op.Product)
             .OrderByDescending(o => o.OrderDate)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -58,7 +74,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     }
 
     /// <summary>
-    /// Maps an order and its related products to a DTO.
+    /// Maps an Order entity and its associated products to a ReadOrderDto. 
     /// </summary>
     private static ReadOrderDto MapToReadOrderDto(Order order)
     {

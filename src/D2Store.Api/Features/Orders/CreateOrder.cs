@@ -22,6 +22,12 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         _validator = validator;
     }
 
+    /// <summary>
+    /// Coordinates validation, retrieval, mapping and creating of an order. Returns the updated order and its products into a response DTO.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async ValueTask<Result<ReadOrderDto>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
@@ -52,7 +58,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Executes the input validation done by the Fluent Validation class CreateOrderCommandValidator. 
+    /// Validates the input. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -68,7 +74,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Does a check in the customers table to see if the customer making the order even exists. This is validated up the call stack and a validation error is thrown if this is false.
+    /// Returns a true or false on whether the customer making the order exists. 
     /// </summary>
     /// <param name="customerId"></param>
     /// <param name="cancellationToken"></param>
@@ -79,7 +85,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Runs the ValidateProductAvailablity method, if successful the TotalAmount is calcuated, else a validation error is thrown. 
+    /// Runs the ValidateProductAvailablity method, if successful the TotalAmount is calcuated, else a validation error result is returned. 
     /// </summary>
     /// <param name="products"></param>
     /// <param name="productsDict"></param>
@@ -100,7 +106,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Validates the Product for its existance and available quantity. 
+    /// Validates the product for its existance and available quantity. 
     /// </summary>
     /// <param name="productOrder"></param>
     /// <param name="productsDict"></param>
@@ -137,13 +143,14 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             var order = new Order(request.CustomerId, totalAmount);
             _dbContext.Orders.Add(order);
             await _dbContext.SaveChangesAsync(cancellationToken);
+            var orderProducts = new List<OrderProduct>();
             foreach (var orderProd in request.Products)
             {
                 var product = productsDict[orderProd.ProductId];
                 product.UpdateProductInfo(null, null, null, product.StockQuantity - orderProd.Quantity);
-                var orderProduct = new OrderProduct(order.OrderId, product.ProductId, orderProd.Quantity);
-                _dbContext.OrderProducts.Add(orderProduct);
+                orderProducts.Add(new OrderProduct(order.OrderId, product.ProductId, orderProd.Quantity));
             }
+            _dbContext.OrderProducts.AddRange(orderProducts);
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return Result.Success(order);
@@ -170,19 +177,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Create a failure result for when a specific order could not be found in the orders table. 
-    /// </summary>
-    /// <returns></returns>
-    private static Result<ReadOrderDto> CreateOrderNotFoundResult()
-    {
-        return Result.Failure<ReadOrderDto>(new Error(
-            "GetOrderById.Validation",
-            "The order with the specified Order Id was not found."));
-    }
-
-    ///
-    /// <summary>
-    /// Find the specific order based on OrderId.
+    /// Loads an order object based on the OrderId, and eagerly loads its associated order products along with the product details for each item.
     /// </summary>
     /// <param name="orderId"></param>
     /// <param name="cancellationToken"></param>
@@ -192,11 +187,26 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         return await _dbContext.Orders
            .AsNoTracking()
            .Include(o => o.Products)
-               .ThenInclude(op => op.Product)
+           .ThenInclude(op => op.Product)
            .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
     }
 
+    /// <summary>
+    /// Creates a failure result response for when a specified order cannot be found. 
+    /// </summary>
+    /// <returns></returns>
+    private static Result<ReadOrderDto> CreateOrderNotFoundResult()
+    {
+        return Result.Failure<ReadOrderDto>(new Error(
+            "GetOrderById.Validation",
+            "The order with the specified Order Id was not found."));
+    }
 
+    /// <summary>
+    /// Maps the list of order products into the equivalent ReadOrderProductDto list. 
+    /// </summary>
+    /// <param name="orderProducts"></param>
+    /// <returns></returns>
     private List<ReadOrderProductDto> MapOrderProductsToDto(List<OrderProduct> orderProducts)
     {
         return orderProducts.Select(op => new ReadOrderProductDto(
@@ -208,6 +218,12 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         )).ToList();
     }
 
+    /// <summary>
+    /// Maps the retrieved order list of ReadOrderProductDto into a response object that gets returned when the GetOrderById endpoint is called. 
+    /// </summary>
+    /// <param name="order"></param>
+    /// <param name="products"></param>
+    /// <returns></returns>
     private static ReadOrderDto MapToReadOrderDto(Order order, List<ReadOrderProductDto> products)
     {
         return new ReadOrderDto(
@@ -221,9 +237,6 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 }
 
-/// <summary>
-/// Fluent Validation which validates input. 
-/// </summary>
 public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 {
     public CreateOrderCommandValidator()

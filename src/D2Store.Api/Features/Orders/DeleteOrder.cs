@@ -17,6 +17,12 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Coordinates retrieval and mapping and deletion of a specific order and its order products.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async ValueTask<Result<Guid>> Handle(DeleteOrderCommand request, CancellationToken cancellationToken) 
     {
         var order = await GetOrderAsync(request.OrderId, cancellationToken);
@@ -28,7 +34,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     }
 
     /// <summary>
-    /// Find the specific order based on OrderId.
+    /// Loads an order object based on the OrderId, and eagerly loads its associated order products along with the product details for each item.
     /// </summary>
     /// <param name="orderId"></param>
     /// <param name="cancellationToken"></param>
@@ -42,7 +48,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     }
 
     /// <summary>
-    /// Create a failure result for when a specific order could not be found in the orders table. 
+    /// Creates a failure result response for when a specified order cannot be found.
     /// </summary>
     /// <returns></returns>
     private static Result<Guid> CreateOrderNotFoundResult()
@@ -53,7 +59,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     }
 
     /// <summary>
-    /// Wraps the deletion of OrderProducts of a specific order as well as the order itself in a transaction so everything can be rolled back if an error occurs.
+    /// Wraps the deletion of order products of a specific order as well as the order itself in a transaction so everything can be rolled back if an error occurs.
     /// </summary>
     /// <param name="order"></param>
     /// <param name="cancellationToken"></param>

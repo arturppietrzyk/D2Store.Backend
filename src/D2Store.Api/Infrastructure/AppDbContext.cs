@@ -34,6 +34,6 @@ public class AppDbContext : DbContext
       .HasForeignKey(op => op.OrderId)
       .OnDelete(DeleteBehavior.Cascade);
 
-       base.OnModelCreating(modelBuilder);
+        base.OnModelCreating(modelBuilder);
     }
 }

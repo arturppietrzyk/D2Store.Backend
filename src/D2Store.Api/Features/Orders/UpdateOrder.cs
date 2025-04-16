@@ -21,6 +21,12 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
         _validator = validator;
     }
 
+    /// <summary>
+    /// Coordinates validation, retrieval, mapping and updating of a specific order. Returns the updated order and its products into a response DTO.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async ValueTask<Result<ReadOrderDto>> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
@@ -40,7 +46,7 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Executes the input validation done by the Fluent Validation class UpdateOrderCommandValidator.
+    /// Validates the input. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -56,7 +62,7 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Find the specific order based on OrderId.
+    /// Loads an order object based on the OrderId, and eagerly loads its associated order products along with the product details for each item.
     /// </summary>
     /// <param name="orderId"></param>
     /// <param name="cancellationToken"></param>
@@ -65,10 +71,14 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
     {
         return await _dbContext.Orders
             .Include(o => o.Products)
-                .ThenInclude(op => op.Product)
+            .ThenInclude(op => op.Product)
             .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
     }
 
+    /// <summary>
+    /// Creates a failure result response for when a specified order cannot be found. 
+    /// </summary>
+    /// <returns></returns>
     private static Result<ReadOrderDto> CreateOrderNotFoundResult()
     {
         return Result.Failure<ReadOrderDto>(new Error(
@@ -77,7 +87,7 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// 
+    /// Maps the list of order products into the equivalent ReadOrderProductDto list. 
     /// </summary>
     /// <param name="orderProducts"></param>
     /// <returns></returns>
@@ -92,6 +102,12 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
         )).ToList();
     }
 
+    /// <summary>
+    /// Maps the retrieved order list of ReadOrderProductDto into a response object that gets returned when the GetOrderById endpoint is called. 
+    /// </summary>
+    /// <param name="order"></param>
+    /// <param name="products"></param>
+    /// <returns></returns>
     private static ReadOrderDto MapToReadOrderDto(Order order, List<ReadOrderProductDto> products)
     {
         return new ReadOrderDto(
