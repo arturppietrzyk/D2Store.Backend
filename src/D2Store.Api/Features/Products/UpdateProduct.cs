@@ -1,4 +1,5 @@
-﻿using D2Store.Api.Features.Products.Dto;
+﻿using D2Store.Api.Features.Products.Domain;
+using D2Store.Api.Features.Products.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
@@ -20,24 +21,83 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         _validator = validator;
     }
 
+    /// <summary>
+    /// Coordinates validation, retrieval, mapping and updating of a specific product. Returns the updated product in a response DTO.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async ValueTask<Result<ReadProductDto>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
+    {
+        var validationResult = await ValidateRequestAsync(request, cancellationToken);
+        if (validationResult.IsFailure)
+        {
+            return Result.Failure<ReadProductDto>(validationResult.Error);
+        }
+        var product = await GetProductAsync(request.ProductId, cancellationToken);
+        if (product is null)
+        {
+            return CreateProductNotFoundResult();
+        }
+        product.UpdateProductInfo(request.Name, request.Description, request.Price, request.StockQuantity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success(MapToReadProductDto(product));
+    }
+
+    /// <summary>
+    /// Validates the input. 
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Result> ValidateRequestAsync(UpdateProductCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            var inputValidationResult = Result.Failure<ReadProductDto>(new Error("UpdateProduct.Validation", validationResult.ToString()));
-            return inputValidationResult;
+            return Result.Failure<ReadProductDto>(new Error("UpdateProduct.Validation", validationResult.ToString()));
         }
-        var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.ProductId == request.ProductId, cancellationToken);
-        if (product is null)
-        {
-            var result = Result.Failure<ReadProductDto>(new Error("UpdateProduct.Validation", "Product not found."));
-            return result;
-        }
-        product.UpdateProductInfo(request.Name, request.Description, request.Price, request.StockQuantity);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        var updatedProduct = new ReadProductDto(product.ProductId, product.Name, product.Description, product.Price, product.StockQuantity, product.AddedDate, product.LastModified);
-        return Result.Success(updatedProduct);
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Loads a product object based on the ProductId.
+    /// </summary>
+    /// <param name="productId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Product?> GetProductAsync(Guid productId, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Products
+            .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Creates a failure result response for when a specified product cannot be found.
+    /// </summary>
+    /// <returns></returns>
+    private static Result<ReadProductDto> CreateProductNotFoundResult()
+    {
+        return Result.Failure<ReadProductDto>(new Error(
+            "UpdateProduct.Validation",
+            "The product with the specified Product Id was not found."));
+    }
+
+    /// <summary>
+    /// Maps the retrieved product into the ReadProductDto which is returned as the response. 
+    /// </summary>
+    /// <param name="product"></param>
+    /// <returns></returns>
+    private static ReadProductDto MapToReadProductDto(Product product)
+    {
+        return new ReadProductDto(
+            product.ProductId,
+            product.Name,
+            product.Description,
+            product.Price,
+            product.StockQuantity,
+            product.AddedDate,
+            product.LastModified);
     }
 }
 
