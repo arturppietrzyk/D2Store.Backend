@@ -23,7 +23,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, mapping and creating of an order. Returns the updated order and its products into a response DTO.
+    /// Coordinates validation, retrieval, mapping and creating of an order. Returns the created order and its products into a response DTO.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -198,7 +198,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     private static Result<ReadOrderDto> CreateOrderNotFoundResult()
     {
         return Result.Failure<ReadOrderDto>(new Error(
-            "GetOrderById.Validation",
+            "CreateOrder.Validation",
             "The order with the specified Order Id was not found."));
     }
 

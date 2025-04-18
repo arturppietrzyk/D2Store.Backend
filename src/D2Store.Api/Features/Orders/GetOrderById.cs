@@ -78,7 +78,7 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
     }
 
     /// <summary>
-    /// Maps the retrieved order list of ReadOrderProductDto into a response object that gets returned when the GetOrderById endpoint is called. 
+    /// Maps the retrieved order into a response object that gets returned when the GetOrderById endpoint is called. 
     /// </summary>
     /// <param name="order"></param>
     /// <param name="products"></param>
