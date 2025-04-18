@@ -36,7 +36,7 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
         }
         customer.UpdateCustomerInfo(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        var updatedCustomer = new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedAt, customer.LastModified
+        var updatedCustomer = new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedDate, customer.LastModified
         );
         return Result.Success(updatedCustomer);
     }
