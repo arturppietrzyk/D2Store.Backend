@@ -25,7 +25,7 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
             var result = Result.Failure<ReadCustomerDto>(new Error("GetCustomerById.Validation", "The customer with the specified Customer Id was not found."));
             return result;
         }
-        var customerDto = new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedAt, customer.LastModified);
+        var customerDto = new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedDate, customer.LastModified);
         return Result.Success<ReadCustomerDto>(customerDto);
     }
 }

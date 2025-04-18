@@ -15,7 +15,7 @@ CREATE TABLE [dbo].[Customers](
 	[Email] [nvarchar](255) NOT NULL,
 	[PhoneNumber] [nvarchar](20) NULL,
 	[Address] [nvarchar](255) NULL,
-	[CreatedAt] [datetime] NOT NULL,
+	[CreatedDate] [datetime] NOT NULL,
 	[LastModified] [datetime] NOT NULL
 PRIMARY KEY CLUSTERED 
 (

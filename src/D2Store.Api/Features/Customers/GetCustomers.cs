@@ -28,8 +28,8 @@ public class GetCustomersHandler : IRequestHandler<GetCustomersQuery, Result<Lis
             var result = Result.Failure<List<ReadCustomerDto>>(new Error("GetCustomers.Validation", validationResult.ToString()));
             return result;
         }
-        var customers = await _dbContext.Customers.AsNoTracking().OrderByDescending(c => c.CreatedAt).Skip((request.PageNumber -1) * request.PageSize).Take(request.PageSize).ToListAsync(cancellationToken);
-        var customersDto = customers.Select(customer => new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedAt, customer.LastModified)).ToList();
+        var customers = await _dbContext.Customers.AsNoTracking().OrderByDescending(c => c.CreatedDate).Skip((request.PageNumber -1) * request.PageSize).Take(request.PageSize).ToListAsync(cancellationToken);
+        var customersDto = customers.Select(customer => new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedDate, customer.LastModified)).ToList();
         return Result.Success(customersDto);
     }
 }

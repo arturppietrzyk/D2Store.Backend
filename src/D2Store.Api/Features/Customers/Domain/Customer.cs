@@ -8,7 +8,7 @@ public class Customer
     public string Email { get; private set; }
     public string PhoneNumber { get; private set; }
     public string Address { get; private set; }
-    public DateTime CreatedAt { get; private set; }
+    public DateTime CreatedDate { get; private set; }
     public DateTime LastModified {  get; private set; }
 
     public Customer(string firstName, string lastName, string email, string phoneNumber, string address)
@@ -19,7 +19,7 @@ public class Customer
         Email = email;
         PhoneNumber = phoneNumber;
         Address = address;
-        CreatedAt = DateTime.UtcNow;
+        CreatedDate = DateTime.UtcNow;
         LastModified = DateTime.UtcNow;
     }
 
