@@ -1,4 +1,5 @@
-﻿using D2Store.Api.Features.Customers.Dto;
+﻿using D2Store.Api.Features.Customers.Domain;
+using D2Store.Api.Features.Customers.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
@@ -20,25 +21,84 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
         _validator = validator;
     }
 
+    /// <summary>
+    /// Coordinates validation, retrieval, mapping and updating of a specific customer. Returns the updated customer in a response DTO.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async ValueTask<Result<ReadCustomerDto>> Handle(UpdateCustomerCommand request, CancellationToken cancellationToken)
+    {
+        var validationResult = await ValidateRequestAsync(request, cancellationToken);
+        if (validationResult.IsFailure)
+        {
+            return Result.Failure<ReadCustomerDto>(validationResult.Error);
+        }
+        var customer = await GetCustomerAsync(request.CustomerId, cancellationToken);
+        if (customer == null)
+        {
+            return CreateCustomerNotFoundResult();
+        }
+        customer.UpdateCustomerInfo(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success(MapToReadCustomerDto(customer));
+    }
+
+    /// <summary>
+    /// Validates the input. 
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Result> ValidateRequestAsync(UpdateCustomerCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            var inputValidationResult = Result.Failure<ReadCustomerDto>(new Error("UpdateCustomer.Validation", validationResult.ToString()));
-            return inputValidationResult;
+            return Result.Failure<ReadCustomerDto>(new Error("UpdateCustomer.Validation", validationResult.ToString()));
         }
-        var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
-        if (customer is null)
-        {
-            var result = Result.Failure<ReadCustomerDto>(new Error("UpdateCustomer.Validation", "Customer not found."));
-            return result;
-        }
-        customer.UpdateCustomerInfo(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        var updatedCustomer = new ReadCustomerDto(customer.CustomerId, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber, customer.Address, customer.CreatedDate, customer.LastModified
-        );
-        return Result.Success(updatedCustomer);
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Loads a customer object based on the CustomerId.
+    /// </summary>
+    /// <param name="customerId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Customer?> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Customers
+            .FirstOrDefaultAsync(c => c.CustomerId == customerId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Creates a failure result response for when a specified customer cannot be found.
+    /// </summary>
+    /// <returns></returns>
+    private static Result<ReadCustomerDto> CreateCustomerNotFoundResult()
+    {
+        return Result.Failure<ReadCustomerDto>(new Error(
+            "GetCustomerById.Validation",
+            "The customer with the specified Customer Id was not found."));
+    }
+
+    /// <summary>
+    /// Maps the retrieved customer into the ReadCustomerDto which is returned as the response. 
+    /// </summary>
+    /// <param name="customer"></param>
+    /// <returns></returns>
+    private static ReadCustomerDto MapToReadCustomerDto(Customer customer)
+    {
+        return new ReadCustomerDto(
+            customer.CustomerId,
+            customer.FirstName,
+            customer.LastName,
+            customer.Email,
+            customer.PhoneNumber,
+            customer.Address,
+            customer.CreatedDate,
+            customer.LastModified);
     }
 }
 
