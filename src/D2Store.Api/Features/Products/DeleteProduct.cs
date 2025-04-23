@@ -30,6 +30,11 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
         {
             return CreateProductNotFoundResult();
         }
+        var orderProductExists = await _dbContext.OrderProducts.AsNoTracking().AnyAsync(op => op.ProductId == request.ProductId);
+        if (orderProductExists)
+        {
+            return CreateOrdersExistsForThisProduct();
+        }
         return await DeleteProductAsync(product, cancellationToken);
     }
 
@@ -54,6 +59,17 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
         return Result.Failure<Guid>(new Error(
             "DeleteProduct.Validation",
             "The product with the specified Product Id was not found."));
+    }
+
+    /// <summary>
+    /// Creates a failure result response for when a specified product is used within an order.
+    /// </summary>
+    /// <returns></returns>
+    private static Result<Guid> CreateOrdersExistsForThisProduct()
+    {
+        return Result.Failure<Guid>(new Error(
+        "DeleteProduct.Validation",
+        "This product is a part of an order."));
     }
 
     /// <summary>

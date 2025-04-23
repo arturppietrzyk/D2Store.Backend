@@ -69,8 +69,7 @@ public class DeleteCustomerHandler : IRequestHandler<DeleteCustomerCommand, Resu
     {
         return Result.Failure<Guid>(new Error(
             "DeleteCustomer.Validation",
-            "Orders exist for this customer."
-            ));
+            "Orders exist for this customer."));
     }
 
     /// <summary>
