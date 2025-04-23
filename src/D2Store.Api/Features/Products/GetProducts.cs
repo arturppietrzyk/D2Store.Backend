@@ -86,8 +86,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<List<
             product.Price,
             product.StockQuantity,
             product.AddedDate,
-            product.LastModified
-            );
+            product.LastModified);
     }
 }
 

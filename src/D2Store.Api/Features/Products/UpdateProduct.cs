@@ -39,8 +39,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         {
             return CreateProductNotFoundResult();
         }
-        product.UpdateProductInfo(request.Name, request.Description, request.Price, request.StockQuantity);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await UpdateProductAsync(product, request, cancellationToken);
         return Result.Success(MapToReadProductDto(product));
     }
 
@@ -81,6 +80,20 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         return Result.Failure<ReadProductDto>(new Error(
             "UpdateProduct.Validation",
             "The product with the specified Product Id was not found."));
+    }
+
+    /// <summary>
+    /// Updates the product and persists the changes in the database table. 
+    /// </summary>
+    /// <param name="product"></param>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Result<Product>> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
+    {
+        product.UpdateProductInfo(request.Name, request.Description, request.Price, request.StockQuantity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success(product);
     }
 
     /// <summary>

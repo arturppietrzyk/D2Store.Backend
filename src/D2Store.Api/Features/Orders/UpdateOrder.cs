@@ -39,8 +39,7 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
         {
             return CreateOrderNotFoundResult();
         }
-        order.UpdateOrderInfo(request.Status);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await UpdateOrderAsync(order, request, cancellationToken);
         var productDtos = MapOrderProductsToDto(order.Products);
         return Result.Success(MapToReadOrderDto(order, productDtos));
     }
@@ -84,6 +83,20 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
         return Result.Failure<ReadOrderDto>(new Error(
             "UpdateOrder.Validation",
             "The order with the specified Order Id was not found."));
+    }
+
+    /// <summary>
+    /// Updates the order and persists the changes in the database table. 
+    /// </summary>
+    /// <param name="order"></param>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Result<Order>> UpdateOrderAsync(Order order, UpdateOrderCommand request, CancellationToken cancellationToken)
+    {
+        order.UpdateOrderInfo(request.Status);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success(order);
     }
 
     /// <summary>

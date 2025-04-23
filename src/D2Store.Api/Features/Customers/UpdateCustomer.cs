@@ -39,8 +39,7 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
         {
             return CreateCustomerNotFoundResult();
         }
-        customer.UpdateCustomerInfo(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await UpdateCustomerAsync(customer, request, cancellationToken);
         return Result.Success(MapToReadCustomerDto(customer));
     }
 
@@ -81,6 +80,20 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
         return Result.Failure<ReadCustomerDto>(new Error(
             "GetCustomerById.Validation",
             "The customer with the specified Customer Id was not found."));
+    }
+
+    /// <summary>
+    /// Updates the customer and persists the changes in the database table. 
+    /// </summary>
+    /// <param name="customer"></param>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Result<Customer>> UpdateCustomerAsync(Customer customer, UpdateCustomerCommand request, CancellationToken cancellationToken)
+    {
+        customer.UpdateCustomerInfo(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success(customer);
     }
 
     /// <summary>
