@@ -21,7 +21,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval and mapping of the specific orders and its products into a response DTO.
+    /// Coordinates validation, retrieval and mapping of the orders and its products into a response DTO.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -99,7 +99,7 @@ public class GetOrdersQueryValidator : AbstractValidator<GetOrdersQuery>
 {
     public GetOrdersQueryValidator()
     {
-        RuleFor(p => p.PageNumber).GreaterThan(0).WithMessage("Page Number must be greater than 0");
-        RuleFor(p => p.PageSize).GreaterThan(0).WithMessage("Page Size must be greater than 0");
+        RuleFor(p => p.PageNumber).GreaterThan(0).WithMessage("Page Number must be greater than 0.");
+        RuleFor(p => p.PageSize).GreaterThan(0).WithMessage("Page Size must be greater than 0.");
     }
 }
