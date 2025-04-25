@@ -163,7 +163,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Takes all the productIds from the input and returns a dictionary of all the products based on those id's. This is done so only one trip to the Products table needs to be made and any subsequent methods who need this data for the order process can have constant time look ups into the dictionary for this information. 
+    /// Takes all the productId's from the input and returns a dictionary of all the products based on those id's. This is done so only one trip to the Products table needs to be made and any subsequent methods which need this data for the order process can have constant time look ups into the dictionary for this information. 
     /// </summary>
     /// <param name="productIds"></param>
     /// <param name="cancellationToken"></param>

@@ -119,9 +119,9 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
 {
     public CreateProductCommandValidator()
     {
-        RuleFor(p => p.Name).NotEmpty().WithMessage("Name is required");
-        RuleFor(p => p.Description).NotEmpty().WithMessage("Description is required");
-        RuleFor(p => p.Price).GreaterThan(0).WithMessage("Price must be greater than zero");
-        RuleFor(p => p.StockQuantity).GreaterThan(0).WithMessage("Stock Quantity must be greater than zero");
+        RuleFor(p => p.Name).NotEmpty().WithMessage("Name is required.");
+        RuleFor(p => p.Description).NotEmpty().WithMessage("Description is required.");
+        RuleFor(p => p.Price).GreaterThan(0).WithMessage("Price must be greater than zero.");
+        RuleFor(p => p.StockQuantity).GreaterThan(0).WithMessage("Stock Quantity must be greater than zero.");
     }
 }

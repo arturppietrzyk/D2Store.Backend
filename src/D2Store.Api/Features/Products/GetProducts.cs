@@ -94,7 +94,7 @@ public class GetProductsQueryValidator : AbstractValidator<GetProductsQuery>
 {
     public GetProductsQueryValidator()
     {
-        RuleFor(p => p.PageNumber).GreaterThan(0).WithMessage("Page Number must be greater than 0");
-        RuleFor(p => p.PageSize).GreaterThan(0).WithMessage("Page Size must be greater than 0");
+        RuleFor(p => p.PageNumber).GreaterThan(0).WithMessage("Page Number must be greater than 0.");
+        RuleFor(p => p.PageSize).GreaterThan(0).WithMessage("Page Size must be greater than 0.");
     }
 }
