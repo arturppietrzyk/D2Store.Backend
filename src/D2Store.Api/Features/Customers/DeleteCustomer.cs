@@ -18,7 +18,7 @@ public class DeleteCustomerHandler : IRequestHandler<DeleteCustomerCommand, Resu
     }
 
     /// <summary>
-    /// Coordinates retrieval and mapping and deletion of a specific customer.
+    /// Coordinates retrieval, validation and deletion of a specific customer. Returns the Guid of the deleted customer if successful. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -28,14 +28,11 @@ public class DeleteCustomerHandler : IRequestHandler<DeleteCustomerCommand, Resu
         var customer = await GetCustomerAsync(request.CustomerId, cancellationToken);
         if (customer == null)
         {
-            return CreateCustomerNotFoundResult();
+            return CustomerNotFoundResult();
         }
-        var orderExists = await _dbContext.Orders.AsNoTracking().AnyAsync(o => o.CustomerId == request.CustomerId, cancellationToken);
-        if (orderExists)
-        {
-            return CreateOrdersExistForThisCustomerResult();
-        }
-        return await DeleteCustomerAsync(customer, cancellationToken);
+        var ordersExist = await _dbContext.Orders.AsNoTracking().AnyAsync(o => o.CustomerId == request.CustomerId, cancellationToken);
+        var deleteCustomerResult = await DeleteCustomerAsync(customer, ordersExist, cancellationToken);
+        return deleteCustomerResult;
     }
 
     /// <summary>
@@ -54,32 +51,26 @@ public class DeleteCustomerHandler : IRequestHandler<DeleteCustomerCommand, Resu
     /// Creates a failure result response for when a specified customer cannot be found.
     /// </summary>
     /// <returns></returns>
-    private static Result<Guid> CreateCustomerNotFoundResult()
+    private static Result<Guid> CustomerNotFoundResult()
     {
         return Result.Failure<Guid>(new Error(
-            "GetCustomerById.Validation",
+            "DeleteCustomer.Validation",
             "The customer with the specified Customer Id was not found."));
     }
 
     /// <summary>
-    /// Creates a failure result response for when a customer that is to be deleted has orders against it. 
-    /// </summary>
-    /// <returns></returns>
-    private static Result<Guid> CreateOrdersExistForThisCustomerResult()
-    {
-        return Result.Failure<Guid>(new Error(
-            "DeleteCustomer.Validation",
-            "Orders exist for this customer."));
-    }
-
-    /// <summary>
-    /// Deletes the specified customer and persists the changes to the database table. 
+    /// Validates the business rules and deletes the specified customer, persisting the changes to the database table. 
     /// </summary>
     /// <param name="product"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> DeleteCustomerAsync(Customer customer, CancellationToken cancellationToken)
+    private async Task<Result<Guid>> DeleteCustomerAsync(Customer customer, bool ordersExist, CancellationToken cancellationToken)
     {
+        var deleteCustomerResult = customer.Delete(ordersExist);
+        if (deleteCustomerResult.IsFailure)
+        {
+            return Result.Failure<Guid>(deleteCustomerResult.Error);
+        }
         _dbContext.Customers.Remove(customer);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success(customer.CustomerId);

@@ -29,7 +29,7 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
         var customer = await GetCustomerAsync(request.CustomerId, cancellationToken);
         if(customer is null)
         {
-            return CreateCustomerNotFoundResult();
+            return CustomerNotFoundResult();
         }
         return Result.Success(MapToReadCustomerDto(customer));
     }
@@ -51,7 +51,7 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
     /// Creates a failure result response for when a specified customer cannot be found.
     /// </summary>
     /// <returns></returns>
-    private static Result<ReadCustomerDto> CreateCustomerNotFoundResult()
+    private static Result<ReadCustomerDto> CustomerNotFoundResult()
     {
         return Result.Failure<ReadCustomerDto>(new Error(
             "GetCustomerById.Validation",

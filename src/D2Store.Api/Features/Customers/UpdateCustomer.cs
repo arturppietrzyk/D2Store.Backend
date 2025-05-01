@@ -1,5 +1,4 @@
 ﻿using D2Store.Api.Features.Customers.Domain;
-using D2Store.Api.Features.Customers.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
@@ -8,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Customers;
 
-public record UpdateCustomerCommand(Guid CustomerId, string? FirstName, string? LastName, string? Email, string? PhoneNumber, string? Address) : IRequest<Result<ReadCustomerDto>>;
+public record UpdateCustomerCommand(Guid CustomerId, string? FirstName, string? LastName, string? Email, string? PhoneNumber, string? Address) : IRequest<Result<Guid>>;
 
-public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Result<ReadCustomerDto>>
+public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Result<Guid>>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<UpdateCustomerCommand> _validator;
@@ -22,25 +21,26 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, mapping and updating of a specific customer. Returns the updated customer in a response DTO.
+    /// Coordinates validation, retrieval, aand updating of a specific customer. Returns the Guid of the deleted customer if successful. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<ReadCustomerDto>> Handle(UpdateCustomerCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result<Guid>> Handle(UpdateCustomerCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<ReadCustomerDto>(validationResult.Error);
+            return Result.Failure<Guid>(validationResult.Error);
         }
         var customer = await GetCustomerAsync(request.CustomerId, cancellationToken);
         if (customer == null)
         {
-            return CreateCustomerNotFoundResult();
+            return CustomerNotFoundResult();
         }
-        await UpdateCustomerAsync(customer, request, cancellationToken);
-        return Result.Success(MapToReadCustomerDto(customer));
+        var customerWithEmailExists = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.Email == request.Email, cancellationToken);
+        var updateCustomerResult = await UpdateCustomerAsync(customer, request, customerWithEmailExists, cancellationToken);
+        return updateCustomerResult;
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<ReadCustomerDto>(new Error("UpdateCustomer.Validation", validationResult.ToString()));
+            return Result.Failure<Guid>(new Error("UpdateCustomer.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -75,43 +75,29 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
     /// Creates a failure result response for when a specified customer cannot be found.
     /// </summary>
     /// <returns></returns>
-    private static Result<ReadCustomerDto> CreateCustomerNotFoundResult()
+    private static Result<Guid> CustomerNotFoundResult()
     {
-        return Result.Failure<ReadCustomerDto>(new Error(
-            "GetCustomerById.Validation",
+        return Result.Failure<Guid>(new Error(
+            "UpdateCustomer.Validation",
             "The customer with the specified Customer Id was not found."));
     }
 
     /// <summary>
-    /// Updates the customer and persists the changes in the database table. 
+    /// Validates the business rules, updates the customer, persisting the changes in the database table. 
     /// </summary>
     /// <param name="customer"></param>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Customer>> UpdateCustomerAsync(Customer customer, UpdateCustomerCommand request, CancellationToken cancellationToken)
+    private async Task<Result<Guid>> UpdateCustomerAsync(Customer customer, UpdateCustomerCommand request, bool customerWithEmailExists, CancellationToken cancellationToken)
     {
-        customer.UpdateCustomerInfo(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
+        var updateCustomerResult = customer.Update(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address, customerWithEmailExists);
+        if (updateCustomerResult.IsFailure)
+        {
+            return Result.Failure<Guid>(updateCustomerResult.Error);
+        }
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(customer);
-    }
-
-    /// <summary>
-    /// Maps the retrieved customer into the ReadCustomerDto which is returned as the response. 
-    /// </summary>
-    /// <param name="customer"></param>
-    /// <returns></returns>
-    private static ReadCustomerDto MapToReadCustomerDto(Customer customer)
-    {
-        return new ReadCustomerDto(
-            customer.CustomerId,
-            customer.FirstName,
-            customer.LastName,
-            customer.Email,
-            customer.PhoneNumber,
-            customer.Address,
-            customer.CreatedDate,
-            customer.LastModified);
+        return Result.Success(customer.CustomerId);
     }
 }
 

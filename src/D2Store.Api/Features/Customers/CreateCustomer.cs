@@ -21,7 +21,7 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, mapping and creating of an customer. Returns the created customer in a response DTO.
+    /// Coordinates validation, mapping and creating of an customer. Returns the created customer in a response DTO.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -34,17 +34,13 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
             return Result.Failure<ReadCustomerDto>(validationResult.Error);
         }
         var customerExists = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.Email == request.Email, cancellationToken);
-        if (customerExists)
+        var createCustomerResult = await CreateCustomerAsync(request, customerExists, cancellationToken);
+        if (createCustomerResult.IsFailure)
         {
-            return CreateCustomerAlreadyExistsResult();
+            return Result.Failure<ReadCustomerDto>(createCustomerResult.Error);
         }
-        var createCustomer = await CreateCustomerAsync(request, cancellationToken);
-        var customer = await GetCustomerAsync(createCustomer.Value.CustomerId, cancellationToken);
-        if(customer is null)
-        {
-            return CreateCustomerNotFoundResult();
-        }
-        return Result.Success(MapToReadCustomerDto(customer));
+        var customerDto = MapToReadCustomerDto(createCustomerResult.Value);
+        return Result.Success(customerDto);
     }
 
     /// <summary>
@@ -64,52 +60,21 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
     }
 
     /// <summary>
-    /// Creates a failure result response for when a specified customer already exists.
-    /// </summary>
-    /// <returns></returns>
-    private static Result<ReadCustomerDto> CreateCustomerAlreadyExistsResult()
-    {
-        return Result.Failure<ReadCustomerDto>(new Error(
-        "CreateCustomer.Validation",
-        "Customer already exists."));
-    }
-
-    /// <summary>
-    /// Creates the customer and persists it to the database. 
+    /// Validates the business rules and creates the customer, persisting it to the database. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Customer>> CreateCustomerAsync(CreateCustomerCommand request, CancellationToken cancellationToken)
+    private async Task<Result<Customer>> CreateCustomerAsync(CreateCustomerCommand request, bool customerExists, CancellationToken cancellationToken)
     {
-        var customer = new Customer(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
-        _dbContext.Customers.Add(customer);
+        var createCustomerResult = Customer.Create(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address, customerExists);
+        if (createCustomerResult.IsFailure)
+        {
+            return createCustomerResult;
+        }
+        _dbContext.Customers.Add(createCustomerResult.Value);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(customer);
-    }
-
-    /// <summary>
-    /// Loads a customer object based on the Customer Id.
-    /// </summary>
-    /// <param name="productId"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    private async Task<Customer?> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken)
-    {
-        return await _dbContext.Customers
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.CustomerId == customerId, cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates a failure result response for when a specified customer cannot be found.
-    /// </summary>
-    /// <returns></returns>
-    private static Result<ReadCustomerDto> CreateCustomerNotFoundResult()
-    {
-        return Result.Failure<ReadCustomerDto>(new Error(
-            "CreateCustomer.Validation",
-            "The customer with the specified Customer Id was not found."));
+        return createCustomerResult;
     }
 
     /// <summary>
