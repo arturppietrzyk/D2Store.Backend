@@ -1,4 +1,6 @@
-﻿namespace D2Store.Api.Features.Customers.Domain;
+﻿using D2Store.Api.Shared;
+
+namespace D2Store.Api.Features.Customers.Domain;
 
 public class Customer
 {
@@ -9,9 +11,9 @@ public class Customer
     public string PhoneNumber { get; private set; }
     public string Address { get; private set; }
     public DateTime CreatedDate { get; private set; }
-    public DateTime LastModified {  get; private set; }
+    public DateTime LastModified { get; private set; }
 
-    public Customer(string firstName, string lastName, string email, string phoneNumber, string address)
+    private Customer(string firstName, string lastName, string email, string phoneNumber, string address)
     {
         CustomerId = Guid.CreateVersion7();
         FirstName = firstName;
@@ -23,8 +25,26 @@ public class Customer
         LastModified = DateTime.UtcNow;
     }
 
-    public void UpdateCustomerInfo(string? firstName, string? lastName, string? email, string? phoneNumber, string? address)
+    public static Result<Customer> Create(string firstName, string lastName, string email, string phoneNumber, string address, bool customerExists)
     {
+        if(customerExists == true) 
+        {
+            return Result.Failure<Customer>(new Error(
+            "CreateCustomer.Validation", 
+            "Customer already exists."));
+        }
+        var customer = new Customer(firstName, lastName, email, phoneNumber, address);
+        return Result.Success(customer);
+    }
+
+    public Result Update(string? firstName, string? lastName, string? email, string? phoneNumber, string? address, bool customerWithEmailExists)
+    {
+        if(customerWithEmailExists == true)
+        {
+            return Result.Failure(new Error(
+            "UpdateCustomer.Validation", 
+            "Email already in use."));
+        }
         bool isUpdated = false;
         if (!string.IsNullOrEmpty(firstName) && firstName != FirstName)
         {
@@ -55,5 +75,17 @@ public class Customer
         {
             LastModified = DateTime.UtcNow;
         }
+        return Result.Success();
+    }
+
+    public Result Delete(bool ordersExist)
+    {
+        if(ordersExist == true)
+        {
+            return Result.Failure(new Error(
+           "DeleteCustomer.Validation", 
+           "Customer cannot be deleted because they have orders."));
+        }
+        return Result.Success();
     }
 }
