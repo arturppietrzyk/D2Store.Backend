@@ -21,7 +21,7 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, aand updating of a specific customer. Returns the Guid of the deleted customer if successful. 
+    /// Coordinates validation, retrieval, and updating of a specific customer. Returns the Guid of the deleted customer if successful. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>

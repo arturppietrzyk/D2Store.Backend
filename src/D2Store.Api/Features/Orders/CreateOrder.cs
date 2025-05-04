@@ -147,7 +147,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             foreach (var orderProd in request.Products)
             {
                 var product = productsDict[orderProd.ProductId];
-                product.UpdateProductInfo(null, null, null, product.StockQuantity - orderProd.Quantity);
+                product.Update(null, null, null, product.StockQuantity - orderProd.Quantity);
                 orderProducts.Add(new OrderProduct(order.OrderId, product.ProductId, orderProd.Quantity));
             }
             _dbContext.OrderProducts.AddRange(orderProducts);

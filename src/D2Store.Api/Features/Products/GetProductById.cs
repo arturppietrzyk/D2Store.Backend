@@ -29,7 +29,7 @@ public class GetProductByIdHandler : IRequestHandler<GetProductByIdQuery, Result
         var product = await GetProductAsync(request.ProductId, cancellationToken);
         if(product is null)
         {
-            return CreateProductNotFoundResult();
+            return ProductNotFoundResult();
         }
         return Result.Success(MapToReadProductDto(product));
     }
@@ -51,7 +51,7 @@ public class GetProductByIdHandler : IRequestHandler<GetProductByIdQuery, Result
     /// Creates a failure result response for when a specified product cannot be found.
     /// </summary>
     /// <returns></returns>
-    private static Result<ReadProductDto> CreateProductNotFoundResult()
+    private static Result<ReadProductDto> ProductNotFoundResult()
     {
         return Result.Failure<ReadProductDto>(new Error(
             "GetProductById.Validation",
