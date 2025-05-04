@@ -1,5 +1,4 @@
 ﻿using D2Store.Api.Features.Products.Domain;
-using D2Store.Api.Features.Products.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
@@ -8,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
-public record UpdateProductCommand(Guid ProductId, string? Name, string? Description, decimal? Price, int? StockQuantity) : IRequest<Result<ReadProductDto>>;
+public record UpdateProductCommand(Guid ProductId, string? Name, string? Description, decimal? Price, int? StockQuantity) : IRequest<Result<Guid>>;
 
-public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result<ReadProductDto>>
+public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result<Guid>>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<UpdateProductCommand> _validator;
@@ -22,25 +21,25 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, mapping and updating of a specific product. Returns the updated product in a response DTO.
+    /// Coordinates validation, retrieval, mapping and updating of a specific product. Returns the Guid of the deleted product if successful. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<ReadProductDto>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result<Guid>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<ReadProductDto>(validationResult.Error);
+            return Result.Failure<Guid>(validationResult.Error);
         }
         var product = await GetProductAsync(request.ProductId, cancellationToken);
-        if (product is null)
+        if(product is null)
         {
-            return CreateProductNotFoundResult();
+            return ProductNotFoundResult();
         }
-        await UpdateProductAsync(product, request, cancellationToken);
-        return Result.Success(MapToReadProductDto(product));
+        var updateProductResult = await UpdateProductAsync(product, request, cancellationToken);
+        return updateProductResult;
     }
 
     /// <summary>
@@ -54,7 +53,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<ReadProductDto>(new Error("UpdateProduct.Validation", validationResult.ToString()));
+            return Result.Failure<Guid>(new Error("UpdateProduct.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -75,9 +74,9 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     /// Creates a failure result response for when a specified product cannot be found.
     /// </summary>
     /// <returns></returns>
-    private static Result<ReadProductDto> CreateProductNotFoundResult()
+    private static Result<Guid> ProductNotFoundResult()
     {
-        return Result.Failure<ReadProductDto>(new Error(
+        return Result.Failure<Guid>(new Error(
             "UpdateProduct.Validation",
             "The product with the specified Product Id was not found."));
     }
@@ -89,28 +88,11 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Product>> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
+    private async Task<Result<Guid>> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        product.UpdateProductInfo(request.Name, request.Description, request.Price, request.StockQuantity);
+        var updateProductResult = product.Update(request.Name, request.Description, request.Price, request.StockQuantity);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(product);
-    }
-
-    /// <summary>
-    /// Maps the retrieved product into the ReadProductDto which is returned as the response. 
-    /// </summary>
-    /// <param name="product"></param>
-    /// <returns></returns>
-    private static ReadProductDto MapToReadProductDto(Product product)
-    {
-        return new ReadProductDto(
-            product.ProductId,
-            product.Name,
-            product.Description,
-            product.Price,
-            product.StockQuantity,
-            product.AddedDate,
-            product.LastModified);
+        return Result.Success(product.ProductId);
     }
 }
 

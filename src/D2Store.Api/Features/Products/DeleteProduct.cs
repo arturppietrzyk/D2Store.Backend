@@ -18,7 +18,7 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
     }
 
     /// <summary>
-    /// Coordinates retrieval and mapping and deletion of a specific product.
+    /// Coordinates retrieval, mapping and deletion of a specific product. Returns the Guid of the deleted product if successful. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -28,14 +28,11 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
         var product = await GetProductAsync(request.ProductId, cancellationToken);
         if (product is null)
         {
-            return CreateProductNotFoundResult();
+            return ProductNotFoundResult();
         }
-        var orderProductExists = await _dbContext.OrderProducts.AsNoTracking().AnyAsync(op => op.ProductId == request.ProductId);
-        if (orderProductExists)
-        {
-            return CreateOrdersExistsForThisProduct();
-        }
-        return await DeleteProductAsync(product, cancellationToken);
+        var orderProductsExist = await _dbContext.OrderProducts.AsNoTracking().AnyAsync(op => op.ProductId == request.ProductId, cancellationToken);
+        var deleteProductResult = await DeleteProductAsync(product, orderProductsExist, cancellationToken);
+        return deleteProductResult;
     }
 
     /// <summary>
@@ -54,7 +51,7 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
     /// Creates a failure result response for when a specified product cannot be found.
     /// </summary>
     /// <returns></returns>
-    private static Result<Guid> CreateProductNotFoundResult()
+    private static Result<Guid> ProductNotFoundResult()
     {
         return Result.Failure<Guid>(new Error(
             "DeleteProduct.Validation",
@@ -62,24 +59,18 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
     }
 
     /// <summary>
-    /// Creates a failure result response for when a specified product is used within an order.
-    /// </summary>
-    /// <returns></returns>
-    private static Result<Guid> CreateOrdersExistsForThisProduct()
-    {
-        return Result.Failure<Guid>(new Error(
-        "DeleteProduct.Validation",
-        "This product is a part of an order."));
-    }
-
-    /// <summary>
-    /// Deletes the specified product and persists the changes to the database table. 
+    /// Validates the business rules and deletes the specified product persisting the changes to the database table. 
     /// </summary>
     /// <param name="product"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> DeleteProductAsync(Product product, CancellationToken cancellationToken)
+    private async Task<Result<Guid>> DeleteProductAsync(Product product, bool orderProductsExist, CancellationToken cancellationToken)
     {
+        var deleteProductResult = product.Delete(orderProductsExist);
+        if (deleteProductResult.IsFailure)
+        {
+            return Result.Failure<Guid>(deleteProductResult.Error);
+        }
         _dbContext.Products.Remove(product);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success(product.ProductId);

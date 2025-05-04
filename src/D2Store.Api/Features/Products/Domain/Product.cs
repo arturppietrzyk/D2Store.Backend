@@ -1,4 +1,6 @@
-﻿namespace D2Store.Api.Features.Products.Domain;
+﻿using D2Store.Api.Shared;
+
+namespace D2Store.Api.Features.Products.Domain;
 
 public class Product
 {
@@ -21,7 +23,13 @@ public class Product
         LastModified = DateTime.UtcNow;
     }
 
-    public void UpdateProductInfo(string? name, string? description, decimal? price, int? stockQuantity)
+    public static Result<Product> Create(string name, string description, decimal price, int stockQuantity)
+    {
+        var product = new Product(name, description, price, stockQuantity);
+        return Result.Success(product);
+    }
+
+    public Result Update(string? name, string? description, decimal? price, int? stockQuantity)
     {
         bool isUpdated = false;
         if (!string.IsNullOrEmpty(name) && name != Name)
@@ -48,5 +56,17 @@ public class Product
         {
             LastModified = DateTime.UtcNow;
         }
+        return Result.Success();
+    }
+
+    public Result Delete(bool orderProductsExist)
+    {
+        if (orderProductsExist == true)
+        {
+            return Result.Failure(new Error(
+           "DeleteProduct.Validation",
+           "Product cannot be deleted because it's part of an order."));
+        }
+        return Result.Success();
     }
 }

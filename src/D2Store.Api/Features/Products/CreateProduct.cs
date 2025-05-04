@@ -4,7 +4,6 @@ using D2Store.Api.Shared;
 using FluentValidation;
 using Mediator;
 using D2Store.Api.Features.Products.Dto;
-using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
@@ -22,7 +21,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, mapping and creating of an product. Returns the created product in a response DTO.
+    /// Coordinates validation, mapping and creating of an product. Returns the created product in a response DTO.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -34,13 +33,9 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
         {
             return Result.Failure<ReadProductDto>(validationResult.Error);
         }
-        var createProduct = await CreateProductAsync(request, cancellationToken);
-        var product = await GetProductAsync(createProduct.Value.ProductId, cancellationToken);
-        if (product is null)
-        {
-            return CreateProductNotFoundResult();
-        }
-        return Result.Success(MapToReadProductDto(product));
+        var createProductResult = await CreateProductAsync(request, cancellationToken);
+        var productDto = MapToReadProductDto(createProductResult.Value);
+        return Result.Success(productDto); 
     }
 
     /// <summary>
@@ -67,34 +62,10 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     /// <returns></returns>
     private async Task<Result<Product>> CreateProductAsync(CreateProductCommand request, CancellationToken cancellationToken)
     {
-        var product = new Product(request.Name, request.Description, request.Price, request.StockQuantity);
-        _dbContext.Products.Add(product);
+        var createProductResult = Product.Create(request.Name, request.Description, request.Price, request.StockQuantity);
+        _dbContext.Products.Add(createProductResult.Value);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(product);
-    }
-
-    /// <summary>
-    /// Loads a product object based on the ProductId.
-    /// </summary>
-    /// <param name="productId"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    private async Task<Product?> GetProductAsync(Guid productId, CancellationToken cancellationToken)
-    {
-        return await _dbContext.Products
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates a failure result response for when a specified product cannot be found.
-    /// </summary>
-    /// <returns></returns>
-    private static Result<ReadProductDto> CreateProductNotFoundResult()
-    {
-        return Result.Failure<ReadProductDto>(new Error(
-            "CreateProduct.Validation",
-            "The product with the specified Product Id was not found."));
+        return createProductResult;
     }
 
     /// <summary>
