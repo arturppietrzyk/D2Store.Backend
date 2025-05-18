@@ -1,43 +1,50 @@
-﻿namespace D2Store.Api.Features.Orders.Domain;
+﻿using D2Store.Api.Features.Products.Domain;
+using D2Store.Api.Shared;
+
+namespace D2Store.Api.Features.Orders.Domain;
 
 public class Order
 {
     public Guid OrderId { get; private set; }
     public Guid CustomerId { get; private set; }
-    public List<OrderProduct> Products { get; set; } 
+    private readonly List<OrderProduct> _products = new List<OrderProduct>();
+    public IReadOnlyCollection<OrderProduct> Products => _products.AsReadOnly();
     public DateTime OrderDate { get; private set; }
     public decimal TotalAmount { get; private set; }
     public string Status { get; private set; }
-    public DateTime LastModified { get; private set; }  
-    
-    public Order(Guid customerId, decimal totalAmount)
+    public DateTime LastModified { get; private set; }
+
+    private Order(Guid customerId, decimal totalAmount)
     {
         OrderId = Guid.CreateVersion7();
         CustomerId = customerId;
-        Products = new List<OrderProduct>();
         OrderDate = DateTime.UtcNow;
         TotalAmount = totalAmount;
         Status = "Paid";
         LastModified = DateTime.UtcNow;
     }
 
-    public void UpdateOrderInfo(string? status)
+    public static Result<Order> Create(Guid customerId, decimal totalAmount)
     {
-        bool isUpdated = false;
-        if(!string.IsNullOrEmpty(status) && status != Status)
-        {
-            Status = status;
-            isUpdated = true;
-        }
-        if (isUpdated)
-        {
-            LastModified = DateTime.UtcNow;
-        }
+        var order = new Order(customerId, totalAmount);
+        return Result.Success(order);
     }
 
-    private Order() 
+    public Result AddProduct(Product product, int quantity)
     {
-        Status = "Paid";
-        Products = new List<OrderProduct>();
+        var orderProductResult = OrderProduct.Create(this.OrderId, product, quantity);
+        if (orderProductResult.IsFailure)
+        {
+            return Result.Failure(orderProductResult.Error);
+        }
+        _products.Add(orderProductResult.Value);
+        return Result.Success(orderProductResult.Value);
+    }
+
+
+    public void UpdateTotalAmount(decimal amount)
+    {
+        TotalAmount = amount;
+        LastModified = DateTime.UtcNow;
     }
 }

@@ -69,4 +69,27 @@ public class Product
         }
         return Result.Success();
     }
+
+    public Result HasSufficientStock(int requestedQuantity)
+    {
+        if (StockQuantity < requestedQuantity)
+        {
+            return Result.Failure(new Error(
+                "Product.InsufficientStock",
+                $"Insufficient stock for product '{Name}'. Available: {StockQuantity}, Requested: {requestedQuantity}"));
+        }
+        return Result.Success();
+    }
+
+    public Result ReduceStock(int quantity)
+    {
+        var stockCheck = HasSufficientStock(quantity);
+        if (stockCheck.IsFailure)
+        {
+            return stockCheck;
+        }
+        StockQuantity -= quantity;
+        LastModified = DateTime.UtcNow;
+        return Result.Success();
+    }
 }
