@@ -59,14 +59,14 @@ public class OrderController : ControllerBase
     //    return Ok(result.Value);
     //}
 
-    //[HttpDelete("order/{orderId}")]
-    //public async Task<IActionResult> DeleteOrder(Guid orderId)
-    //{
-    //    var result = await _mediator.Send(new DeleteOrderCommand(orderId));
-    //    if (result.IsFailure)
-    //    {
-    //        return NotFound(result.Error);
-    //    }
-    //    return Ok(result.Value);
-    //}
+    [HttpDelete("order/{orderId}")]
+    public async Task<IActionResult> DeleteOrder(Guid orderId)
+    {
+        var result = await _mediator.Send(new DeleteOrderCommand(orderId));
+        if (result.IsFailure)
+        {
+            return NotFound(result.Error);
+        }
+        return Ok(result.Value);
+    }
 }
