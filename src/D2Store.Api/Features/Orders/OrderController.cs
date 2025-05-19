@@ -26,16 +26,16 @@ public class OrderController : ControllerBase
         return Ok(result.Value);
     }
 
-    //[HttpGet("order/{orderId}")]
-    //public async Task<IActionResult> GetOrderById(Guid orderId)
-    //{
-    //    var result = await _mediator.Send(new GetOrderByIdQuery(orderId));
-    //    if (result.IsFailure)
-    //    {
-    //        return NotFound(result.Error);
-    //    }
-    //    return Ok(result.Value);
-    //}
+    [HttpGet("order/{orderId}")]
+    public async Task<IActionResult> GetOrderById(Guid orderId)
+    {
+        var result = await _mediator.Send(new GetOrderByIdQuery(orderId));
+        if (result.IsFailure)
+        {
+            return NotFound(result.Error);
+        }
+        return Ok(result.Value);
+    }
 
     //[HttpGet("orders")]
     //public async Task<IActionResult> GetOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)

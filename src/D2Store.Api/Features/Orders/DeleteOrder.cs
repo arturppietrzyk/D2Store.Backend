@@ -25,12 +25,12 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     /// <returns></returns>
     public async ValueTask<Result<Guid>> Handle(DeleteOrderCommand request, CancellationToken cancellationToken)
     {
-        var orderExistsResult = await GetOrderAsync(request.OrderId, cancellationToken);
-        if (orderExistsResult.IsFailure)
+        var orderResult = await GetOrderAsync(request.OrderId, cancellationToken);
+        if (orderResult.IsFailure)
         {
-            return Result.Failure<Guid>(orderExistsResult.Error);
+            return Result.Failure<Guid>(orderResult.Error);
         }
-        return await DeleteOrderAsync(orderExistsResult.Value, cancellationToken);
+        return await DeleteOrderAsync(orderResult.Value, cancellationToken);
     }
 
     /// <summary>
@@ -41,17 +41,17 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     /// <returns></returns>
     private async Task<Result<Order>> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
-        var orderExists = await _dbContext.Orders
+        var orderResult = await _dbContext.Orders
          .Include(o => o.Products)
          .ThenInclude(op => op.Product)
          .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
-        if(orderExists is null)
+        if(orderResult is null)
         {
             return Result.Failure<Order>(new Error(
             "DeleteOrder.Validation",
             "The order with the specified Order Id was not found."));
         }
-        return Result.Success(orderExists);
+        return Result.Success(orderResult);
     }
 
     /// <summary>
