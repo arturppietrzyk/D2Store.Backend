@@ -41,7 +41,6 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
     /// <param name="orderId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-
     private async Task<Result<Order>> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
         var orderExists = await _dbContext.Orders

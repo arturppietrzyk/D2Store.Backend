@@ -40,4 +40,18 @@ public class Order
         TotalAmount = amount;
         LastModified = DateTime.UtcNow;
     }
+
+    public void Update(string? status)
+    {
+        bool isUpdated = false;
+        if (!string.IsNullOrEmpty(status) && status != Status)
+        {
+            Status = status;
+            isUpdated = true;
+        }
+        if (isUpdated)
+        {
+            LastModified = DateTime.UtcNow;
+        }
+    }
 }

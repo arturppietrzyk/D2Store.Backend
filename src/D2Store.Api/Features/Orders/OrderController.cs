@@ -37,27 +37,27 @@ public class OrderController : ControllerBase
         return Ok(result.Value);
     }
 
-    //[HttpGet("orders")]
-    //public async Task<IActionResult> GetOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
-    //{
-    //    var result = await _mediator.Send(new GetOrdersQuery(pageNumber, pageSize));
-    //    if (result.IsFailure)
-    //    {
-    //        return BadRequest(result.Error);
-    //    }
-    //    return Ok(result.Value);
-    //}
+    [HttpGet("orders")]
+    public async Task<IActionResult> GetOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var result = await _mediator.Send(new GetOrdersQuery(pageNumber, pageSize));
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+        return Ok(result.Value);
+    }
 
-    //[HttpPatch("order/{orderId}")]
-    //public async Task<IActionResult> UpdateOrder(Guid orderId, [FromBody] WriteOrderDtoUpdate writeOrderDto)
-    //{
-    //    var result = await _mediator.Send(new UpdateOrderCommand(orderId, writeOrderDto.Status));
-    //    if (result.IsFailure)
-    //    {
-    //        return BadRequest(result.Error);
-    //    }
-    //    return Ok(result.Value);
-    //}
+    [HttpPatch("order/{orderId}")]
+    public async Task<IActionResult> UpdateOrder(Guid orderId, [FromBody] WriteOrderDtoUpdate writeOrderDto)
+    {
+        var result = await _mediator.Send(new UpdateOrderCommand(orderId, writeOrderDto.Status));
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+        return Ok(result.Value);
+    }
 
     [HttpDelete("order/{orderId}")]
     public async Task<IActionResult> DeleteOrder(Guid orderId)
