@@ -1,5 +1,4 @@
 ﻿using D2Store.Api.Features.Products.Domain;
-using D2Store.Api.Shared;
 
 namespace D2Store.Api.Features.Orders.Domain;
 
@@ -22,12 +21,12 @@ public class OrderProduct
         LastModified = DateTime.UtcNow;
     }
 
-    public static Result<OrderProduct> Create(Guid orderId, Product product, int quantity)
+    public static OrderProduct Create(Guid orderId, Product product, int quantity)
     {
         var orderProduct = new OrderProduct(orderId, product.ProductId, quantity)
         {
             Product = product
         };
-        return Result.Success(orderProduct);
+        return orderProduct;
     }
 }

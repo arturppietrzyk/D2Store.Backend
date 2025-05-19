@@ -113,17 +113,17 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         try
         {
             decimal totalAmount = CalculateTotalAmount(request, productsDict);
-            var orderResult = Order.Create(request.CustomerId, totalAmount);
-            _dbContext.Orders.Add(orderResult.Value);
+            var order = Order.Create(request.CustomerId, totalAmount);
+            _dbContext.Orders.Add(order);
             foreach (var orderProd in request.Products)
             {
                 var product = productsDict[orderProd.ProductId];
-                orderResult.Value.AddProduct(product, orderProd.Quantity);
+                order.AddProduct(product, orderProd.Quantity);
                 product.ReduceStock(orderProd.Quantity);
             }
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return Result.Success(orderResult.Value);
+            return Result.Success(order);
         }
         catch (Exception ex)
         {

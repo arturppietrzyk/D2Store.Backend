@@ -1,5 +1,4 @@
 ﻿using D2Store.Api.Features.Products.Domain;
-using D2Store.Api.Shared;
 
 namespace D2Store.Api.Features.Orders.Domain;
 
@@ -24,23 +23,17 @@ public class Order
         LastModified = DateTime.UtcNow;
     }
 
-    public static Result<Order> Create(Guid customerId, decimal totalAmount)
+    public static Order Create(Guid customerId, decimal totalAmount)
     {
         var order = new Order(customerId, totalAmount);
-        return Result.Success(order);
+        return order;
     }
 
-    public Result AddProduct(Product product, int quantity)
+    public void AddProduct(Product product, int quantity)
     {
-        var orderProductResult = OrderProduct.Create(this.OrderId, product, quantity);
-        if (orderProductResult.IsFailure)
-        {
-            return Result.Failure(orderProductResult.Error);
-        }
-        _products.Add(orderProductResult.Value);
-        return Result.Success(orderProductResult.Value);
+        var orderProduct = OrderProduct.Create(this.OrderId, product, quantity);
+        _products.Add(orderProduct);
     }
-
 
     public void UpdateTotalAmount(decimal amount)
     {
