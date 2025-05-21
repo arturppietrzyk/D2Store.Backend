@@ -22,7 +22,7 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, mapping and updating of a specific order. Returns the updated order and its products into a response DTO.
+    /// Coordinates validation, retrieval and updating of a specific order. Returns the Guid of the updated order if successful.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -39,8 +39,8 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
         {
             return Result.Failure<Guid>(orderResult.Error);
         }
-        var updateOrderResult = await UpdateOrderAsync(orderResult.Value, request, cancellationToken);
-        return updateOrderResult;
+        var updateOrder = await UpdateOrderAsync(orderResult.Value, request, cancellationToken);
+        return Result.Success(updateOrder);
     }
 
     /// <summary>
@@ -61,23 +61,24 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
 
     /// <summary>
     /// Loads an order object based on the OrderId, and eagerly loads its associated order products along with the product details for each item.
+    /// Validate whether an order got brought back and returns either a result success of result failure. 
     /// </summary>
     /// <param name="orderId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     private async Task<Result<Order>> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
-        var orderResult =  await _dbContext.Orders
+        var order =  await _dbContext.Orders
             .Include(o => o.Products)
             .ThenInclude(op => op.Product)
             .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
-        if (orderResult is null)
+        if (order is null)
         {
             return Result.Failure<Order>(new Error(
             "UpdateOrder.Validation",
             "The order with the specified Order Id was not found."));
         }
-        return Result.Success(orderResult);
+        return Result.Success(order);
     }
 
     /// <summary>
@@ -87,11 +88,11 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> UpdateOrderAsync(Order order, UpdateOrderCommand request, CancellationToken cancellationToken)
+    private async Task<Guid> UpdateOrderAsync(Order order, UpdateOrderCommand request, CancellationToken cancellationToken)
     {
         order.Update(request.Status);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(order.OrderId);
+        return order.OrderId;
     }
 }
 

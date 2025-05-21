@@ -22,6 +22,12 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         _validator = validator;
     }
 
+    /// <summary>
+    /// Coordinates validation, retrieval, mapping and creating of an order. Returns the created order and its products into a response DTO.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async ValueTask<Result<ReadOrderDto>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
         var requestValidationResult = await ValidateRequestAsync(request, cancellationToken);
@@ -45,12 +51,18 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         {
             return Result.Failure<ReadOrderDto>(stockCheckResult.Error);
         }
-        var createOrderResult = await CreateOrderAsync(request, productsDict, cancellationToken);
-        var productDtos = MapOrderProductsToDto(createOrderResult.Value.Products.ToList());
-        var orderDto = MapToReadOrderDto(createOrderResult.Value, productDtos);
+        var createOrder = await CreateOrderAsync(request, productsDict, cancellationToken);
+        var productDtos = MapOrderProductsToDto(createOrder.Products.ToList());
+        var orderDto = MapToReadOrderDto(createOrder, productDtos);
         return Result.Success(orderDto);
     }
 
+    /// <summary>
+    /// Validates the input.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<Result> ValidateRequestAsync(CreateOrderCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
@@ -61,6 +73,12 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         return Result.Success();
     }
 
+    /// <summary>
+    /// Returns a result failure or success depending on whether the specific customer exists in the customers table. 
+    /// </summary>
+    /// <param name="customerId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<Result> CustomerExistsAsync(Guid customerId, CancellationToken cancellationToken)
     {
         var customerExists = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.CustomerId == customerId, cancellationToken);
@@ -71,6 +89,12 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         return Result.Success();
     }
 
+    /// <summary>
+    /// Loads all the products from the order into a dictionary of products for constant time product lookups. 
+    /// </summary>
+    /// <param name="productIds"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<Dictionary<Guid, Product>> GetProductsDictionaryAsync(List<Guid> productIds, CancellationToken cancellationToken)
     {
         return await _dbContext.Products
@@ -79,6 +103,12 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             .ToDictionaryAsync(p => p.ProductId, cancellationToken);
     }
 
+    /// <summary>
+    /// Validates products exsistance and returns either a result failure or result success. 
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="productsDict"></param>
+    /// <returns></returns>
     private static Result ValidateProductsExistance(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
     {
         foreach (var product in request.Products)
@@ -93,6 +123,12 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         return Result.Success();
     }
 
+    /// <summary>
+    /// Validates each products stock availability from the order and returns a result failure or success whether there is enough stock or not.  
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="productsDict"></param>
+    /// <returns></returns>
     private static Result ValidateStockAvailability(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
     {
         foreach (var orderProduct in request.Products)
@@ -107,7 +143,14 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         return Result.Success();
     }
 
-    private async Task<Result<Order>> CreateOrderAsync(CreateOrderCommand request, Dictionary<Guid, Product> productsDict, CancellationToken cancellationToken)
+    /// <summary>
+    /// Creates the order inside the Orders table and adds an entry for each product from the order inside the OrderProducts table. 
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="productsDict"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<Order> CreateOrderAsync(CreateOrderCommand request, Dictionary<Guid, Product> productsDict, CancellationToken cancellationToken)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -123,7 +166,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             }
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return Result.Success(order);
+            return order;
         }
         catch (Exception ex)
         {
@@ -132,6 +175,12 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         }
     }
 
+    /// <summary>
+    /// Calculates the Total Amount of an order. 
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="productsDict"></param>
+    /// <returns></returns>
     private static decimal CalculateTotalAmount(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
     {
         decimal total = 0;
@@ -143,6 +192,11 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         return total;
     }
 
+    /// <summary>
+    /// Maps the list of order products into the equivalent ReadOrderProductDto list. 
+    /// </summary>
+    /// <param name="orderProducts"></param>
+    /// <returns></returns>
     private List<ReadOrderProductDto> MapOrderProductsToDto(List<OrderProduct> orderProducts)
     {
         return orderProducts.Select(op => new ReadOrderProductDto(
@@ -154,6 +208,12 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         )).ToList();
     }
 
+    /// <summary>
+    /// Maps the retrieved order list of ReadOrderProductDto into a response object that gets returned when the GetOrderById endpoint is called. 
+    /// </summary>
+    /// <param name="order"></param>
+    /// <param name="products"></param>
+    /// <returns></returns>
     private static ReadOrderDto MapToReadOrderDto(Order order, List<ReadOrderProductDto> products)
     {
         return new ReadOrderDto(

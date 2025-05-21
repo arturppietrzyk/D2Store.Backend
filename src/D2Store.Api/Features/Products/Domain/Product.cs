@@ -64,7 +64,7 @@ public class Product
         if (orderProductsExist == true)
         {
             return Result.Failure(new Error(
-           "DeleteProduct.Validation",
+           "Product.Validation",
            "Product cannot be deleted because it's part of an order."));
         }
         return Result.Success();
@@ -75,7 +75,7 @@ public class Product
         if (StockQuantity < requestedQuantity)
         {
             return Result.Failure(new Error(
-                "Product.InsufficientStock",
+                "Product.Validation",
                 $"Insufficient stock for product '{Name}'. Available: {StockQuantity}, Requested: {requestedQuantity}"));
         }
         return Result.Success();

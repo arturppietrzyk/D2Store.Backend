@@ -30,7 +30,8 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
         {
             return Result.Failure<Guid>(orderResult.Error);
         }
-        return await DeleteOrderAsync(orderResult.Value, cancellationToken);
+        var deleteOrder = await DeleteOrderAsync(orderResult.Value, cancellationToken);
+        return Result.Success(deleteOrder);
     }
 
     /// <summary>
@@ -60,7 +61,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     /// <param name="order"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> DeleteOrderAsync(Order order, CancellationToken cancellationToken)
+    private async Task<Guid> DeleteOrderAsync(Order order, CancellationToken cancellationToken)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -73,7 +74,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
             _dbContext.Orders.Remove(order);
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return Result.Success(order.OrderId);
+            return order.OrderId;
         }
         catch (Exception ex)
         {
