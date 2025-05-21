@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record DeleteOrderCommand(Guid OrderId) : IRequest<Result<Guid>>; 
+public record DeleteOrderCommand(Guid OrderId) : IRequest<Result<Guid>>;
 
-public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid>> 
+public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid>>
 {
     private readonly AppDbContext _dbContext;
 
@@ -23,14 +23,15 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<Guid>> Handle(DeleteOrderCommand request, CancellationToken cancellationToken) 
+    public async ValueTask<Result<Guid>> Handle(DeleteOrderCommand request, CancellationToken cancellationToken)
     {
-        var order = await GetOrderAsync(request.OrderId, cancellationToken);
-        if (order is null)
+        var orderResult = await GetOrderAsync(request.OrderId, cancellationToken);
+        if (orderResult.IsFailure)
         {
-            return CreateOrderNotFoundResult();
+            return Result.Failure<Guid>(orderResult.Error);
         }
-        return await DeleteOrderAsync(order, cancellationToken);
+        var deleteOrder = await DeleteOrderAsync(orderResult.Value, cancellationToken);
+        return Result.Success(deleteOrder);
     }
 
     /// <summary>
@@ -39,23 +40,19 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     /// <param name="orderId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Order?> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
+    private async Task<Result<Order>> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Orders
+        var orderResult = await _dbContext.Orders
          .Include(o => o.Products)
          .ThenInclude(op => op.Product)
          .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates a failure result response for when a specified order cannot be found.
-    /// </summary>
-    /// <returns></returns>
-    private static Result<Guid> CreateOrderNotFoundResult()
-    {
-        return Result.Failure<Guid>(new Error(
+        if(orderResult is null)
+        {
+            return Result.Failure<Order>(new Error(
             "DeleteOrder.Validation",
             "The order with the specified Order Id was not found."));
+        }
+        return Result.Success(orderResult);
     }
 
     /// <summary>
@@ -64,7 +61,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     /// <param name="order"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> DeleteOrderAsync(Order order, CancellationToken cancellationToken)
+    private async Task<Guid> DeleteOrderAsync(Order order, CancellationToken cancellationToken)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -77,7 +74,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
             _dbContext.Orders.Remove(order);
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return Result.Success(order.OrderId);
+            return order.OrderId;
         }
         catch (Exception ex)
         {

@@ -26,13 +26,13 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
     /// <returns></returns>
     public async ValueTask<Result<ReadOrderDto>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
     {
-        var order = await GetOrderAsync(request.OrderId, cancellationToken);
-        if (order is null)
+        var orderResult = await GetOrderAsync(request.OrderId, cancellationToken);
+        if (orderResult.IsFailure)
         {
-            return CreateOrderNotFoundResult();
+            return Result.Failure<ReadOrderDto>(orderResult.Error);
         }
-        var orderProductDtos = MapOrderProductsToDto(order.Products);
-        return Result.Success(MapToReadOrderDto(order, orderProductDtos));
+        var orderProductDtos = MapOrderProductsToDto(orderResult.Value.Products);
+        return Result.Success(MapToReadOrderDto(orderResult.Value, orderProductDtos));
     }
 
     /// <summary>
@@ -41,24 +41,19 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
     /// <param name="orderId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Order?> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
+    private async Task<Result<Order>> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Orders
-            .AsNoTracking()
-            .Include(o => o.Products)
-            .ThenInclude(op => op.Product)
-            .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates a failure result response for when a specified order cannot be found. 
-    /// </summary>
-    /// <returns></returns>
-    private static Result<ReadOrderDto> CreateOrderNotFoundResult()
-    {
-        return Result.Failure<ReadOrderDto>(new Error(
+        var orderExists = await _dbContext.Orders
+         .Include(o => o.Products)
+         .ThenInclude(op => op.Product)
+         .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
+        if (orderExists is null)
+        {
+            return Result.Failure<Order>(new Error(
             "GetOrderById.Validation",
             "The order with the specified Order Id was not found."));
+        }
+        return Result.Success(orderExists);
     }
 
     /// <summary>
@@ -66,7 +61,7 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
     /// </summary>
     /// <param name="orderProducts"></param>
     /// <returns></returns>
-    private List<ReadOrderProductDto> MapOrderProductsToDto(List<OrderProduct> orderProducts)
+    private List<ReadOrderProductDto> MapOrderProductsToDto(IReadOnlyCollection<OrderProduct> orderProducts)
     {
         return orderProducts.Select(op => new ReadOrderProductDto(
             op.Product.ProductId,

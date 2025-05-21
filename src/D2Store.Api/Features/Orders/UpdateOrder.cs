@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record UpdateOrderCommand(Guid OrderId, string? Status) : IRequest<Result<ReadOrderDto>>;
+public record UpdateOrderCommand(Guid OrderId, string? Status) : IRequest<Result<Guid>>;
 
-public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<ReadOrderDto>>
+public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Guid>>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<UpdateOrderCommand> _validator;
@@ -22,26 +22,25 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, mapping and updating of a specific order. Returns the updated order and its products into a response DTO.
+    /// Coordinates validation, retrieval and updating of a specific order. Returns the Guid of the updated order if successful.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<ReadOrderDto>> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result<Guid>> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<ReadOrderDto>(validationResult.Error);
+            return Result.Failure<Guid>(validationResult.Error);
         }
-        var order = await GetOrderAsync(request.OrderId, cancellationToken);
-        if (order is null)
+        var orderResult = await GetOrderAsync(request.OrderId, cancellationToken);
+        if (orderResult.IsFailure)
         {
-            return CreateOrderNotFoundResult();
+            return Result.Failure<Guid>(orderResult.Error);
         }
-        await UpdateOrderAsync(order, request, cancellationToken);
-        var productDtos = MapOrderProductsToDto(order.Products);
-        return Result.Success(MapToReadOrderDto(order, productDtos));
+        var updateOrder = await UpdateOrderAsync(orderResult.Value, request, cancellationToken);
+        return Result.Success(updateOrder);
     }
 
     /// <summary>
@@ -62,27 +61,24 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
 
     /// <summary>
     /// Loads an order object based on the OrderId, and eagerly loads its associated order products along with the product details for each item.
+    /// Validate whether an order got brought back and returns either a result success of result failure. 
     /// </summary>
     /// <param name="orderId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Order?> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
+    private async Task<Result<Order>> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Orders
+        var order =  await _dbContext.Orders
             .Include(o => o.Products)
             .ThenInclude(op => op.Product)
             .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates a failure result response for when a specified order cannot be found. 
-    /// </summary>
-    /// <returns></returns>
-    private static Result<ReadOrderDto> CreateOrderNotFoundResult()
-    {
-        return Result.Failure<ReadOrderDto>(new Error(
+        if (order is null)
+        {
+            return Result.Failure<Order>(new Error(
             "UpdateOrder.Validation",
             "The order with the specified Order Id was not found."));
+        }
+        return Result.Success(order);
     }
 
     /// <summary>
@@ -92,45 +88,11 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Rea
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Order>> UpdateOrderAsync(Order order, UpdateOrderCommand request, CancellationToken cancellationToken)
+    private async Task<Guid> UpdateOrderAsync(Order order, UpdateOrderCommand request, CancellationToken cancellationToken)
     {
-        order.UpdateOrderInfo(request.Status);
+        order.Update(request.Status);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(order);
-    }
-
-    /// <summary>
-    /// Maps the list of order products into the equivalent ReadOrderProductDto list. 
-    /// </summary>
-    /// <param name="orderProducts"></param>
-    /// <returns></returns>
-    private List<ReadOrderProductDto> MapOrderProductsToDto(List<OrderProduct> orderProducts)
-    {
-        return orderProducts.Select(op => new ReadOrderProductDto(
-            op.Product.ProductId,
-            op.Product.Name,
-            op.Product.Description,
-            op.Product.Price,
-            op.Quantity
-        )).ToList();
-    }
-
-    /// <summary>
-    /// Maps the retrieved order list of ReadOrderProductDto into a response object that gets returned when the GetOrderById endpoint is called. 
-    /// </summary>
-    /// <param name="order"></param>
-    /// <param name="products"></param>
-    /// <returns></returns>
-    private static ReadOrderDto MapToReadOrderDto(Order order, List<ReadOrderProductDto> products)
-    {
-        return new ReadOrderDto(
-            order.OrderId,
-            order.CustomerId,
-            products,
-            order.OrderDate,
-            order.TotalAmount,
-            order.Status,
-            order.LastModified);
+        return order.OrderId;
     }
 }
 

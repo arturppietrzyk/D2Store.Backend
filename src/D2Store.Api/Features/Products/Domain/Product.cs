@@ -64,9 +64,32 @@ public class Product
         if (orderProductsExist == true)
         {
             return Result.Failure(new Error(
-           "DeleteProduct.Validation",
+           "Product.Validation",
            "Product cannot be deleted because it's part of an order."));
         }
+        return Result.Success();
+    }
+
+    public Result HasSufficientStock(int requestedQuantity)
+    {
+        if (StockQuantity < requestedQuantity)
+        {
+            return Result.Failure(new Error(
+                "Product.Validation",
+                $"Insufficient stock for product '{Name}'. Available: {StockQuantity}, Requested: {requestedQuantity}"));
+        }
+        return Result.Success();
+    }
+
+    public Result ReduceStock(int quantity)
+    {
+        var stockCheck = HasSufficientStock(quantity);
+        if (stockCheck.IsFailure)
+        {
+            return stockCheck;
+        }
+        StockQuantity -= quantity;
+        LastModified = DateTime.UtcNow;
         return Result.Success();
     }
 }

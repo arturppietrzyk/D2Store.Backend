@@ -23,8 +23,7 @@ public class OrderController : ControllerBase
         {
             return BadRequest(result.Error);
         }
-        var createdOrder = result.Value;
-        return CreatedAtAction(nameof(GetOrderById), new { orderId = createdOrder.OrderId }, createdOrder);
+        return Ok(result.Value);
     }
 
     [HttpGet("order/{orderId}")]

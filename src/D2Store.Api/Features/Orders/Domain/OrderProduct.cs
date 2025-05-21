@@ -12,7 +12,7 @@ public class OrderProduct
     public Product Product { get; private set; } = null!;
     public Order Order { get; private set; } = null!;
 
-    public OrderProduct(Guid orderId, Guid productId, int quantity)
+    private OrderProduct(Guid orderId, Guid productId, int quantity)
     {
         OrderProductId = Guid.CreateVersion7();
         OrderId = orderId;
@@ -21,5 +21,12 @@ public class OrderProduct
         LastModified = DateTime.UtcNow;
     }
 
-    private OrderProduct() { }
+    public static OrderProduct Create(Guid orderId, Product product, int quantity)
+    {
+        var orderProduct = new OrderProduct(orderId, product.ProductId, quantity)
+        {
+            Product = product
+        };
+        return orderProduct;
+    }
 }
