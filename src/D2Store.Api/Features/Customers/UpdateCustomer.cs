@@ -33,14 +33,22 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
         {
             return Result.Failure<Guid>(validationResult.Error);
         }
-        var customer = await GetCustomerAsync(request.CustomerId, cancellationToken);
-        if (customer == null)
+        var customerResult = await GetCustomerAsync(request.CustomerId, cancellationToken);
+        if (customerResult.IsFailure)
         {
-            return CustomerNotFoundResult();
+            return Result.Failure<Guid>(customerResult.Error);
         }
-        var customerWithEmailExists = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.Email == request.Email, cancellationToken);
-        var updateCustomerResult = await UpdateCustomerAsync(customer, request, customerWithEmailExists, cancellationToken);
-        return updateCustomerResult;
+        if(request.Email is not null)
+        {
+            var emailInUse = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.Email == request.Email && c.CustomerId != request.CustomerId, cancellationToken);
+            var validateEmailUniquenessResult = Customer.ValidateEmailUniqueness(emailInUse);
+            if (validateEmailUniquenessResult.IsFailure)
+            {
+                return Result.Failure<Guid>(validateEmailUniquenessResult.Error);
+            }
+        }
+        var updateCustomer = await UpdateCustomerAsync(customerResult.Value, request, cancellationToken);
+        return Result.Success(updateCustomer);
     }
 
     /// <summary>
@@ -65,39 +73,31 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
     /// <param name="customerId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Customer?> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken)
+    private async Task<Result<Customer>> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Customers
+        var customer = await _dbContext.Customers
             .FirstOrDefaultAsync(c => c.CustomerId == customerId, cancellationToken);
+        if(customer is null)
+        {
+            return Result.Failure<Customer>(new Error(
+           "UpdateCustomer.Validation",
+           "The customer with the specified Customer Id was not found."));
+        }
+        return Result.Success(customer);
     }
 
     /// <summary>
-    /// Creates a failure result response for when a specified customer cannot be found.
-    /// </summary>
-    /// <returns></returns>
-    private static Result<Guid> CustomerNotFoundResult()
-    {
-        return Result.Failure<Guid>(new Error(
-            "UpdateCustomer.Validation",
-            "The customer with the specified Customer Id was not found."));
-    }
-
-    /// <summary>
-    /// Validates the business rules, updates the customer, persisting the changes in the database table. 
+    /// Updates the customer, persisting the changes in the database table. 
     /// </summary>
     /// <param name="customer"></param>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> UpdateCustomerAsync(Customer customer, UpdateCustomerCommand request, bool customerWithEmailExists, CancellationToken cancellationToken)
+    private async Task<Guid> UpdateCustomerAsync(Customer customer, UpdateCustomerCommand request, CancellationToken cancellationToken)
     {
-        var updateCustomerResult = customer.Update(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address, customerWithEmailExists);
-        if (updateCustomerResult.IsFailure)
-        {
-            return Result.Failure<Guid>(updateCustomerResult.Error);
-        }
+        customer.Update(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(customer.CustomerId);
+        return customer.CustomerId;
     }
 }
 

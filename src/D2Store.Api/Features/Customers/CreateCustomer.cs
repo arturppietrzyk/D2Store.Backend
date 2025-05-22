@@ -33,13 +33,17 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
         {
             return Result.Failure<ReadCustomerDto>(validationResult.Error);
         }
-        var customerExists = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.Email == request.Email, cancellationToken);
-        var createCustomerResult = await CreateCustomerAsync(request, customerExists, cancellationToken);
-        if (createCustomerResult.IsFailure)
+        if (request.Email is not null)
         {
-            return Result.Failure<ReadCustomerDto>(createCustomerResult.Error);
+            var emailInUse = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.Email == request.Email, cancellationToken);
+            var validateEmailUniquenessResult = Customer.ValidateEmailUniqueness(emailInUse);
+            if (validateEmailUniquenessResult.IsFailure)
+            {
+                return Result.Failure<ReadCustomerDto>(validateEmailUniquenessResult.Error);
+            }
         }
-        var customerDto = MapToReadCustomerDto(createCustomerResult.Value);
+        var createCustomer = await CreateCustomerAsync(request, cancellationToken);
+        var customerDto = MapToReadCustomerDto(createCustomer);
         return Result.Success(customerDto);
     }
 
@@ -60,21 +64,17 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
     }
 
     /// <summary>
-    /// Validates the business rules and creates the customer, persisting it to the database. 
+    /// Creates the customer, persisting it to the database. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Customer>> CreateCustomerAsync(CreateCustomerCommand request, bool customerExists, CancellationToken cancellationToken)
+    private async Task<Customer> CreateCustomerAsync(CreateCustomerCommand request, CancellationToken cancellationToken)
     {
-        var createCustomerResult = Customer.Create(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address, customerExists);
-        if (createCustomerResult.IsFailure)
-        {
-            return createCustomerResult;
-        }
-        _dbContext.Customers.Add(createCustomerResult.Value);
+        var createCustomer = Customer.Create(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
+        _dbContext.Customers.Add(createCustomer);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return createCustomerResult;
+        return createCustomer;
     }
 
     /// <summary>

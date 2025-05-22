@@ -25,26 +25,14 @@ public class Customer
         LastModified = DateTime.UtcNow;
     }
 
-    public static Result<Customer> Create(string firstName, string lastName, string email, string phoneNumber, string address, bool customerExists)
+    public static Customer Create(string firstName, string lastName, string email, string phoneNumber, string address)
     {
-        if(customerExists == true) 
-        {
-            return Result.Failure<Customer>(new Error(
-            "CreateCustomer.Validation", 
-            "Customer already exists."));
-        }
         var customer = new Customer(firstName, lastName, email, phoneNumber, address);
-        return Result.Success(customer);
+        return customer;
     }
 
-    public Result Update(string? firstName, string? lastName, string? email, string? phoneNumber, string? address, bool customerWithEmailExists)
+    public void Update(string? firstName, string? lastName, string? email, string? phoneNumber, string? address)
     {
-        if(customerWithEmailExists == true)
-        {
-            return Result.Failure(new Error(
-            "UpdateCustomer.Validation", 
-            "Email already in use."));
-        }
         bool isUpdated = false;
         if (!string.IsNullOrEmpty(firstName) && firstName != FirstName)
         {
@@ -75,16 +63,26 @@ public class Customer
         {
             LastModified = DateTime.UtcNow;
         }
+    }
+
+    public static Result ValidateEmailUniqueness(bool emailInUse)
+    {
+        if (emailInUse)
+        {
+            return Result.Failure(new Error(
+                "Customer.Validation", 
+                "Customer email already in use."));
+        }
         return Result.Success();
     }
 
-    public Result Delete(bool ordersExist)
+    public static Result ValidateOrdersExistance(bool hasOrders)
     {
-        if(ordersExist == true)
+        if (hasOrders)
         {
             return Result.Failure(new Error(
-           "DeleteCustomer.Validation", 
-           "Customer cannot be deleted because they have orders."));
+                "Customer.Validation",
+                "Customer cannot be deleted because they have orders."));
         }
         return Result.Success();
     }
