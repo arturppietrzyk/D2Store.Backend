@@ -26,12 +26,12 @@ public class GetProductByIdHandler : IRequestHandler<GetProductByIdQuery, Result
     /// <returns></returns>
     public async ValueTask<Result<ReadProductDto>> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
     {
-        var product = await GetProductAsync(request.ProductId, cancellationToken);
-        if(product is null)
+        var productResult = await GetProductAsync(request.ProductId, cancellationToken);
+        if (productResult.IsFailure)
         {
-            return ProductNotFoundResult();
+            return Result.Failure<ReadProductDto>(productResult.Error);
         }
-        return Result.Success(MapToReadProductDto(product));
+        return Result.Success(MapToReadProductDto(productResult.Value));
     }
 
     /// <summary>
@@ -40,22 +40,17 @@ public class GetProductByIdHandler : IRequestHandler<GetProductByIdQuery, Result
     /// <param name="productId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Product?> GetProductAsync(Guid productId, CancellationToken cancellationToken)
+    private async Task<Result<Product>> GetProductAsync(Guid productId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Products
-            .AsNoTracking()
+        var product = await _dbContext.Products
             .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates a failure result response for when a specified product cannot be found.
-    /// </summary>
-    /// <returns></returns>
-    private static Result<ReadProductDto> ProductNotFoundResult()
-    {
-        return Result.Failure<ReadProductDto>(new Error(
+        if (product is null)
+        {
+            return Result.Failure<Product>(new Error(
             "GetProductById.Validation",
             "The product with the specified Product Id was not found."));
+        }
+        return Result.Success(product);
     }
 
     /// <summary>

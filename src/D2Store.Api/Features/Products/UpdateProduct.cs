@@ -33,13 +33,13 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         {
             return Result.Failure<Guid>(validationResult.Error);
         }
-        var product = await GetProductAsync(request.ProductId, cancellationToken);
-        if(product is null)
+        var productResult = await GetProductAsync(request.ProductId, cancellationToken);
+        if (productResult.IsFailure)
         {
-            return ProductNotFoundResult();
+            return Result.Failure<Guid>(productResult.Error);
         }
-        var updateProductResult = await UpdateProductAsync(product, request, cancellationToken);
-        return updateProductResult;
+        var updateProduct = await UpdateProductAsync(productResult.Value, request, cancellationToken);
+        return Result.Success(updateProduct);
     }
 
     /// <summary>
@@ -64,21 +64,17 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     /// <param name="productId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Product?> GetProductAsync(Guid productId, CancellationToken cancellationToken)
+    private async Task<Result<Product>> GetProductAsync(Guid productId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Products
+        var product = await _dbContext.Products
             .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates a failure result response for when a specified product cannot be found.
-    /// </summary>
-    /// <returns></returns>
-    private static Result<Guid> ProductNotFoundResult()
-    {
-        return Result.Failure<Guid>(new Error(
+        if (product is null)
+        {
+            return Result.Failure<Product>(new Error(
             "UpdateProduct.Validation",
             "The product with the specified Product Id was not found."));
+        }
+        return Result.Success(product);
     }
 
     /// <summary>
@@ -88,11 +84,11 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
+    private async Task<Guid> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        var updateProductResult = product.Update(request.Name, request.Description, request.Price, request.StockQuantity);
+        product.Update(request.Name, request.Description, request.Price, request.StockQuantity);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(product.ProductId);
+        return product.ProductId;
     }
 }
 

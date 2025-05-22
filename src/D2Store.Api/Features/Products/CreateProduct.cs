@@ -33,8 +33,8 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
         {
             return Result.Failure<ReadProductDto>(validationResult.Error);
         }
-        var createProductResult = await CreateProductAsync(request, cancellationToken);
-        var productDto = MapToReadProductDto(createProductResult.Value);
+        var createProduct = await CreateProductAsync(request, cancellationToken);
+        var productDto = MapToReadProductDto(createProduct);
         return Result.Success(productDto); 
     }
 
@@ -60,12 +60,12 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Product>> CreateProductAsync(CreateProductCommand request, CancellationToken cancellationToken)
+    private async Task<Product> CreateProductAsync(CreateProductCommand request, CancellationToken cancellationToken)
     {
-        var createProductResult = Product.Create(request.Name, request.Description, request.Price, request.StockQuantity);
-        _dbContext.Products.Add(createProductResult.Value);
+        var createProduct = Product.Create(request.Name, request.Description, request.Price, request.StockQuantity);
+        _dbContext.Products.Add(createProduct);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return createProductResult;
+        return createProduct;
     }
 
     /// <summary>

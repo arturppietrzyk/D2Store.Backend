@@ -23,13 +23,13 @@ public class Product
         LastModified = DateTime.UtcNow;
     }
 
-    public static Result<Product> Create(string name, string description, decimal price, int stockQuantity)
+    public static Product Create(string name, string description, decimal price, int stockQuantity)
     {
         var product = new Product(name, description, price, stockQuantity);
-        return Result.Success(product);
+        return product;
     }
 
-    public Result Update(string? name, string? description, decimal? price, int? stockQuantity)
+    public void Update(string? name, string? description, decimal? price, int? stockQuantity)
     {
         bool isUpdated = false;
         if (!string.IsNullOrEmpty(name) && name != Name)
@@ -56,12 +56,11 @@ public class Product
         {
             LastModified = DateTime.UtcNow;
         }
-        return Result.Success();
     }
 
-    public Result Delete(bool orderProductsExist)
+    public static Result ValidateOrderProductExistance(bool hasOrderProducts)
     {
-        if (orderProductsExist == true)
+        if (hasOrderProducts)
         {
             return Result.Failure(new Error(
            "Product.Validation",
