@@ -26,12 +26,12 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
     /// <returns></returns>
     public async ValueTask<Result<ReadCustomerDto>> Handle(GetCustomerByIdQuery request, CancellationToken cancellationToken)
     {
-        var customer = await GetCustomerAsync(request.CustomerId, cancellationToken);
-        if(customer is null)
+        var customerResult = await GetCustomerAsync(request.CustomerId, cancellationToken);
+        if(customerResult.IsFailure)
         {
-            return CustomerNotFoundResult();
+            return Result.Failure<ReadCustomerDto>(customerResult.Error);
         }
-        return Result.Success(MapToReadCustomerDto(customer));
+        return Result.Success(MapToReadCustomerDto(customerResult.Value));
     }
 
     /// <summary>
@@ -40,22 +40,18 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
     /// <param name="customerId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Customer?> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken)
+    private async Task<Result<Customer>> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Customers
+        var customer = await _dbContext.Customers
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.CustomerId == customerId, cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates a failure result response for when a specified customer cannot be found.
-    /// </summary>
-    /// <returns></returns>
-    private static Result<ReadCustomerDto> CustomerNotFoundResult()
-    {
-        return Result.Failure<ReadCustomerDto>(new Error(
+        if(customer is null)
+        {
+            return Result.Failure<Customer>(new Error(
             "GetCustomerById.Validation",
             "The customer with the specified Customer Id was not found."));
+        }
+        return Result.Success(customer);
     }
 
     /// <summary>
