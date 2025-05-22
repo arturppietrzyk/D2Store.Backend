@@ -56,7 +56,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<List<
     }
 
     /// <summary>
-    /// Loads the product objects based on the Pagination parameters.
+    /// Loads the product objects based on the Pagination parameters..
     /// </summary>
     /// <param name="pageNumber"></param>
     /// <param name="pageSize"></param>
