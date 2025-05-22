@@ -33,14 +33,11 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
         {
             return Result.Failure<ReadCustomerDto>(validationResult.Error);
         }
-        if (request.Email is not null)
+        var emailInUse = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.Email == request.Email, cancellationToken);
+        var validateEmailUniquenessResult = Customer.ValidateEmailUniqueness(emailInUse);
+        if (validateEmailUniquenessResult.IsFailure)
         {
-            var emailInUse = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.Email == request.Email, cancellationToken);
-            var validateEmailUniquenessResult = Customer.ValidateEmailUniqueness(emailInUse);
-            if (validateEmailUniquenessResult.IsFailure)
-            {
-                return Result.Failure<ReadCustomerDto>(validateEmailUniquenessResult.Error);
-            }
+            return Result.Failure<ReadCustomerDto>(validateEmailUniquenessResult.Error);
         }
         var createCustomer = await CreateCustomerAsync(request, cancellationToken);
         var customerDto = MapToReadCustomerDto(createCustomer);

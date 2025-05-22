@@ -1,4 +1,5 @@
-﻿using D2Store.Api.Features.Orders.Domain;
+﻿using D2Store.Api.Features.Customers.Domain;
+using D2Store.Api.Features.Orders.Domain;
 using D2Store.Api.Features.Orders.Dto;
 using D2Store.Api.Features.Products.Domain;
 using D2Store.Api.Infrastructure;
@@ -35,18 +36,19 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         {
             return Result.Failure<ReadOrderDto>(requestValidationResult.Error);
         }
-        var customerExistsResult = await CustomerExistsAsync(request.CustomerId, cancellationToken);
-        if (customerExistsResult.IsFailure)
+        var customerExists = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
+        var validateCustomerExistanceResult = Customer.ValidateCustomerExsistance(customerExists);
+        if (validateCustomerExistanceResult.IsFailure)
         {
-            return Result.Failure<ReadOrderDto>(customerExistsResult.Error);
+            return Result.Failure<ReadOrderDto>(validateCustomerExistanceResult.Error);
         }
         var productsDict = await GetProductsDictionaryAsync(request.Products.Select(p => p.ProductId).Distinct().ToList(), cancellationToken);
-        var validateProductsExistanceResult = ValidateProductsExistance(request, productsDict);
+        var validateProductsExistanceResult = Product.ValidateProductsExistance(request, productsDict);
         if (validateProductsExistanceResult.IsFailure)
         {
             return Result.Failure<ReadOrderDto>(validateProductsExistanceResult.Error);
         }
-        var stockCheckResult = ValidateStockAvailability(request, productsDict);
+        var stockCheckResult = Product.ValidateStockAvailability(request, productsDict);
         if (stockCheckResult.IsFailure)
         {
             return Result.Failure<ReadOrderDto>(stockCheckResult.Error);
@@ -74,22 +76,6 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Returns a result failure or success depending on whether the specific customer exists in the customers table. 
-    /// </summary>
-    /// <param name="customerId"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    private async Task<Result> CustomerExistsAsync(Guid customerId, CancellationToken cancellationToken)
-    {
-        var customerExists = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.CustomerId == customerId, cancellationToken);
-        if (!customerExists)
-        {
-            return Result.Failure(new Error("CreateOrder.Validation", "Customer does not exist."));
-        }
-        return Result.Success();
-    }
-
-    /// <summary>
     /// Loads all the products from the order into a dictionary of products for constant time product lookups. 
     /// </summary>
     /// <param name="productIds"></param>
@@ -104,46 +90,6 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Validates products exsistance and returns either a result failure or result success. 
-    /// </summary>
-    /// <param name="request"></param>
-    /// <param name="productsDict"></param>
-    /// <returns></returns>
-    private static Result ValidateProductsExistance(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
-    {
-        foreach (var product in request.Products)
-        {
-            if (!productsDict.ContainsKey(product.ProductId))
-            {
-                return Result.Failure(new Error(
-                    "CreateOrder.Validation",
-                    $"Product with ID '{product.ProductId}' does not exist."));
-            }
-        }
-        return Result.Success();
-    }
-
-    /// <summary>
-    /// Validates each products stock availability from the order and returns a result failure or success whether there is enough stock or not.  
-    /// </summary>
-    /// <param name="request"></param>
-    /// <param name="productsDict"></param>
-    /// <returns></returns>
-    private static Result ValidateStockAvailability(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
-    {
-        foreach (var orderProduct in request.Products)
-        {
-            var product = productsDict[orderProduct.ProductId];
-            var stockCheck = product.HasSufficientStock(orderProduct.Quantity);
-            if (stockCheck.IsFailure)
-            {
-                return stockCheck;
-            }
-        }
-        return Result.Success();
-    }
-
-    /// <summary>
     /// Creates the order inside the Orders table and adds an entry for each product from the order inside the OrderProducts table. 
     /// </summary>
     /// <param name="request"></param>
@@ -155,7 +101,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            decimal totalAmount = CalculateTotalAmount(request, productsDict);
+            decimal totalAmount = Order.CalculateTotalAmount(request, productsDict);
             var order = Order.Create(request.CustomerId, totalAmount);
             _dbContext.Orders.Add(order);
             foreach (var orderProd in request.Products)
@@ -173,23 +119,6 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
-    }
-
-    /// <summary>
-    /// Calculates the Total Amount of an order. 
-    /// </summary>
-    /// <param name="request"></param>
-    /// <param name="productsDict"></param>
-    /// <returns></returns>
-    private static decimal CalculateTotalAmount(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
-    {
-        decimal total = 0;
-        foreach (var orderProduct in request.Products)
-        {
-            var product = productsDict[orderProduct.ProductId];
-            total += product.Price * orderProduct.Quantity;
-        }
-        return total;
     }
 
     /// <summary>
