@@ -1,4 +1,5 @@
-﻿using D2Store.Api.Shared;
+﻿using D2Store.Api.Features.Orders;
+using D2Store.Api.Shared;
 
 namespace D2Store.Api.Features.Products.Domain;
 
@@ -58,14 +59,43 @@ public class Product
         }
     }
 
-    public static Result ValidateOrderProductExistance(bool hasOrderProducts)
+    public static Result ValidateProductsExistance(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
     {
-        if (hasOrderProducts)
+        foreach (var product in request.Products)
         {
-            return Result.Failure(new Error(
-           "Product.Validation",
-           "Product cannot be deleted because it's part of an order."));
+            if (!productsDict.ContainsKey(product.ProductId))
+            {
+                return Result.Failure(new Error(
+                    "Product.Validation",
+                    $"Product with ID '{product.ProductId}' does not exist."));
+            }
         }
+        return Result.Success();
+    }
+
+    public static Result ValidateStockAvailability(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
+    {
+        foreach (var orderProduct in request.Products)
+        {
+            var product = productsDict[orderProduct.ProductId];
+            var stockCheck = product.HasSufficientStock(orderProduct.Quantity);
+            if (stockCheck.IsFailure)
+            {
+                return stockCheck;
+            }
+        }
+        return Result.Success();
+    }
+
+    public Result ReduceStock(int quantity)
+    {
+        var stockCheck = HasSufficientStock(quantity);
+        if (stockCheck.IsFailure)
+        {
+            return stockCheck;
+        }
+        StockQuantity -= quantity;
+        LastModified = DateTime.UtcNow;
         return Result.Success();
     }
 
@@ -80,15 +110,14 @@ public class Product
         return Result.Success();
     }
 
-    public Result ReduceStock(int quantity)
+    public static Result ValidateOrderProductExistance(bool hasOrderProducts)
     {
-        var stockCheck = HasSufficientStock(quantity);
-        if (stockCheck.IsFailure)
+        if (hasOrderProducts)
         {
-            return stockCheck;
+            return Result.Failure(new Error(
+             "Product.Validation",
+             "Product cannot be deleted because it's part of an order."));
         }
-        StockQuantity -= quantity;
-        LastModified = DateTime.UtcNow;
         return Result.Success();
     }
 }

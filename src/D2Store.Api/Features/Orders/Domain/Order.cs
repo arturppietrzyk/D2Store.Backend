@@ -35,6 +35,17 @@ public class Order
         _products.Add(orderProduct);
     }
 
+    public static decimal CalculateTotalAmount(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
+    {
+        decimal total = 0;
+        foreach (var orderProduct in request.Products)
+        {
+            var product = productsDict[orderProduct.ProductId];
+            total += product.Price * orderProduct.Quantity;
+        }
+        return total;
+    }
+
     public void UpdateTotalAmount(decimal amount)
     {
         TotalAmount = amount;
