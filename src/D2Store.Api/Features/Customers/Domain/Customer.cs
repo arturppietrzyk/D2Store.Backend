@@ -65,17 +65,6 @@ public class Customer
         }
     }
 
-    public static Result ValidateCustomerExsistance(bool customerExists)
-    {
-        if (!customerExists)
-        {
-            return Result.Failure(new Error(
-                "Customer.Validation",
-                "Customer does not exist."));
-        }
-        return Result.Success();
-    }
-
     public static Result ValidateEmailUniqueness(bool emailInUse)
     {
         if (emailInUse)

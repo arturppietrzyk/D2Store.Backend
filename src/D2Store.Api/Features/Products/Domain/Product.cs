@@ -1,5 +1,4 @@
-﻿using D2Store.Api.Features.Orders;
-using D2Store.Api.Shared;
+﻿using D2Store.Api.Shared;
 
 namespace D2Store.Api.Features.Products.Domain;
 
@@ -57,34 +56,6 @@ public class Product
         {
             LastModified = DateTime.UtcNow;
         }
-    }
-
-    public static Result ValidateProductsExistance(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
-    {
-        foreach (var product in request.Products)
-        {
-            if (!productsDict.ContainsKey(product.ProductId))
-            {
-                return Result.Failure(new Error(
-                    "Product.Validation",
-                    $"Product with ID '{product.ProductId}' does not exist."));
-            }
-        }
-        return Result.Success();
-    }
-
-    public static Result ValidateStockAvailability(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
-    {
-        foreach (var orderProduct in request.Products)
-        {
-            var product = productsDict[orderProduct.ProductId];
-            var stockCheck = product.HasSufficientStock(orderProduct.Quantity);
-            if (stockCheck.IsFailure)
-            {
-                return stockCheck;
-            }
-        }
-        return Result.Success();
     }
 
     public Result ReduceStock(int quantity)
