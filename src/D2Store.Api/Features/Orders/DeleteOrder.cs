@@ -42,17 +42,17 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     /// <returns></returns>
     private async Task<Result<Order>> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
-        var orderResult = await _dbContext.Orders
+        var order = await _dbContext.Orders
          .Include(o => o.Products)
          .ThenInclude(op => op.Product)
          .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
-        if(orderResult is null)
+        if(order is null)
         {
             return Result.Failure<Order>(new Error(
             "DeleteOrder.Validation",
             "The order with the specified Order Id was not found."));
         }
-        return Result.Success(orderResult);
+        return Result.Success(order);
     }
 
     /// <summary>

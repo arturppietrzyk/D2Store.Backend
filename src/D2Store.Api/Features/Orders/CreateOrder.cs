@@ -1,5 +1,4 @@
-﻿using D2Store.Api.Features.Customers.Domain;
-using D2Store.Api.Features.Orders.Domain;
+﻿using D2Store.Api.Features.Orders.Domain;
 using D2Store.Api.Features.Orders.Dto;
 using D2Store.Api.Features.Products.Domain;
 using D2Store.Api.Infrastructure;
@@ -37,18 +36,18 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             return Result.Failure<ReadOrderDto>(requestValidationResult.Error);
         }
         var customerExists = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
-        var validateCustomerExistanceResult = Customer.ValidateCustomerExsistance(customerExists);
+        var validateCustomerExistanceResult = Order.ValidateCustomerExsistance(customerExists);
         if (validateCustomerExistanceResult.IsFailure)
         {
             return Result.Failure<ReadOrderDto>(validateCustomerExistanceResult.Error);
         }
         var productsDict = await GetProductsDictionaryAsync(request.Products.Select(p => p.ProductId).Distinct().ToList(), cancellationToken);
-        var validateProductsExistanceResult = Product.ValidateProductsExistance(request, productsDict);
+        var validateProductsExistanceResult = Order.ValidateProductsExistance(request, productsDict);
         if (validateProductsExistanceResult.IsFailure)
         {
             return Result.Failure<ReadOrderDto>(validateProductsExistanceResult.Error);
         }
-        var stockCheckResult = Product.ValidateStockAvailability(request, productsDict);
+        var stockCheckResult = Order.ValidateStockAvailability(request, productsDict);
         if (stockCheckResult.IsFailure)
         {
             return Result.Failure<ReadOrderDto>(stockCheckResult.Error);
