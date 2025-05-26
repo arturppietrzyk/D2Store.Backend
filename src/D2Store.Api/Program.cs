@@ -3,6 +3,8 @@ using D2Store.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using FluentValidation;
+using Mediator;
+using D2Store.Api.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +27,8 @@ var connectionStringsConfig = new ConnectionStringsConfig();
 builder.Configuration.GetSection(ConnectionStringsConfig.SectionName).Bind(connectionStringsConfig);
 
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
+
+builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehaviour<,>));
 
 builder.Services.AddValidatorsFromAssembly(assembly);
 
