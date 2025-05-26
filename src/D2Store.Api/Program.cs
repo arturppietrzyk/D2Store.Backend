@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using FluentValidation;
 using Mediator;
-using D2Store.Api.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 

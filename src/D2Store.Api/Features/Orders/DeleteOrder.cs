@@ -76,7 +76,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
             await transaction.CommitAsync(cancellationToken);
             return order.OrderId;
         }
-        catch (Exception ex)
+        catch
         {
             await transaction.RollbackAsync(cancellationToken);
             throw;

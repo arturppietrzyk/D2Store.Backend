@@ -1,6 +1,7 @@
-﻿using Mediator;
+﻿using D2Store.Api.Shared;
+using Mediator;
 
-namespace D2Store.Api.Shared;
+namespace D2Store.Api.Infrastructure;
 
 public class LoggingPipelineBehaviour<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
