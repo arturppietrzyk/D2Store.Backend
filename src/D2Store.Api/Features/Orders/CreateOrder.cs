@@ -113,7 +113,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             await transaction.CommitAsync(cancellationToken);
             return order;
         }
-        catch (Exception ex)
+        catch
         {
             await transaction.RollbackAsync(cancellationToken);
             throw;
