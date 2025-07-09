@@ -1,6 +1,7 @@
 ﻿using D2Store.Api.Features.Customers.Domain;
 using D2Store.Api.Features.Orders.Domain;
 using D2Store.Api.Features.Products.Domain;
+using D2Store.Api.Features.Users.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Infrastructure;
@@ -14,6 +15,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Order> Orders { get; set; }
     public DbSet<Customer> Customers { get; set; }
+    public DbSet<User> Users { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<OrderProduct> OrderProducts { get; set; }
 
