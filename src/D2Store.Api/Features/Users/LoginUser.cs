@@ -1,10 +1,16 @@
-﻿using D2Store.Api.Features.Users.Domain;
+﻿using D2Store.Api.Config;
+using D2Store.Api.Features.Users.Domain;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
 using Mediator;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace D2Store.Api.Features.Users;
 
@@ -12,11 +18,13 @@ public record LoginUserCommand(string Email, string Password) : IRequest<Result<
 
 public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>>
 {
+    private readonly JwtSettingsConfig _jwtSettingsConfig;
     private readonly AppDbContext _dbContext;
     private readonly IValidator<LoginUserCommand> _validator;
 
-    public LoginUserHandler(AppDbContext dbContext, IValidator<LoginUserCommand> validator)
+    public LoginUserHandler(IOptions<JwtSettingsConfig> jwtSettingsConfig, AppDbContext dbContext, IValidator<LoginUserCommand> validator)
     {
+        _jwtSettingsConfig = jwtSettingsConfig.Value;
         _validator = validator;
         _dbContext = dbContext;
     }
@@ -33,7 +41,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>
         {
             return Result.Failure<string>(userResult.Error);
         }
-        var loginUser = LoginUserAsync(userResult.Value, request, cancellationToken);
+        var loginUser = LoginUser(userResult.Value, request, cancellationToken);
         if (loginUser.IsFailure)
         {
             return Result.Failure<string>(loginUser.Error);
@@ -61,10 +69,9 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>
            "The user with the specified Email is not found."));
         }
         return Result.Success(user);
-       
     }
 
-    private Result<string> LoginUserAsync(User user, LoginUserCommand request, CancellationToken cancellationToken)
+    private Result<string> LoginUser(User user, LoginUserCommand request, CancellationToken cancellationToken)
     {
         if(new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password) == PasswordVerificationResult.Failed)
         {
@@ -72,8 +79,27 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>
                 "LoginUser.Validation",
                 "The Password is wrong."));
         }
-        string token = "sucess";
-        return Result.Success(token);
+        string jwt = CreateJwt(user);
+        return Result.Success(jwt);
+    }
+
+    private string CreateJwt(User user)
+    {
+        var claims = new Claim[]
+        {
+            new(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+        };
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettingsConfig.Secret));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
+        var jwtDescriptor = new JwtSecurityToken(
+            issuer: _jwtSettingsConfig.Issuer,
+            audience: _jwtSettingsConfig.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(_jwtSettingsConfig.ExpiryMinutes),
+            signingCredentials: creds
+        );
+        return new JwtSecurityTokenHandler().WriteToken(jwtDescriptor);
     }
 }
 
