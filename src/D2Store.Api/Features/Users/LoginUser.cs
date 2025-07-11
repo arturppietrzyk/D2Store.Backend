@@ -41,7 +41,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>
         {
             return Result.Failure<string>(userResult.Error);
         }
-        var loginUser = LoginUser(userResult.Value, request, cancellationToken);
+        var loginUser = LoginUser(userResult.Value, request);
         if (loginUser.IsFailure)
         {
             return Result.Failure<string>(loginUser.Error);
@@ -71,7 +71,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>
         return Result.Success(user);
     }
 
-    private Result<string> LoginUser(User user, LoginUserCommand request, CancellationToken cancellationToken)
+    private Result<string> LoginUser(User user, LoginUserCommand request)
     {
         if(new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password) == PasswordVerificationResult.Failed)
         {
@@ -89,6 +89,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>
         {
             new(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
+            new(ClaimTypes.Role, user.Role)
         };
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettingsConfig.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);

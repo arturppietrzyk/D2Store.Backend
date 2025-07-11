@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record CreateOrderCommand(Guid CustomerId, List<WriteOrderProductDtoCreate> Products) : IRequest<Result<ReadOrderDto>>;
+public record CreateOrderCommand(Guid UserId, List<WriteOrderProductDtoCreate> Products) : IRequest<Result<ReadOrderDto>>;
 
 public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<ReadOrderDto>>
 {
@@ -35,8 +35,8 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         {
             return Result.Failure<ReadOrderDto>(requestValidationResult.Error);
         }
-        var customerExists = await _dbContext.Customers.AsNoTracking().AnyAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
-        var validateCustomerExistanceResult = Order.ValidateCustomerExsistance(customerExists);
+        var userExists = await _dbContext.Users.AsNoTracking().AnyAsync(u => u.UserId == request.UserId, cancellationToken);
+        var validateCustomerExistanceResult = Order.ValidateCustomerExsistance(userExists);
         if (validateCustomerExistanceResult.IsFailure)
         {
             return Result.Failure<ReadOrderDto>(validateCustomerExistanceResult.Error);
@@ -101,7 +101,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
         try
         {
             decimal totalAmount = Order.CalculateTotalAmount(request, productsDict);
-            var order = Order.Create(request.CustomerId, totalAmount);
+            var order = Order.Create(request.UserId, totalAmount);
             _dbContext.Orders.Add(order);
             foreach (var orderProd in request.Products)
             {
@@ -146,7 +146,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     {
         return new ReadOrderDto(
             order.OrderId,
-            order.CustomerId,
+            order.UserId,
             products,
             order.OrderDate,
             order.TotalAmount,
@@ -159,7 +159,7 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 {
     public CreateOrderCommandValidator()
     {
-        RuleFor(c => c.CustomerId).NotEmpty().WithMessage("Customer Id is required.");
+        RuleFor(u => u.UserId).NotEmpty().WithMessage("User Id is required.");
         RuleFor(c => c.Products).NotEmpty().WithMessage("At least one product must be provided.");
         RuleForEach(c => c.Products).ChildRules(products =>
         {

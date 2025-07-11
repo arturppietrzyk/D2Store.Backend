@@ -1,5 +1,4 @@
-﻿using D2Store.Api.Features.Customers.Domain;
-using D2Store.Api.Features.Orders.Domain;
+﻿using D2Store.Api.Features.Orders.Domain;
 using D2Store.Api.Features.Products.Domain;
 using D2Store.Api.Features.Users.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +13,6 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Order> Orders { get; set; }
-    public DbSet<Customer> Customers { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<OrderProduct> OrderProducts { get; set; }
@@ -28,7 +26,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Product>()
            .Property(p => p.Price)
            .HasColumnType("decimal(18,2)");
-
 
         modelBuilder.Entity<Order>()
       .HasMany(o => o.Products)

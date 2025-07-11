@@ -66,7 +66,7 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            if (order.Products != null && order.Products.Any())
+            if (order.Products is not null && order.Products.Any())
             {
                 _dbContext.OrderProducts.RemoveRange(order.Products);
                 await _dbContext.SaveChangesAsync();

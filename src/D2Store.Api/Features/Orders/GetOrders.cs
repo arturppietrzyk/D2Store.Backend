@@ -33,7 +33,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
         {
             return Result.Failure<List<ReadOrderDto>>(validationResult.Error);
         }
-        var orders = await GetPaginatedOrdersWithIncludesAsync(request.PageNumber, request.PageSize, cancellationToken);
+        var orders = await GetPaginatedOrdersWithProductsAsync(request.PageNumber, request.PageSize, cancellationToken);
         var orderDtos = orders.Select(MapToReadOrderDto).ToList();
         return Result.Success(orderDtos);
     }
@@ -61,7 +61,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     /// <param name="pageSize"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<List<Order>> GetPaginatedOrdersWithIncludesAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
+    private async Task<List<Order>> GetPaginatedOrdersWithProductsAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
     {
         return await _dbContext.Orders
             .AsNoTracking()
@@ -86,7 +86,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
             op.Quantity)).ToList();
         return new ReadOrderDto(
             order.OrderId,
-            order.CustomerId,
+            order.UserId,
             productDtos,
             order.OrderDate,
             order.TotalAmount,
