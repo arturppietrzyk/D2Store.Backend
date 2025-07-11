@@ -29,7 +29,7 @@ public class ProductController : ControllerBase
     [HttpGet("product/{productId}")]
     public async Task<IActionResult> GetProductById(Guid productId)
     {
-        var result = await _mediator.Send(new GetProductByIdQuery(productId));
+        var result = await _mediator.Send(new GetProductQuery(productId));
         if (result.IsFailure)
         {
             return NotFound(result.Error);

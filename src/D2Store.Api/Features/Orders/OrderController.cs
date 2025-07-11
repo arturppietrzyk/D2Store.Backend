@@ -27,9 +27,9 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet("order/{orderId}")]
-    public async Task<IActionResult> GetOrderById(Guid orderId)
+    public async Task<IActionResult> GetOrder(Guid orderId)
     {
-        var result = await _mediator.Send(new GetOrderByIdQuery(orderId));
+        var result = await _mediator.Send(new GetOrderQuery(orderId));
         if (result.IsFailure)
         {
             return NotFound(result.Error);

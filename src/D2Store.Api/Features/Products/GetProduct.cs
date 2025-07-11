@@ -7,13 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
-public record GetProductByIdQuery(Guid ProductId) : IRequest<Result<ReadProductDto>>;
+public record GetProductQuery(Guid ProductId) : IRequest<Result<ReadProductDto>>;
 
-public class GetProductByIdHandler : IRequestHandler<GetProductByIdQuery, Result<ReadProductDto>>
+public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadProductDto>>
 {
     private readonly AppDbContext _dbContext;
 
-    public GetProductByIdHandler(AppDbContext dbContext)
+    public GetProductHandler(AppDbContext dbContext)
     {
         _dbContext = dbContext;
     }
@@ -24,7 +24,7 @@ public class GetProductByIdHandler : IRequestHandler<GetProductByIdQuery, Result
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<ReadProductDto>> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
+    public async ValueTask<Result<ReadProductDto>> Handle(GetProductQuery request, CancellationToken cancellationToken)
     {
         var productResult = await GetProductAsync(request.ProductId, cancellationToken);
         if (productResult.IsFailure)

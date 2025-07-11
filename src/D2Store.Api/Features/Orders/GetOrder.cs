@@ -7,13 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record GetOrderByIdQuery(Guid OrderId) : IRequest<Result<ReadOrderDto>>;
+public record GetOrderQuery(Guid OrderId) : IRequest<Result<ReadOrderDto>>;
 
-public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<ReadOrderDto>>
+public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDto>>
 {
     private readonly AppDbContext _dbContext;
 
-    public GetOrderByIdHandler(AppDbContext dbContext)
+    public GetOrderHandler(AppDbContext dbContext)
     {
         _dbContext = dbContext;
     }
@@ -24,7 +24,7 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<ReadOrderDto>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
+    public async ValueTask<Result<ReadOrderDto>> Handle(GetOrderQuery request, CancellationToken cancellationToken)
     {
         var orderResult = await GetOrderAsync(request.OrderId, cancellationToken);
         if (orderResult.IsFailure)
@@ -82,7 +82,7 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Rea
     {
         return new ReadOrderDto(
             order.OrderId,
-            order.CustomerId,
+            order.UserId,
             products,
             order.OrderDate,
             order.TotalAmount,
