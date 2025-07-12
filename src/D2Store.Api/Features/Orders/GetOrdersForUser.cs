@@ -22,7 +22,7 @@ public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Re
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval and mapping of the orders and its products into a response DTO..
+    /// Coordinates validation, retrieval and mapping of the orders and its products into a response DTO.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
