@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record DeleteOrderCommand(Guid OrderId) : IRequest<Result<Guid>>;
+public record DeleteOrderCommand(Guid OrderId, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
 
 public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid>>
 {
@@ -29,6 +29,11 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
         if (orderResult.IsFailure)
         {
             return Result.Failure<Guid>(orderResult.Error);
+        }
+        var order = orderResult.Value;
+        if (!request.IsAdmin && order.UserId != request.AuthenticatedUserId)
+        {
+            return Result.Failure<Guid>(Error.Forbidden);
         }
         var deleteOrder = await DeleteOrderAsync(orderResult.Value, cancellationToken);
         return Result.Success(deleteOrder);

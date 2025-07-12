@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Users;
 
-public record DeleteUserCommand(Guid UserId) : IRequest<Result<Guid>>;
+public record DeleteUserCommand(Guid UserId, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
 
 public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, Result<Guid>>
 {
@@ -25,6 +25,10 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, Result<Guid>
     /// <returns></returns>
     public async ValueTask<Result<Guid>> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
     {
+        if (!request.IsAdmin && request.UserId != request.AuthenticatedUserId)
+        {
+            return Result.Failure<Guid>(Error.Forbidden);
+        }
         var userResult = await GetUserAsync(request.UserId, cancellationToken);
         if (userResult.IsFailure)
         {

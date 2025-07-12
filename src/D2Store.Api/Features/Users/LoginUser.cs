@@ -87,8 +87,8 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>
     {
         var claims = new Claim[]
         {
-            new(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+            new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Role, user.Role)
         };
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettingsConfig.Secret));

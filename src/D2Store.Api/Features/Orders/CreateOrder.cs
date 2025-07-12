@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record CreateOrderCommand(Guid UserId, List<WriteOrderProductDtoCreate> Products) : IRequest<Result<ReadOrderDto>>;
+public record CreateOrderCommand(Guid UserId, List<WriteOrderProductDtoCreate> Products, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<ReadOrderDto>>;
 
 public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<ReadOrderDto>>
 {
@@ -30,6 +30,10 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     /// <returns></returns>
     public async ValueTask<Result<ReadOrderDto>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
+        if (!request.IsAdmin && request.UserId != request.AuthenticatedUserId)
+        {
+            return Result.Failure<ReadOrderDto>(Error.Forbidden);
+        }
         var requestValidationResult = await ValidateRequestAsync(request, cancellationToken);
         if (requestValidationResult.IsFailure)
         {

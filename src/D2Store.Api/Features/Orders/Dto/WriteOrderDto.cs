@@ -2,7 +2,7 @@
 
 public class WriteOrderDtoCreate
 {
-    public required Guid CustomerId { get; set; }
+    public required Guid UserId { get; set; }
     public required List<WriteOrderProductDtoCreate> Products { get; set; }
 }
 

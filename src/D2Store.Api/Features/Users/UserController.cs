@@ -1,7 +1,9 @@
 ﻿using D2Store.Api.Features.Users.Dto;
+using D2Store.Api.Shared;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace D2Store.Api.Features.Users;
 
@@ -38,35 +40,55 @@ public class UserController : ControllerBase
         return Ok(result.Value);
     }
 
+    [Authorize]
     [HttpGet("user/{userId}")]
     public async Task<IActionResult> GetUser(Guid userId)
     {
-        var result = await _mediator.Send(new GetUserQuery(userId));
+        var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = User.IsInRole("ADMIN");
+        var result = await _mediator.Send(new GetUserQuery(userId, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
-            return NotFound(result.Error);
-        }
-        return Ok(result.Value);
-    }
-
-    [HttpGet("users")]
-    public async Task<IActionResult> GetUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
-    {
-        var result = await _mediator.Send(new GetUsersQuery(pageNumber, pageSize));
-        if (result.IsFailure)
-        {
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
             return BadRequest(result.Error);
         }
         return Ok(result.Value);
     }
 
+    [Authorize]
+    [HttpGet("users")]
+    public async Task<IActionResult> GetUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
+    {
+        var isAdmin = User.IsInRole("ADMIN");
+        var result = await _mediator.Send(new GetUsersQuery(pageNumber, pageSize, isAdmin));
+        if (result.IsFailure)
+        {
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
+            return BadRequest(result.Error);
+        }
+        return Ok(result.Value);
+    }
+
+    [Authorize]
     [HttpDelete("user/{userId}")]
     public async Task<IActionResult> DeleteUser(Guid userId)
     {
-        var result = await _mediator.Send(new DeleteUserCommand(userId));
+        var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = User.IsInRole("ADMIN");
+        var result = await _mediator.Send(new DeleteUserCommand(userId, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
-            return NotFound(result.Error);
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
+            return BadRequest(result.Error);
         }
         return Ok(result.Value);
     }
@@ -74,26 +96,17 @@ public class UserController : ControllerBase
     [HttpPatch("user/{userId}")]
     public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] WriteUserDtoUpdate writeUserDto)
     {
-        var result = await _mediator.Send(new UpdateUserCommand(userId, writeUserDto.FirstName, writeUserDto.LastName, writeUserDto.Email, writeUserDto.PhoneNumber, writeUserDto.Address));
+        var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = User.IsInRole("ADMIN");
+        var result = await _mediator.Send(new UpdateUserCommand(userId, writeUserDto.FirstName, writeUserDto.LastName, writeUserDto.Email, writeUserDto.PhoneNumber, writeUserDto.Address, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
             return BadRequest(result.Error);
         }
         return Ok(result.Value);
     }
-
-    [Authorize]
-    [HttpGet("test-auth")]
-    public  IActionResult AuthenticatedOnlyEndpoint()
-    {
-        return Ok("You are authenticated");
-    }
-
-    [Authorize(Roles = "ADMIN")]
-    [HttpGet("admin-only")]
-    public IActionResult AdminOnlyEndpoint()
-    {
-        return Ok("You are authorized");
-    }
-
 }

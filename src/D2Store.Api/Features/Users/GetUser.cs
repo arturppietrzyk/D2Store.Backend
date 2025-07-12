@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Users;
 
-public record GetUserQuery(Guid UserId) : IRequest<Result<ReadUserDto>>;
+public record GetUserQuery(Guid UserId, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<ReadUserDto>>;
 
 public class GetUserHandler : IRequestHandler<GetUserQuery, Result<ReadUserDto>>
 {
@@ -26,6 +26,10 @@ public class GetUserHandler : IRequestHandler<GetUserQuery, Result<ReadUserDto>>
     /// <returns></returns>
     public async ValueTask<Result<ReadUserDto>> Handle(GetUserQuery request, CancellationToken cancellationToken)
     {
+        if (!request.IsAdmin && request.UserId != request.AuthenticatedUserId)
+        {
+            return Result.Failure<ReadUserDto>(Error.Forbidden);
+        }
         var userResult = await GetUserAsync(request.UserId, cancellationToken);
         if (userResult.IsFailure)
         {

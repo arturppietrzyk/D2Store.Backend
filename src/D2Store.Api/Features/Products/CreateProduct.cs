@@ -7,7 +7,7 @@ using D2Store.Api.Features.Products.Dto;
 
 namespace D2Store.Api.Features.Products;
 
-public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity) : IRequest<Result<ReadProductDto>>;
+public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, bool isAdmin) : IRequest<Result<ReadProductDto>>;
 
 public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result<ReadProductDto>>
 {
@@ -28,6 +28,10 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     /// <returns></returns>
     public async ValueTask<Result<ReadProductDto>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
+        if (!request.isAdmin)
+        {
+            return Result.Failure<ReadProductDto>(Error.Forbidden);
+        }
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {

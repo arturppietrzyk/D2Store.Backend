@@ -1,5 +1,7 @@
 ﻿using D2Store.Api.Features.Products.Dto;
+using D2Store.Api.Shared;
 using Mediator;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace D2Store.Api.Features.Products;
@@ -15,12 +17,18 @@ public class ProductController : ControllerBase
         _mediator = mediator;
     }
 
+    [Authorize]
     [HttpPost("product")]
     public async Task<IActionResult> CreateProduct([FromBody] WriteProductDtoCreate writeProductDto)
     {
-        var result = await _mediator.Send(new CreateProductCommand(writeProductDto.Name, writeProductDto.Description, writeProductDto.Price, writeProductDto.StockQuantity));
+        var isAdmin = User.IsInRole("ADMIN");
+        var result = await _mediator.Send(new CreateProductCommand(writeProductDto.Name, writeProductDto.Description, writeProductDto.Price, writeProductDto.StockQuantity, isAdmin));
         if (result.IsFailure)
         {
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
             return BadRequest(result.Error);
         }
         return Ok(result.Value);
@@ -32,7 +40,7 @@ public class ProductController : ControllerBase
         var result = await _mediator.Send(new GetProductQuery(productId));
         if (result.IsFailure)
         {
-            return NotFound(result.Error);
+            return BadRequest(result.Error);
         }
         return Ok(result.Value);
     }
@@ -48,24 +56,36 @@ public class ProductController : ControllerBase
         return Ok(result.Value);
     }
 
+    [Authorize]
     [HttpPatch("product/{productId}")]
     public async Task<IActionResult> UpdateProduct(Guid productId, [FromBody] WriteProductDtoUpdate writeProductDto)
     {
-        var result = await _mediator.Send(new UpdateProductCommand(productId, writeProductDto.Name, writeProductDto.Description, writeProductDto.Price, writeProductDto.StockQuantity));
+        var isAdmin = User.IsInRole("ADMIN");
+        var result = await _mediator.Send(new UpdateProductCommand(productId, writeProductDto.Name, writeProductDto.Description, writeProductDto.Price, writeProductDto.StockQuantity, isAdmin));
         if (result.IsFailure)
         {
-            return NotFound(result.Error);
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
+            return BadRequest(result.Error);
         }
         return Ok(result.Value);
     }
 
+    [Authorize]
     [HttpDelete("product/{productId}")]
     public async Task<IActionResult> DeleteProduct(Guid productId)
     {
-        var result = await _mediator.Send(new DeleteProductCommand(productId));
+        var isAdmin = User.IsInRole("ADMIN");
+        var result = await _mediator.Send(new DeleteProductCommand(productId, isAdmin));
         if (result.IsFailure)
         {
-            return NotFound(result.Error);
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
+            return BadRequest(result.Error);
         }
         return Ok(result.Value);
     }
