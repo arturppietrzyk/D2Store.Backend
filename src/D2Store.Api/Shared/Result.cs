@@ -8,7 +8,6 @@ public class Result
         {
             throw new InvalidOperationException();
         }
-
         if (!isSuccess && error == Error.None)
         {
             throw new InvalidOperationException();
@@ -30,8 +29,4 @@ public class Result
     public static Result Failure(Error error) => new(false, error);
 
     public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
-
-    public static Result Create(bool condition) => condition ? Success() : Failure(Error.ConditionNotMet);
-
-    public static Result<TValue> Create<TValue>(TValue? value) => value is not null ? Success(value) : Failure<TValue>(Error.NullValue);
 }

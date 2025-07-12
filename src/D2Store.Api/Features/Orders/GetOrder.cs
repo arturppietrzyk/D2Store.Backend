@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record GetOrderQuery(Guid OrderId) : IRequest<Result<ReadOrderDto>>;
+public record GetOrderQuery(Guid OrderId, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<ReadOrderDto>>;
 
 public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDto>>
 {
@@ -30,6 +30,11 @@ public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDt
         if (orderResult.IsFailure)
         {
             return Result.Failure<ReadOrderDto>(orderResult.Error);
+        }
+        var order = orderResult.Value;
+        if (!request.IsAdmin && order.UserId != request.AuthenticatedUserId)
+        {
+            return Result.Failure<ReadOrderDto>(Error.Forbidden);
         }
         var orderProductDtos = MapOrderProductsToDto(orderResult.Value.Products);
         return Result.Success(MapToReadOrderDto(orderResult.Value, orderProductDtos));

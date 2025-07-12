@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Users;
 
-public record UpdateUserCommand(Guid UserId, string? FirstName, string? LastName, string? Email, string? PhoneNumber, string? Address) : IRequest<Result<Guid>>;
+public record UpdateUserCommand(Guid UserId, string? FirstName, string? LastName, string? Email, string? PhoneNumber, string? Address, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
 
 public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>>
 {
@@ -28,6 +28,10 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>
     /// <returns></returns>
     public async ValueTask<Result<Guid>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
+        if (!request.IsAdmin && request.UserId != request.AuthenticatedUserId)
+        {
+            return Result.Failure<Guid>(Error.Forbidden);
+        }
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {

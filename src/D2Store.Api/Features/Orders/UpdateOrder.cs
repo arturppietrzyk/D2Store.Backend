@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record UpdateOrderCommand(Guid OrderId, string? Status) : IRequest<Result<Guid>>;
+public record UpdateOrderCommand(Guid OrderId, string? Status, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
 
 public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Guid>>
 {
@@ -38,6 +38,11 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
         if (orderResult.IsFailure)
         {
             return Result.Failure<Guid>(orderResult.Error);
+        }
+        var order = orderResult.Value;
+        if (!request.IsAdmin && order.UserId != request.AuthenticatedUserId)
+        {
+            return Result.Failure<Guid>(Error.Forbidden);
         }
         var updateOrder = await UpdateOrderAsync(orderResult.Value, request, cancellationToken);
         return Result.Success(updateOrder);

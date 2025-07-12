@@ -1,4 +1,5 @@
 ﻿using D2Store.Api.Features.Products.Domain;
+using D2Store.Api.Features.Products.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
-public record UpdateProductCommand(Guid ProductId, string? Name, string? Description, decimal? Price, int? StockQuantity) : IRequest<Result<Guid>>;
+public record UpdateProductCommand(Guid ProductId, string? Name, string? Description, decimal? Price, int? StockQuantity, bool isAdmin) : IRequest<Result<Guid>>;
 
 public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result<Guid>>
 {
@@ -28,6 +29,10 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     /// <returns></returns>
     public async ValueTask<Result<Guid>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
+        if (!request.isAdmin)
+        {
+            return Result.Failure<Guid>(Error.Forbidden);
+        }
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
