@@ -55,6 +55,24 @@ public class OrderController : ControllerBase
     }
 
     [Authorize]
+    [HttpGet("orders/{userId}")]
+    public async Task<IActionResult> GetOrdersForUser(Guid userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = User.IsInRole("ADMIN");
+        var result = await _mediator.Send(new GetOrdersForUserQuery(userId, pageNumber, pageSize, Guid.Parse(authenticatedUserId!), isAdmin));
+        if (result.IsFailure)
+        {
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
+            return BadRequest(result.Error);
+        }
+        return Ok(result.Value);
+    }
+
+    [Authorize]
     [HttpGet("orders")]
     public async Task<IActionResult> GetOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {

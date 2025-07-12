@@ -5,16 +5,17 @@ using D2Store.Api.Shared;
 using FluentValidation;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
+
 namespace D2Store.Api.Features.Orders;
 
-public record GetOrdersQuery(int PageNumber, int PageSize, bool isAdmin) : IRequest<Result<List<ReadOrderDto>>>;
+public record GetOrdersForUserQuery(Guid userId, int PageNumber, int PageSize, Guid AuthenticatedUserId, bool isAdmin) : IRequest<Result<List<ReadOrderDto>>>;
 
-public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<ReadOrderDto>>>
+public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Result<List<ReadOrderDto>>>
 {
     private readonly AppDbContext _dbContext;
-    private readonly IValidator<GetOrdersQuery> _validator;
+    private readonly IValidator<GetOrdersForUserQuery> _validator;
 
-    public GetOrdersHandler(AppDbContext dbContext, IValidator<GetOrdersQuery> validator)
+    public GetOrdersForUserHandler(AppDbContext dbContext, IValidator<GetOrdersForUserQuery> validator)
     {
         _dbContext = dbContext;
         _validator = validator;
@@ -26,9 +27,9 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<List<ReadOrderDto>>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
+    public async ValueTask<Result<List<ReadOrderDto>>> Handle(GetOrdersForUserQuery request, CancellationToken cancellationToken)
     {
-        if (!request.isAdmin)
+        if (!request.isAdmin && request.userId != request.AuthenticatedUserId)
         {
             return Result.Failure<List<ReadOrderDto>>(Error.Forbidden);
         }
@@ -37,9 +38,30 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
         {
             return Result.Failure<List<ReadOrderDto>>(validationResult.Error);
         }
-        var orders = await GetPaginatedOrdersWithProductsAsync(request.PageNumber, request.PageSize, cancellationToken);
+        var orders = await GetPaginatedOrdersWithProductsAsync(request.userId, request.PageNumber, request.PageSize, cancellationToken);
         var orderDtos = orders.Select(MapToReadOrderDto).ToList();
         return Result.Success(orderDtos);
+    }
+
+    /// <summary>
+    /// Loads the order objects based on the Pagination parameters and userId. It then eagerly loads its associated order products along with the product details for each item.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="pageNumber"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<List<Order>> GetPaginatedOrdersWithProductsAsync(Guid userId, int pageNumber, int pageSize, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Orders
+            .AsNoTracking()
+            .Where(o => o.UserId == userId)
+            .Include(o => o.Products)
+            .ThenInclude(op => op.Product)
+            .OrderByDescending(o => o.OrderDate)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
     }
 
     /// <summary>
@@ -48,33 +70,14 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result> ValidateRequestAsync(GetOrdersQuery request, CancellationToken cancellationToken)
+    private async Task<Result> ValidateRequestAsync(GetOrdersForUserQuery request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<List<ReadOrderDto>>(new Error("GetOrders.Validation", validationResult.ToString()));
+            return Result.Failure<List<ReadOrderDto>>(new Error("GetOrdersForUser.Validation", validationResult.ToString()));
         }
         return Result.Success();
-    }
-
-    /// <summary>
-    /// Loads the order objects based on the Pagination parameters, and eagerly loads its associated order products along with the product details for each item.
-    /// </summary>
-    /// <param name="pageNumber"></param>
-    /// <param name="pageSize"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    private async Task<List<Order>> GetPaginatedOrdersWithProductsAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
-    {
-        return await _dbContext.Orders
-            .AsNoTracking()
-            .Include(o => o.Products)
-            .ThenInclude(op => op.Product)
-            .OrderByDescending(o => o.OrderDate)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(cancellationToken);
     }
 
     /// <summary>
@@ -101,9 +104,9 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     }
 }
 
-public class GetOrdersQueryValidator : AbstractValidator<GetOrdersQuery>
+public class GetOrdersForUserQueryValidator : AbstractValidator<GetOrdersForUserQuery>
 {
-    public GetOrdersQueryValidator()
+    public GetOrdersForUserQueryValidator()
     {
         RuleFor(p => p.PageNumber).GreaterThan(0).WithMessage("Page Number must be greater than 0.");
         RuleFor(p => p.PageSize).GreaterThan(0).WithMessage("Page Size must be greater than 0.");
