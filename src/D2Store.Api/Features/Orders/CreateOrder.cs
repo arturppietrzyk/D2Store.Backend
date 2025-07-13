@@ -23,7 +23,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, mapping and creating of an order. Returns the created order and its products into a response DTO..
+    /// Coordinates validation, retrieval, mapping and creating of an order. Returns the created order and its products into a response DTO.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
