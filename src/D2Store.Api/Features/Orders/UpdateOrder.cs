@@ -1,24 +1,21 @@
 ﻿using D2Store.Api.Features.Orders.Domain;
-using D2Store.Api.Features.Orders.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
-using FluentValidation;
+using D2Store.Api.Shared.Enums;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record UpdateOrderCommand(Guid OrderId, string? Status, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
+public record UpdateOrderCommand(Guid OrderId, OrderStatus? Status, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
 
 public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Guid>>
 {
     private readonly AppDbContext _dbContext;
-    private readonly IValidator<UpdateOrderCommand> _validator;
 
-    public UpdateOrderHandler(AppDbContext dbContext, IValidator<UpdateOrderCommand> validator)
+    public UpdateOrderHandler(AppDbContext dbContext)
     {
         _dbContext = dbContext;
-        _validator = validator;
     }
 
     /// <summary>
@@ -29,11 +26,6 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
     /// <returns></returns>
     public async ValueTask<Result<Guid>> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
     {
-        var validationResult = await ValidateRequestAsync(request, cancellationToken);
-        if (validationResult.IsFailure)
-        {
-            return Result.Failure<Guid>(validationResult.Error);
-        }
         var orderResult = await GetOrderAsync(request.OrderId, cancellationToken);
         if (orderResult.IsFailure)
         {
@@ -46,22 +38,6 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
         }
         var updateOrder = await UpdateOrderAsync(orderResult.Value, request, cancellationToken);
         return Result.Success(updateOrder);
-    }
-
-    /// <summary>
-    /// Validates the input. 
-    /// </summary>
-    /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    private async Task<Result> ValidateRequestAsync(UpdateOrderCommand request, CancellationToken cancellationToken)
-    {
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return Result.Failure<ReadOrderDto>(new Error("UpdateOrder.Validation", validationResult.ToString()));
-        }
-        return Result.Success();
     }
 
     /// <summary>
@@ -98,13 +74,5 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
         order.Update(request.Status);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return order.OrderId;
-    }
-}
-
-public class UpdateOrderCommandValidator : AbstractValidator<UpdateOrderCommand>
-{
-    public UpdateOrderCommandValidator()
-    {
-        RuleFor(o => o.Status).NotEmpty().When(o => o.Status is not null).WithMessage("Status cannot be empty if provided.");
     }
 }

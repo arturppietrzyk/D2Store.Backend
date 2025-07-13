@@ -1,4 +1,6 @@
-﻿namespace D2Store.Api.Features.Orders.Dto;
+﻿using D2Store.Api.Shared.Enums;
+
+namespace D2Store.Api.Features.Orders.Dto;
 
 public class WriteOrderDtoCreate
 {
@@ -14,5 +16,5 @@ public class WriteOrderProductDtoCreate
 
 public class WriteOrderDtoUpdate
 {
-    public string? Status { get; set; }
+    public OrderStatus? Status { get; set; }
 }

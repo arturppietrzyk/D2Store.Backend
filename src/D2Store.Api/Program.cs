@@ -7,6 +7,7 @@ using D2Store.Api.Config;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,7 +46,11 @@ builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineB
 builder.Services.AddValidatorsFromAssembly(assembly);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+     .AddJsonOptions(options =>
+     {
+         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+     });
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(o =>o.UseSqlServer(connectionString));
 
