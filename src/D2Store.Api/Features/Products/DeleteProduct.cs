@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
-public record DeleteProductCommand(Guid ProductId, bool isAdmin) : IRequest<Result<Guid>>;
+public record DeleteProductCommand(Guid ProductId, bool IsAdmin) : IRequest<Result<Guid>>;
 
 public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result<Guid>>
 {
@@ -25,7 +25,7 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
     /// <returns></returns>
     public async ValueTask<Result<Guid>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
     {
-        if (!request.isAdmin)
+        if (!request.IsAdmin)
         {
             return Result.Failure<Guid>(Error.Forbidden);
         }

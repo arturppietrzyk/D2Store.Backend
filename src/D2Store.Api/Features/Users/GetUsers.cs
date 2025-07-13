@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Users;
 
-public record GetUsersQuery(int PageNumber, int PageSize, bool isAdmin) : IRequest<Result<List<ReadUserDto>>>;
+public record GetUsersQuery(int PageNumber, int PageSize, bool IsAdmin) : IRequest<Result<List<ReadUserDto>>>;
 
 public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<List<ReadUserDto>>>
 {
@@ -29,7 +29,7 @@ public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<List<ReadUs
     /// <returns></returns>
     public async ValueTask<Result<List<ReadUserDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
-        if (!request.isAdmin)
+        if (!request.IsAdmin)
         {
             return Result.Failure<List<ReadUserDto>>(Error.Forbidden);
         }

@@ -91,7 +91,7 @@ public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDt
             products,
             order.OrderDate,
             order.TotalAmount,
-            order.Status,
+            order.Status.ToString(),
             order.LastModified);
     }
 }

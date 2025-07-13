@@ -154,7 +154,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             products,
             order.OrderDate,
             order.TotalAmount,
-            order.Status,
+            order.Status.ToString(),
             order.LastModified);
     }
 }
