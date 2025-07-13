@@ -7,7 +7,7 @@ using Mediator;
 using Microsoft.EntityFrameworkCore;
 namespace D2Store.Api.Features.Orders;
 
-public record GetOrdersQuery(int PageNumber, int PageSize, bool isAdmin) : IRequest<Result<List<ReadOrderDto>>>;
+public record GetOrdersQuery(int PageNumber, int PageSize, bool IsAdmin) : IRequest<Result<List<ReadOrderDto>>>;
 
 public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<ReadOrderDto>>>
 {
@@ -28,7 +28,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     /// <returns></returns>
     public async ValueTask<Result<List<ReadOrderDto>>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
     {
-        if (!request.isAdmin)
+        if (!request.IsAdmin)
         {
             return Result.Failure<List<ReadOrderDto>>(Error.Forbidden);
         }
@@ -96,7 +96,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
             productDtos,
             order.OrderDate,
             order.TotalAmount,
-            order.Status,
+            order.Status.ToString(),
             order.LastModified);
     }
 }

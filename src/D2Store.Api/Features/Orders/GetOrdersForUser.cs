@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record GetOrdersForUserQuery(Guid userId, int PageNumber, int PageSize, Guid AuthenticatedUserId, bool isAdmin) : IRequest<Result<List<ReadOrderDto>>>;
+public record GetOrdersForUserQuery(Guid UserId, int PageNumber, int PageSize, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<List<ReadOrderDto>>>;
 
 public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Result<List<ReadOrderDto>>>
 {
@@ -29,7 +29,7 @@ public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Re
     /// <returns></returns>
     public async ValueTask<Result<List<ReadOrderDto>>> Handle(GetOrdersForUserQuery request, CancellationToken cancellationToken)
     {
-        if (!request.isAdmin && request.userId != request.AuthenticatedUserId)
+        if (!request.IsAdmin && request.UserId != request.AuthenticatedUserId)
         {
             return Result.Failure<List<ReadOrderDto>>(Error.Forbidden);
         }
@@ -38,13 +38,13 @@ public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Re
         {
             return Result.Failure<List<ReadOrderDto>>(validationResult.Error);
         }
-        var orders = await GetPaginatedOrdersWithProductsAsync(request.userId, request.PageNumber, request.PageSize, cancellationToken);
+        var orders = await GetPaginatedOrdersWithProductsAsync(request.UserId, request.PageNumber, request.PageSize, cancellationToken);
         var orderDtos = orders.Select(MapToReadOrderDto).ToList();
         return Result.Success(orderDtos);
     }
 
     /// <summary>
-    /// Loads the order objects based on the Pagination parameters and userId. It then eagerly loads its associated order products along with the product details for each item.
+    /// Loads the order objects based on the Pagination parameters and UserId. It then eagerly loads its associated order products along with the product details for each item.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="pageNumber"></param>
@@ -99,7 +99,7 @@ public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Re
             productDtos,
             order.OrderDate,
             order.TotalAmount,
-            order.Status,
+            order.Status.ToString(),
             order.LastModified);
     }
 }
