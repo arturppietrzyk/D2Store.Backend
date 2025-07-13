@@ -1,5 +1,6 @@
 ﻿using D2Store.Api.Features.Products.Domain;
 using D2Store.Api.Shared;
+using D2Store.Api.Shared.Enums;
 
 namespace D2Store.Api.Features.Orders.Domain;
 
@@ -11,7 +12,7 @@ public class Order
     public IReadOnlyCollection<OrderProduct> Products => _products.AsReadOnly();
     public DateTime OrderDate { get; private set; }
     public decimal TotalAmount { get; private set; }
-    public string Status { get; private set; }
+    public OrderStatus Status { get; private set; }
     public DateTime LastModified { get; private set; }
 
     private Order(Guid userId, decimal totalAmount)
@@ -20,7 +21,7 @@ public class Order
         UserId = userId;
         OrderDate = DateTime.UtcNow;
         TotalAmount = totalAmount;
-        Status = "Paid";
+        Status = OrderStatus.PAID;
         LastModified = DateTime.UtcNow;
     }
 
@@ -53,12 +54,26 @@ public class Order
         LastModified = DateTime.UtcNow;
     }
 
-    public void Update(string? status)
+    //public void Update(string? status)
+    //{
+    //    bool isUpdated = false;
+    //    if (!string.IsNullOrEmpty(status) && status != Status)
+    //    {
+    //        Status = status;
+    //        isUpdated = true;
+    //    }
+    //    if (isUpdated)
+    //    {
+    //        LastModified = DateTime.UtcNow;
+    //    }
+    //}
+
+    public void Update(OrderStatus? status)
     {
         bool isUpdated = false;
-        if (!string.IsNullOrEmpty(status) && status != Status)
+        if (status.HasValue && status.Value != Status)
         {
-            Status = status;
+            Status = status.Value;
             isUpdated = true;
         }
         if (isUpdated)

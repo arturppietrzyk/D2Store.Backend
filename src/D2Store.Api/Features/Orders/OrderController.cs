@@ -1,5 +1,6 @@
 ﻿using D2Store.Api.Features.Orders.Dto;
 using D2Store.Api.Shared;
+using D2Store.Api.Shared.Enums;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> CreateOrder([FromBody] WriteOrderDtoCreate writeOrderDto)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("ADMIN");
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new CreateOrderCommand(writeOrderDto.UserId, writeOrderDto.Products, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
@@ -41,7 +42,7 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> GetOrder(Guid orderId)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("ADMIN");
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new GetOrderQuery(orderId, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
@@ -59,7 +60,7 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> GetOrdersForUser(Guid userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("ADMIN");
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new GetOrdersForUserQuery(userId, pageNumber, pageSize, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
@@ -76,7 +77,7 @@ public class OrderController : ControllerBase
     [HttpGet("orders")]
     public async Task<IActionResult> GetOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
-        var isAdmin = User.IsInRole("ADMIN");
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new GetOrdersQuery(pageNumber, pageSize, isAdmin));
         if (result.IsFailure)
         {
@@ -94,7 +95,7 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> UpdateOrder(Guid orderId, [FromBody] WriteOrderDtoUpdate writeOrderDto)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("ADMIN");
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new UpdateOrderCommand(orderId, writeOrderDto.Status, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
@@ -112,7 +113,7 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> DeleteOrder(Guid orderId)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("ADMIN");
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new DeleteOrderCommand(orderId, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {

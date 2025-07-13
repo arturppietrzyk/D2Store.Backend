@@ -1,5 +1,6 @@
 ﻿using D2Store.Api.Features.Users.Dto;
 using D2Store.Api.Shared;
+using D2Store.Api.Shared.Enums;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,7 +46,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> GetUser(Guid userId)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("ADMIN");
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new GetUserQuery(userId, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
@@ -62,7 +63,7 @@ public class UserController : ControllerBase
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
     {
-        var isAdmin = User.IsInRole("ADMIN");
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new GetUsersQuery(pageNumber, pageSize, isAdmin));
         if (result.IsFailure)
         {
@@ -80,7 +81,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> DeleteUser(Guid userId)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("ADMIN");
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new DeleteUserCommand(userId, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
@@ -97,7 +98,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] WriteUserDtoUpdate writeUserDto)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("ADMIN");
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new UpdateUserCommand(userId, writeUserDto.FirstName, writeUserDto.LastName, writeUserDto.Email, writeUserDto.PhoneNumber, writeUserDto.Address, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
