@@ -1,12 +1,13 @@
+using D2Store.Api.Config;
 using D2Store.Api.Infrastructure;
-using Microsoft.EntityFrameworkCore;
-using Serilog;
 using FluentValidation;
 using Mediator;
-using D2Store.Api.Config;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +40,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings!.Secret)),
             ValidateIssuerSigningKey = true
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                var error = D2Store.Api.Shared.Error.Unauthorized;
+                var json = JsonSerializer.Serialize(error);
+                return context.Response.WriteAsync(json);
+            }
         };
     });
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
