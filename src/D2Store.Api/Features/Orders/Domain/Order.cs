@@ -68,7 +68,7 @@ public class Order
         }
     }
 
-    public static Result ValidateCustomerExsistance(bool customerExists)
+    public static Result AssertCustomerExsistance(bool customerExists)
     {
         if (!customerExists)
         {
@@ -79,7 +79,7 @@ public class Order
         return Result.Success();
     }
 
-    public static Result ValidateProductsExistance(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
+    public static Result AssertProductsExistance(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
     {
         foreach (var product in request.Products)
         {
@@ -93,12 +93,12 @@ public class Order
         return Result.Success();
     }
 
-    public static Result ValidateStockAvailability(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
+    public static Result AssertStockAvailability(CreateOrderCommand request, Dictionary<Guid, Product> productsDict)
     {
         foreach (var orderProduct in request.Products)
         {
             var product = productsDict[orderProduct.ProductId];
-            var stockCheck = product.HasSufficientStock(orderProduct.Quantity);
+            var stockCheck = product.AssertProductHasSufficientStock(orderProduct.Quantity);
             if (stockCheck.IsFailure)
             {
                 return stockCheck;

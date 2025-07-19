@@ -35,10 +35,10 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, Result<Guid>
             return Result.Failure<Guid>(userResult.Error);
         }
         var hasOrders = await _dbContext.Orders.AsNoTracking().AnyAsync(o => o.UserId == request.UserId, cancellationToken);
-        var validateOrdersExsistanceResult = User.ValidateOrdersExistance(hasOrders);
-        if (validateOrdersExsistanceResult.IsFailure)
+        var assertUserHasNoOrdersResult = User.AssertUserHasNoOrders(hasOrders);
+        if (assertUserHasNoOrdersResult.IsFailure)
         {
-            return Result.Failure<Guid>(validateOrdersExsistanceResult.Error);
+            return Result.Failure<Guid>(assertUserHasNoOrdersResult.Error);
         }
         var deleteUser = await DeleteUserAsync(userResult.Value, cancellationToken);
         return Result.Success(deleteUser);
