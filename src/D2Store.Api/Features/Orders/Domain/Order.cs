@@ -54,20 +54,6 @@ public class Order
         LastModified = DateTime.UtcNow;
     }
 
-    //public void Update(string? status)
-    //{
-    //    bool isUpdated = false;
-    //    if (!string.IsNullOrEmpty(status) && status != Status)
-    //    {
-    //        Status = status;
-    //        isUpdated = true;
-    //    }
-    //    if (isUpdated)
-    //    {
-    //        LastModified = DateTime.UtcNow;
-    //    }
-    //}
-
     public void Update(OrderStatus? status)
     {
         bool isUpdated = false;
@@ -101,7 +87,7 @@ public class Order
             {
                 return Result.Failure(new Error(
                     "Order.Validation",
-                    $"Product with ID '{product.ProductId}' does not exist."));
+                    $"Product with ProductId '{product.ProductId}' does not exist."));
             }
         }
         return Result.Success();
