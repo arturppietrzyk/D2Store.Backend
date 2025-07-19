@@ -69,7 +69,7 @@ public class User
         }
     }
 
-    public static Result ValidateEmailUniqueness(bool emailInUse)
+    public static Result AssertUserEmailIsUnique(bool emailInUse)
     {
         if (emailInUse)
         {
@@ -80,7 +80,7 @@ public class User
         return Result.Success();
     }
 
-    public static Result ValidateOrdersExistance(bool hasOrders)
+    public static Result AssertUserHasNoOrders(bool hasOrders)
     {
         if (hasOrders)
         {

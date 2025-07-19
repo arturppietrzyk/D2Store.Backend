@@ -60,7 +60,7 @@ public class Product
 
     public Result ReduceStock(int quantity)
     {
-        var stockCheck = HasSufficientStock(quantity);
+        var stockCheck = AssertProductHasSufficientStock(quantity);
         if (stockCheck.IsFailure)
         {
             return stockCheck;
@@ -70,7 +70,7 @@ public class Product
         return Result.Success();
     }
 
-    public Result HasSufficientStock(int requestedQuantity)
+    public Result AssertProductHasSufficientStock(int requestedQuantity)
     {
         if (StockQuantity < requestedQuantity)
         {
@@ -81,7 +81,7 @@ public class Product
         return Result.Success();
     }
 
-    public static Result ValidateOrderProductExistance(bool hasOrderProducts)
+    public static Result AssertOrderProductExistance(bool hasOrderProducts)
     {
         if (hasOrderProducts)
         {

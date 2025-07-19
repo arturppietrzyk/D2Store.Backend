@@ -45,10 +45,10 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>
         if (request.Email is not null)
         {
             var emailInUse = await _dbContext.Users.AsNoTracking().AnyAsync(u => u.Email == request.Email && u.UserId != request.UserId, cancellationToken);
-            var validateEmailUniquenessResult = User.ValidateEmailUniqueness(emailInUse);
-            if (validateEmailUniquenessResult.IsFailure)
+            var assertUserEmailIsUniqueResult = User.AssertUserEmailIsUnique(emailInUse);
+            if (assertUserEmailIsUniqueResult.IsFailure)
             {
-                return Result.Failure<Guid>(validateEmailUniquenessResult.Error);
+                return Result.Failure<Guid>(assertUserEmailIsUniqueResult.Error);
             }
         }
         var updateUser = await UpdateUserAsync(userResult.Value, request, cancellationToken);

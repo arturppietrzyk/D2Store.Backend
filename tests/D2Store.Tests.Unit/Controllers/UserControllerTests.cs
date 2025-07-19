@@ -101,7 +101,7 @@ public class UserControllerTests
     //        Password = "Password"
     //    };
 
-    //}
+    //}/
 
     // GetUser Tests
     [Fact]

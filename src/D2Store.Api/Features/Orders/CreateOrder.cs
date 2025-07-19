@@ -40,21 +40,21 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             return Result.Failure<ReadOrderDto>(requestValidationResult.Error);
         }
         var userExists = await _dbContext.Users.AsNoTracking().AnyAsync(u => u.UserId == request.UserId, cancellationToken);
-        var validateCustomerExistanceResult = Order.ValidateCustomerExsistance(userExists);
-        if (validateCustomerExistanceResult.IsFailure)
+        var assertCustomerExistanceResult = Order.AssertCustomerExsistance(userExists);
+        if (assertCustomerExistanceResult.IsFailure)
         {
-            return Result.Failure<ReadOrderDto>(validateCustomerExistanceResult.Error);
+            return Result.Failure<ReadOrderDto>(assertCustomerExistanceResult.Error);
         }
         var productsDict = await GetProductsDictionaryAsync(request.Products.Select(p => p.ProductId).Distinct().ToList(), cancellationToken);
-        var validateProductsExistanceResult = Order.ValidateProductsExistance(request, productsDict);
-        if (validateProductsExistanceResult.IsFailure)
+        var assertProductsExistanceResult = Order.AssertProductsExistance(request, productsDict);
+        if (assertProductsExistanceResult.IsFailure)
         {
-            return Result.Failure<ReadOrderDto>(validateProductsExistanceResult.Error);
+            return Result.Failure<ReadOrderDto>(assertProductsExistanceResult.Error);
         }
-        var stockCheckResult = Order.ValidateStockAvailability(request, productsDict);
-        if (stockCheckResult.IsFailure)
+        var assertStockAvailabilityResult = Order.AssertStockAvailability(request, productsDict);
+        if (assertStockAvailabilityResult.IsFailure)
         {
-            return Result.Failure<ReadOrderDto>(stockCheckResult.Error);
+            return Result.Failure<ReadOrderDto>(assertStockAvailabilityResult.Error);
         }
         var createOrder = await CreateOrderAsync(request, productsDict, cancellationToken);
         var productDtos = MapOrderProductsToDto(createOrder.Products.ToList());

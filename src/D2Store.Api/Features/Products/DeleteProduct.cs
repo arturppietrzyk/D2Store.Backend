@@ -35,10 +35,10 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
             return Result.Failure<Guid>(productResult.Error);
         }
         var hasOrderProducts = await _dbContext.OrderProducts.AsNoTracking().AnyAsync(op => op.ProductId == request.ProductId, cancellationToken);
-        var validateOrderProductExistanceResult = Product.ValidateOrderProductExistance(hasOrderProducts);
-        if (validateOrderProductExistanceResult.IsFailure)
+        var assertOrderProductExistanceResult = Product.AssertOrderProductExistance(hasOrderProducts);
+        if (assertOrderProductExistanceResult.IsFailure)
         {
-            return Result.Failure<Guid>(validateOrderProductExistanceResult.Error);
+            return Result.Failure<Guid>(assertOrderProductExistanceResult.Error);
         }
         var deleteProduct = await DeleteProductAsync(productResult.Value, cancellationToken);
         return Result.Success(deleteProduct);

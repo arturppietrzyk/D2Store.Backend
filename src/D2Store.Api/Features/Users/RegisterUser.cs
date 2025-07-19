@@ -30,10 +30,10 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
             return Result.Failure<ReadUserDto>(validationResult.Error);
         }
         var emailInUse = await _dbContext.Users.AsNoTracking().AnyAsync(u => u.Email == request.Email, cancellationToken);
-        var validateEmailUniquenessResult = User.ValidateEmailUniqueness(emailInUse);
-        if (validateEmailUniquenessResult.IsFailure)
+        var assertUserEmailIsUniqueResult = User.AssertUserEmailIsUnique(emailInUse);
+        if (assertUserEmailIsUniqueResult.IsFailure)
         {
-            return Result.Failure<ReadUserDto>(validateEmailUniquenessResult.Error);
+            return Result.Failure<ReadUserDto>(assertUserEmailIsUniqueResult.Error);
         }
         var registerUser = await RegisterUserAsync(request, cancellationToken);
         var userDto = MapToReadUserDto(registerUser);
