@@ -23,8 +23,6 @@ var connectionString = builder.Configuration.GetConnectionString("D2Store");
 
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 
-var assembly = typeof(Program).Assembly;
-
 builder.Services.Configure<JwtSettingsConfig>(builder.Configuration.GetSection(JwtSettingsConfig.SectionName));
 var jwtSettings = builder.Configuration.GetSection(JwtSettingsConfig.SectionName).Get<JwtSettingsConfig>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -56,7 +54,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehaviour<,>));
-builder.Services.AddValidatorsFromAssembly(assembly);
+builder.Services.AddValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers()
@@ -65,7 +63,7 @@ builder.Services.AddControllers()
          options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
      });
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<AppDbContext>(o =>o.UseSqlServer(connectionString));
+builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connectionString));
 
 var app = builder.Build();
 
