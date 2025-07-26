@@ -43,7 +43,11 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
             return Result.Failure<Guid>(productResult.Error);
         }
         var updateProduct = await UpdateProductAsync(productResult.Value, request, cancellationToken);
-        return Result.Success(updateProduct);
+        if (updateProduct.IsFailure)
+        {
+            return Result.Failure<Guid>(updateProduct.Error);
+        }
+        return Result.Success(updateProduct.Value);
     }
 
     /// <summary>
@@ -88,11 +92,15 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Guid> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
+    private async Task<Result<Guid>> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        product.Update(request.Name, request.Description, request.Price, request.StockQuantity);
+        var isUpdated = product.Update(request.Name, request.Description, request.Price, request.StockQuantity);
+        if (!isUpdated)
+        {
+            return Result.Failure<Guid>(new Error("UpdateProduct.Validation", "The changes are no different to what is currently there."));
+        }
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return product.ProductId;
+        return Result.Success(product.ProductId);
     }
 }
 
@@ -104,5 +112,12 @@ public class UpdateProductCommandValidator : AbstractValidator<UpdateProductComm
         RuleFor(p => p.Description).NotEmpty().When(p => p.Description is not null).WithMessage("Description cannot be empty if provided.");
         RuleFor(p => p.Price).GreaterThan(0).When(p => p.Price is not null).WithMessage("Price cannot be 0 if provided.");
         RuleFor(p => p.StockQuantity).GreaterThan(-1).When(p => p.StockQuantity is not null).WithMessage("Stock Quantity cannot be negative if provided.");
+        RuleFor(p => p)
+            .Must(p =>
+                p.Name is not null ||
+                p.Description is not null ||
+                p.Price is not null ||
+                p.StockQuantity is not null)
+                .WithMessage("At least one field (Name, Description, Price, StockQuantity) must be provided.");
     }
 }

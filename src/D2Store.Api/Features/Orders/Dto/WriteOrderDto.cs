@@ -16,5 +16,5 @@ public class WriteOrderProductDtoCreate
 
 public class WriteOrderDtoUpdate
 {
-    public OrderStatus? Status { get; set; }
+    public required OrderStatus Status { get; set; }
 }

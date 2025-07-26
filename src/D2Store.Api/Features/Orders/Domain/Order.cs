@@ -54,18 +54,19 @@ public class Order
         LastModified = DateTime.UtcNow;
     }
 
-    public void Update(OrderStatus? status)
+    public bool Update(OrderStatus status)
     {
         bool isUpdated = false;
-        if (status.HasValue && status.Value != Status)
+        if(status != Status)
         {
-            Status = status.Value;
+            Status = status;
             isUpdated = true;
         }
         if (isUpdated)
         {
             LastModified = DateTime.UtcNow;
         }
+        return isUpdated;
     }
 
     public static Result AssertCustomerExsistance(bool customerExists)

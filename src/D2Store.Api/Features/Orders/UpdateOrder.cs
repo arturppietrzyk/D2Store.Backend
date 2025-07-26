@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record UpdateOrderCommand(Guid OrderId, OrderStatus? Status, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
+public record UpdateOrderCommand(Guid OrderId, OrderStatus Status, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
 
 public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Guid>>
 {
@@ -37,7 +37,11 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
             return Result.Failure<Guid>(Error.Forbidden);
         }
         var updateOrder = await UpdateOrderAsync(orderResult.Value, request, cancellationToken);
-        return Result.Success(updateOrder);
+        if (updateOrder.IsFailure)
+        {
+            return Result.Failure<Guid>(updateOrder.Error);
+        }
+        return Result.Success(updateOrder.Value);
     }
 
     /// <summary>
@@ -69,10 +73,14 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Guid> UpdateOrderAsync(Order order, UpdateOrderCommand request, CancellationToken cancellationToken)
+    private async Task<Result<Guid>> UpdateOrderAsync(Order order, UpdateOrderCommand request, CancellationToken cancellationToken)
     {
-        order.Update(request.Status);
+        var isUpdated = order.Update(request.Status);
+        if (!isUpdated)
+        {
+            return Result.Failure<Guid>(new Error("UpdateOrder.Validation", "The changes are no different to what is currently there."));
+        }
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return order.OrderId;
+        return Result.Success(order.OrderId);
     }
 }

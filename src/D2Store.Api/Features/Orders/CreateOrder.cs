@@ -163,11 +163,9 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 {
     public CreateOrderCommandValidator()
     {
-        RuleFor(u => u.UserId).NotEmpty().WithMessage("User Id is required.");
         RuleFor(c => c.Products).NotEmpty().WithMessage("At least one product must be provided.");
         RuleForEach(c => c.Products).ChildRules(products =>
         {
-            products.RuleFor(p => p.ProductId).NotEmpty().WithMessage("Product Id is required.");
             products.RuleFor(p => p.Quantity).GreaterThan(0).WithMessage("Quantity must be greater than zero.");
         });
     }

@@ -52,7 +52,11 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>
             }
         }
         var updateUser = await UpdateUserAsync(userResult.Value, request, cancellationToken);
-        return Result.Success(updateUser);
+        if (updateUser.IsFailure)
+        {
+            return Result.Failure<Guid>(updateUser.Error);
+        }
+        return Result.Success(updateUser.Value);
     }
 
     /// <summary>
@@ -97,11 +101,15 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Guid> UpdateUserAsync(User user, UpdateUserCommand request, CancellationToken cancellationToken)
+    private async Task<Result<Guid>> UpdateUserAsync(User user, UpdateUserCommand request, CancellationToken cancellationToken)
     {
-        user.Update(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
+        var isUpdated = user.Update(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return user.UserId;
+        if (!isUpdated)
+        {
+            return Result.Failure<Guid>(new Error("UpdateUser.Validation", "The changes are no different to what is currently there."));
+        }
+        return Result.Success(user.UserId);
     }
 }
 
@@ -114,5 +122,13 @@ public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
         RuleFor(u => u.Email).NotEmpty().When(u => u.Email is not null).WithMessage("Email cannot be empty if provided.");
         RuleFor(u => u.PhoneNumber).NotEmpty().When(u => u.PhoneNumber is not null).WithMessage("Phone Number cannot be empty if provided.");
         RuleFor(u => u.Address).NotEmpty().When(u => u.Address is not null).WithMessage("Address cannot be empty if provided.");
+        RuleFor(u => u)
+            .Must(u =>
+            u.FirstName is not null ||
+            u.LastName is not null ||
+            u.Email is not null ||
+            u.PhoneNumber is not null ||
+            u.Address is not null)
+            .WithMessage("At least one field (First Name, Last Name, Email, Phone Number, Address) must be provided");
     }
 }

@@ -27,9 +27,9 @@ public class UserControllerTests
         // Arrange
         var writeUserDto = new WriteUserDtoRegister
         {
-            FirstName = "Artur",
-            LastName = "Pietrzyk",
-            Email = "artur@example.com",
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john@example.com",
             Password = "Password",
             PhoneNumber = "123456",
             Address = "Address"
@@ -67,9 +67,9 @@ public class UserControllerTests
     {
         var writeUserDto = new WriteUserDtoRegister
         {
-            FirstName = "Artur",
-            LastName = "Pietrzyk",
-            Email = "artur@example.com",
+            FirstName = "",
+            LastName = "Doe",
+            Email = "john@example.com",
             Password = "Password",
             PhoneNumber = "123456",
             Address = "Address"
@@ -100,7 +100,7 @@ public class UserControllerTests
         var authenticatedUserId = userId;
         var writeUserDto = new WriteUserDtoLogin
         {
-            Email = "artur@example.com",
+            Email = "john@example.com",
             Password = "Password"
         };
         var jwtToken = "Token";
@@ -135,10 +135,10 @@ public class UserControllerTests
         var authenticatedUserId = userId;
         var writeUserDto = new WriteUserDtoLogin
         {
-            Email = "artur@example.com",
+            Email = "",
             Password = "Password"
         };
-        var error = new Error("RegisterUser.Validation", "First Name is required.");
+        var error = new Error("LoginUser.Validation", "Email is required.");
         var result = Result.Failure<string>(error);
         _mediator.Send(Arg.Is<LoginUserCommand>(cmd =>
         cmd.Email == writeUserDto.Email &&
@@ -169,7 +169,7 @@ public class UserControllerTests
         // Arrange
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
-        var user = User.Register("Artur", "Pietrzyk", "artur@example.com", "hashedPwd", "123456", "Address");
+        var user = User.Register("John", "Doe", "john@example.com", "hashedPwd", "123456", "Address");
         var readUserDto = new ReadUserDto(
             user.UserId,
             user.FirstName,
@@ -268,9 +268,9 @@ public class UserControllerTests
         int pageSize = 2;
         var readUserDto1 = new ReadUserDto(
             Guid.CreateVersion7(),
-            "Artur",
-            "Pietrzyk",
-            "artur@example.com",
+            "John",
+            "Doe",
+            "john@example.com",
             "PasswordHash",
             "123415",
             "Address",
@@ -280,9 +280,9 @@ public class UserControllerTests
             );
         var readUserDto2 = new ReadUserDto(
             Guid.CreateVersion7(),
-            "Daniel",
+            "Jane",
             "Smith",
-            "daniel@example.com",
+            "jane@example.com",
             "PasswordHash",
             "123415",
             "Address",
@@ -338,7 +338,7 @@ public class UserControllerTests
     [Fact]
     public async Task GetUsers_ReturnsBadRequestAndError_GetUsersFails()
     {
-        int pageNumber = 1;
+        int pageNumber = 0;
         int pageSize = 2;
         var error = new Error("GetUsers.Validation", "Page Number must be greater than 0.");
         var result = Result.Failure<List<ReadUserDto>>(error);
@@ -449,9 +449,9 @@ public class UserControllerTests
         // Arrange
         var writeUserDto = new WriteUserDtoUpdate
         {
-            FirstName = "Artur",
-            LastName = "Pietrzyk",
-            Email = "artur@example.com",
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john@example.com",
             PhoneNumber = "123456",
             Address = "Address"
         };
@@ -484,9 +484,9 @@ public class UserControllerTests
         // Arrange
         var writeUserDto = new WriteUserDtoUpdate
         {
-            FirstName = "Artur",
-            LastName = "Pietrzyk",
-            Email = "artur@example.com",
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john@example.com",
             PhoneNumber = "123456",
             Address = "Address"
         };
@@ -519,9 +519,9 @@ public class UserControllerTests
         // Arrange
         var writeUserDto = new WriteUserDtoUpdate
         {
-            FirstName = "Artur",
-            LastName = "Pietrzyk",
-            Email = "artur@example.com",
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john@example.com",
             PhoneNumber = "123456",
             Address = "Address"
         };
