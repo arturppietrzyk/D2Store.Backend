@@ -1,5 +1,7 @@
 using D2Store.Api.Config;
 using D2Store.Api.Infrastructure;
+using D2Store.Api.Shared;
+using D2Store.Api.Shared.Enums;
 using FluentValidation;
 using Mediator;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -46,7 +48,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 context.HandleResponse();
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 context.Response.ContentType = "application/json";
-                var error = D2Store.Api.Shared.Error.Unauthorized;
+                var error = Error.Unauthorized;
                 var json = JsonSerializer.Serialize(error);
                 return context.Response.WriteAsync(json);
             }

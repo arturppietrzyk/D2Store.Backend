@@ -29,7 +29,7 @@ public class Product
         return product;
     }
 
-    public void Update(string? name, string? description, decimal? price, int? stockQuantity)
+    public bool Update(string? name, string? description, decimal? price, int? stockQuantity)
     {
         bool isUpdated = false;
         if (!string.IsNullOrEmpty(name) && name != Name)
@@ -56,6 +56,7 @@ public class Product
         {
             LastModified = DateTime.UtcNow;
         }
+        return isUpdated;
     }
 
     public Result ReduceStock(int quantity)

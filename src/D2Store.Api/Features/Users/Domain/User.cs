@@ -35,7 +35,7 @@ public class User
         return user;
     }
 
-    public void Update(string? firstName, string? lastName, string? email, string? phoneNumber, string? address)
+    public bool Update(string? firstName, string? lastName, string? email, string? phoneNumber, string? address)
     {
         bool isUpdated = false;
         if (!string.IsNullOrEmpty(firstName) && firstName != FirstName)
@@ -67,6 +67,7 @@ public class User
         {
             LastModified = DateTime.UtcNow;
         }
+        return isUpdated;
     }
 
     public static Result AssertUserEmailIsUnique(bool emailInUse)
