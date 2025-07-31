@@ -129,6 +129,6 @@ public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
             u.Email is not null ||
             u.PhoneNumber is not null ||
             u.Address is not null)
-            .WithMessage("At least one field (First Name, Last Name, Email, Phone Number, Address) must be provided");
+            .WithMessage("At least one field (First Name, Last Name, Email, Phone Number, Address) must be provided.");
     }
 }
