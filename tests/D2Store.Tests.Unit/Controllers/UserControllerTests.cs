@@ -25,6 +25,7 @@ public class UserControllerTests
     public async Task RegisterUser_ReturnsOkAndObject_WhenRegisterUserSucceeds()
     {
         // Arrange
+        var userId = Guid.CreateVersion7();
         var writeUserDto = new WriteUserDtoRegister
         {
             FirstName = "John",
@@ -34,18 +35,17 @@ public class UserControllerTests
             PhoneNumber = "123456",
             Address = "Address"
         };
-        var user = User.Register(writeUserDto.FirstName, writeUserDto.LastName, writeUserDto.Email, writeUserDto.Email, writeUserDto.PhoneNumber, writeUserDto.Address);
         var readUserDto = new ReadUserDto(
-            user.UserId,
-            user.FirstName,
-            user.LastName,
-            user.Email,
-            user.PasswordHash,
-            user.PhoneNumber,
-            user.Address,
-            user.Role,
-            user.CreatedDate,
-            user.LastModified);
+            userId,
+            "John,",
+            "Doe",
+            "john@example.com",
+            "hashedPwd",
+            "123456",
+            "Address",
+            "ADMIN",
+            DateTime.Now,
+            DateTime.Now);
         var result = Result.Success(readUserDto);
         _mediator.Send(Arg.Is<RegisterUserCommand>(cmd =>
         cmd.FirstName == writeUserDto.FirstName &&
@@ -91,7 +91,7 @@ public class UserControllerTests
         Assert.Equal(error, badRequestResult.Value);
     }
 
-    //LoginUser
+    //LoginUser Tests
     [Fact]
     public async Task LoginUser_ReturnsOkAndObject_WhenLoginUserSucceeds()
     {
@@ -169,18 +169,17 @@ public class UserControllerTests
         // Arrange
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
-        var user = User.Register("John", "Doe", "john@example.com", "hashedPwd", "123456", "Address");
         var readUserDto = new ReadUserDto(
-            user.UserId,
-            user.FirstName,
-            user.LastName,
-            user.Email,
-            user.PasswordHash,
-            user.PhoneNumber,
-            user.Address,
-            user.Role,
-            user.CreatedDate,
-            user.LastModified);
+            userId,
+            "John,",
+            "Doe",
+            "john@example.com",
+            "hashedPwd",
+            "123456",
+            "Address",
+            "ADMIN",
+            DateTime.Now,
+            DateTime.Now);
         var result = Result.Success(readUserDto);
         _mediator.Send(Arg.Is<GetUserQuery>(q =>
         q.AuthenticatedUserId == userId &&
@@ -260,7 +259,7 @@ public class UserControllerTests
         Assert.Equal(error, badRequestResult.Value);
     }
 
-    //GetUsers
+    //GetUsers Tests
     [Fact]
     public async Task GetUsers_ReturnsOkAndObject_WhenGetUsersSucceeds()
     {
@@ -361,6 +360,7 @@ public class UserControllerTests
         Assert.Equal(error, badRequestResult.Value);
     }
 
+    //DeleteUser Tests
     [Fact]
     public async Task DeleteUser_ReturnsOkAndObject_WhenDeleteUserSucceeds()
     {
@@ -443,6 +443,7 @@ public class UserControllerTests
         Assert.Equal(error, badRequestResult.Value);
     }
 
+    //UpdateUserTests
     [Fact]
     public async Task Update_ReturnsOkAndObject_WhenUpdateUserSucceeds()
     {
@@ -549,4 +550,4 @@ public class UserControllerTests
         Assert.Equal(error, badRequestResult.Value);
     }
 }
-// when you start working on handler tests, redo the ealier controller tests to remove the setup of the actual user, since all im testing is status codes, i can just create the dto instead like i did with GetUsers
+

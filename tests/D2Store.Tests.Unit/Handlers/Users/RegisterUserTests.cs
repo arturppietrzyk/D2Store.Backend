@@ -21,7 +21,7 @@ public class RegisterUserTests
     }
 
     [Fact]
-    public async Task Handle_ReturnsFailure_WhenValidationFails()
+    public async Task Handle_ReturnsFailure_WhenValidationFailsDueToEmptyRegisterValues()
     {
         // Arrange
         var command = new RegisterUserCommand("", "", "", "", "", "");
@@ -42,7 +42,7 @@ public class RegisterUserTests
             "John",
             "Doe",
             "john@example.com",
-            "SomeHashedPassword",
+            "HashedPassword",
             "1234567890",
             "123 Street");
         _dbContext.Users.Add(existingUser);
@@ -51,7 +51,7 @@ public class RegisterUserTests
             FirstName: "John",
             LastName: "Doe",
             Email: "john@example.com",
-            Password: "StrongPassword123",
+            Password: "Password1",
             PhoneNumber: "1234567890",
             Address: "123 Street");
         // Act
@@ -70,7 +70,7 @@ public class RegisterUserTests
             FirstName: "John",
             LastName: "Doe",
             Email: "john@example.com",
-            Password: "StrongPassword123",
+            Password: "Password1",
             PhoneNumber: "1234567890",
             Address: "123 Street");
         // Act
