@@ -34,7 +34,7 @@ public class GetUsersTests
         // Assert
         Assert.True(result.IsFailure);
         Assert.Equal("GetUsers.Validation", result.Error.Code);
-        Assert.Equal("Page Number must be greater than 0.\r\nPage Size must be greater than 0.", result.Error.Message);
+        Assert.Equal("Page Number must be greater than 0.\nPage Size must be greater than 0.", result.Error.Message);
     }
 
     [Fact]

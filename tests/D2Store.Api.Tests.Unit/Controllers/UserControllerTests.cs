@@ -1,5 +1,4 @@
 ﻿using D2Store.Api.Features.Users;
-using D2Store.Api.Features.Users.Domain;
 using D2Store.Api.Features.Users.Dto;
 using D2Store.Api.Shared;
 using Mediator;
@@ -8,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using System.Security.Claims;
 
-namespace D2Store.Tests.Unit.Controllers;
+namespace D2Store.Api.Tests.Unit.Controllers;
 
 public class UserControllerTests
 {

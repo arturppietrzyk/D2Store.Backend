@@ -9,7 +9,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{819DEA23
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2Store.Api", "src\D2Store.Api\D2Store.Api.csproj", "{C8F98435-9719-481B-9F23-8BB74C683F42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2Store.Api.Tests.Unit", "tests\D2Store.Tests.Unit\D2Store.Api.Tests.Unit.csproj", "{15EA47E7-AB72-04AE-E7F1-CD3E3939258D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2Store.Api.Tests.Unit", "tests\D2Store.Api.Tests.Unit\D2Store.Api.Tests.Unit.csproj", "{15EA47E7-AB72-04AE-E7F1-CD3E3939258D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2Store.Api.Tests.Integration", "tests\D2Store.Api.Tests.Integration\D2Store.Api.Tests.Integration.csproj", "{87463AAE-D775-4551-9963-1CC7A3817C07}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +27,10 @@ Global
 		{15EA47E7-AB72-04AE-E7F1-CD3E3939258D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15EA47E7-AB72-04AE-E7F1-CD3E3939258D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15EA47E7-AB72-04AE-E7F1-CD3E3939258D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87463AAE-D775-4551-9963-1CC7A3817C07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87463AAE-D775-4551-9963-1CC7A3817C07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87463AAE-D775-4551-9963-1CC7A3817C07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87463AAE-D775-4551-9963-1CC7A3817C07}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -32,6 +38,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{C8F98435-9719-481B-9F23-8BB74C683F42} = {CF144DE4-8034-47E0-8C57-88CA3073F1B9}
 		{15EA47E7-AB72-04AE-E7F1-CD3E3939258D} = {819DEA23-725D-490C-8314-3DA7483F9553}
+		{87463AAE-D775-4551-9963-1CC7A3817C07} = {819DEA23-725D-490C-8314-3DA7483F9553}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BC75FFDB-C2CD-40FB-A4F0-03FFEFD20663}
