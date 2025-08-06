@@ -45,7 +45,7 @@ public class LoginUserTests
         // Assert
         Assert.True(result.IsFailure);
         Assert.Equal("LoginUser.Validation", result.Error.Code);
-        Assert.Equal("Email is required.\r\nPassword is required.", result.Error.Message);
+        Assert.Equal("Email is required.\nPassword is required.", result.Error.Message);
     }
 
     [Fact]

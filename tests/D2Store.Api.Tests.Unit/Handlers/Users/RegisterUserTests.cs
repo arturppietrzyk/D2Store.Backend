@@ -30,7 +30,7 @@ public class RegisterUserTests
         // Assert
         Assert.True(result.IsFailure);
         Assert.Equal("RegisterUser.Validation", result.Error.Code);
-        Assert.Equal("First Name is required.\r\nLast Name is required.\r\nEmail is required.\r\nPassword is required.\r\nPhone Number is required.\r\nAddress is required.", result.Error.Message);
+        Assert.Equal("First Name is required.\nLast Name is required.\nEmail is required.\nPassword is required.\nPhone Number is required.\nAddress is required.", result.Error.Message);
     }
 
     [Fact]

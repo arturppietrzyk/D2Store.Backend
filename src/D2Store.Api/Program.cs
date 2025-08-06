@@ -1,7 +1,6 @@
 using D2Store.Api.Config;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
-using D2Store.Api.Shared.Enums;
 using FluentValidation;
 using Mediator;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

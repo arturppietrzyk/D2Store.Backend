@@ -50,7 +50,7 @@ public class UpdateUserTests
         // Assert
         Assert.True(result.IsFailure);
         Assert.Equal("UpdateUser.Validation", result.Error.Code);
-        Assert.Equal("First Name cannot be empty if provided.\r\nLast Name cannot be empty if provided.", result.Error.Message);
+        Assert.Equal("First Name cannot be empty if provided.\nLast Name cannot be empty if provided.", result.Error.Message);
     }
 
     [Fact]
