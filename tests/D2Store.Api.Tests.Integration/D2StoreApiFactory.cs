@@ -3,6 +3,7 @@ using D2Store.Api.Infrastructure;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -43,7 +44,7 @@ public class D2StoreApiFactory : WebApplicationFactory<IApiMarker>, IAsyncLifeti
         using var scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await context.Database.EnsureCreatedAsync();
-        //await SeedTestDataAsync(context);
+        await SeedTestDataAsync(context);
     }
 
     public new async Task DisposeAsync()
@@ -55,18 +56,17 @@ public class D2StoreApiFactory : WebApplicationFactory<IApiMarker>, IAsyncLifeti
     {
         if (!await context.Users.AnyAsync())
         {
-            var users = new[]
-            {
-            User.Register(
+            var hashedPassword = new PasswordHasher<User>()
+                .HashPassword(null!, "Password");
+            var user = User.Register(
                 firstName: "John",
                 lastName: "Doe",
-                email: "john.doe@test.com",
-                passwordHash: "Password",
-                phoneNumber: "+1234567890",
-                address: "123 Test Street, Test City"
-            )
-        };
-            context.Users.AddRange(users);
+                email: "john@gmail.com",
+                passwordHash: hashedPassword,
+                phoneNumber: "1234567890",
+                address: "123 Test Street"
+            );
+            context.Users.Add(user);
             await context.SaveChangesAsync();
         }
     }
