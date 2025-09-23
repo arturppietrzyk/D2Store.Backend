@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
-public record DeleteProductCommand(Guid ProductId, bool IsAdmin) : IRequest<Result<Guid>>;
+public record DeleteProductCommand(Guid ProductId, bool IsAdmin) : IRequest<Result>;
 
-public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result<Guid>>
+public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result>
 {
     private readonly AppDbContext _dbContext;
 
@@ -23,7 +23,7 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<Guid>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
     {
         if (!request.IsAdmin)
         {
@@ -40,8 +40,8 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
         {
             return Result.Failure<Guid>(assertOrderProductExistanceResult.Error);
         }
-        var deleteProduct = await DeleteProductAsync(productResult.Value, cancellationToken);
-        return Result.Success(deleteProduct);
+        await DeleteProductAsync(productResult.Value, cancellationToken);
+        return Result.Success();
     }
 
     /// <summary>
@@ -56,9 +56,7 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
             .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
         if(product is null)
         {
-            return Result.Failure<Product>(new Error(
-            "DeleteProduct.Validation",
-            "The product with the specified Product Id was not found."));
+            return Result.Failure<Product>(Error.NotFound);
         }
         return Result.Success(product);
     }
@@ -69,10 +67,9 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
     /// <param name="product"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Guid> DeleteProductAsync(Product product, CancellationToken cancellationToken)
+    private async Task DeleteProductAsync(Product product, CancellationToken cancellationToken)
     {
         _dbContext.Products.Remove(product);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return product.ProductId;
     }
 }

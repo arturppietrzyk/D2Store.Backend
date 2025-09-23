@@ -31,8 +31,8 @@ public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDt
         {
             return Result.Failure<ReadOrderDto>(orderResult.Error);
         }
-        var order = orderResult.Value;
-        if (!request.IsAdmin && order.UserId != request.AuthenticatedUserId)
+        //var order = orderResult.Value;
+        if (!request.IsAdmin && orderResult.Value.UserId != request.AuthenticatedUserId)
         {
             return Result.Failure<ReadOrderDto>(Error.Forbidden);
         }

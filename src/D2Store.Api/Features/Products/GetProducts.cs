@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
-public record GetProductsQuery(int PageNumber, int PageSize) : IRequest<Result<List<ReadProductDto>>>;
+public record GetProductsQuery(int PageNumber, int PageSize) : IRequest<Result<IReadOnlyCollection<ReadProductDto>>>;
 
-public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<List<ReadProductDto>>>
+public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IReadOnlyCollection<ReadProductDto>>>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<GetProductsQuery> _validator;
@@ -27,16 +27,16 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<List<
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<List<ReadProductDto>>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
+    public async ValueTask<Result<IReadOnlyCollection<ReadProductDto>>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
     {
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<List<ReadProductDto>>(validationResult.Error);
+            return Result.Failure<IReadOnlyCollection<ReadProductDto>>(validationResult.Error);
         }
         var products = await GetPaginatedProductsAsync(request.PageNumber, request.PageSize, cancellationToken);
         var productDtos = products.Select(MapToReadProductDto).ToList();
-        return Result.Success(productDtos);
+         return Result.Success<IReadOnlyCollection<ReadProductDto>>(productDtos);
     }
 
     /// <summary>
@@ -50,7 +50,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<List<
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<List<ReadProductDto>>(new Error("GetProducts.Validation", validationResult.ToString()));
+            return Result.Failure<IReadOnlyCollection<ReadProductDto>>(new Error("GetProducts.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -62,9 +62,10 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<List<
     /// <param name="pageSize"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<List<Product>> GetPaginatedProductsAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
+    private async Task<IReadOnlyCollection<Product>> GetPaginatedProductsAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
     {
         return await _dbContext.Products
+            .Include(p => p.Images)
             .AsNoTracking()
             .OrderByDescending(p => p.AddedDate)
             .Skip((pageNumber - 1) * pageSize)
@@ -79,6 +80,11 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<List<
     /// <returns></returns>
     private static ReadProductDto MapToReadProductDto(Product product)
     {
+        var productImageDto = product.Images.Select(pi => new ReadProductImageDto(
+            pi.ProductImageId,
+            pi.Location,
+            pi.IsPrimary
+        )).ToList();
         return new ReadProductDto(
             product.ProductId,
             product.Name,
@@ -86,7 +92,9 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<List<
             product.Price,
             product.StockQuantity,
             product.AddedDate,
-            product.LastModified);
+            product.LastModified,
+            productImageDto
+            );
     }
 }
 

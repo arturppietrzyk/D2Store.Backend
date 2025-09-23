@@ -11,8 +11,10 @@ public class Product
     public int StockQuantity { get; private set; }
     public DateTime AddedDate { get; private set; }
     public DateTime LastModified {  get; private set; }
-
-    public Product(string name, string description, decimal price, int stockQuantity)
+    private readonly List<ProductImage> _images = new List<ProductImage>();
+    public IReadOnlyCollection<ProductImage> Images => _images.AsReadOnly();
+    
+    private Product(string name, string description, decimal price, int stockQuantity)
     {
         ProductId = Guid.CreateVersion7();
         Name = name;
@@ -27,6 +29,17 @@ public class Product
     {
         var product = new Product(name, description, price, stockQuantity);
         return product;
+    }
+
+    public void AddImage(string location, bool isPrimary)
+    {
+        var productImage = ProductImage.Create(this.ProductId, location, isPrimary);
+        _images.Add(productImage);
+    }
+
+    public void RemoveImages(IEnumerable<Guid> productImageIds)
+    {
+        _images.RemoveAll(img => productImageIds.Contains(img.ProductImageId));
     }
 
     public bool Update(string? name, string? description, decimal? price, int? stockQuantity)

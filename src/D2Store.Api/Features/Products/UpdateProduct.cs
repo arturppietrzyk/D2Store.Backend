@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
-public record UpdateProductCommand(Guid ProductId, string? Name, string? Description, decimal? Price, int? StockQuantity, bool IsAdmin) : IRequest<Result<Guid>>;
+public record UpdateProductCommand(Guid ProductId, string? Name, string? Description, decimal? Price, int? StockQuantity, bool IsAdmin) : IRequest<Result>;
 
-public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result<Guid>>
+public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<UpdateProductCommand> _validator;
@@ -26,7 +26,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<Guid>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
         if (!request.IsAdmin)
         {
@@ -47,7 +47,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         {
             return Result.Failure<Guid>(updateProduct.Error);
         }
-        return Result.Success(updateProduct.Value);
+        return Result.Success();
     }
 
     /// <summary>
@@ -78,9 +78,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
             .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
         if (product is null)
         {
-            return Result.Failure<Product>(new Error(
-            "UpdateProduct.Validation",
-            "The product with the specified Product Id was not found."));
+            return Result.Failure<Product>(Error.NotFound);
         }
         return Result.Success(product);
     }
@@ -92,7 +90,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
+    private async Task<Result> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
     {
         var isUpdated = product.Update(request.Name, request.Description, request.Price, request.StockQuantity);
         if (!isUpdated)

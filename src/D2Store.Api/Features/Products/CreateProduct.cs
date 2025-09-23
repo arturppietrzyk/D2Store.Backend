@@ -4,10 +4,11 @@ using D2Store.Api.Shared;
 using FluentValidation;
 using Mediator;
 using D2Store.Api.Features.Products.Dto;
+using System.Data;
 
 namespace D2Store.Api.Features.Products;
 
-public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, bool IsAdmin) : IRequest<Result<ReadProductDto>>;
+public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, List<WriteProductImageDtoCreate> ImagesDto, bool IsAdmin) : IRequest<Result<ReadProductDto>>;
 
 public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result<ReadProductDto>>
 {
@@ -38,8 +39,9 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             return Result.Failure<ReadProductDto>(validationResult.Error);
         }
         var createProduct = await CreateProductAsync(request, cancellationToken);
-        var productDto = MapToReadProductDto(createProduct);
-        return Result.Success(productDto); 
+        var productImageDtos = MapProductImagesToDto(createProduct.Images.ToList());
+        var productDto = MapToReadProductDto(createProduct, productImageDtos);
+        return Result.Success(productDto);
     }
 
     /// <summary>
@@ -66,10 +68,38 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     /// <returns></returns>
     private async Task<Product> CreateProductAsync(CreateProductCommand request, CancellationToken cancellationToken)
     {
-        var createProduct = Product.Create(request.Name, request.Description, request.Price, request.StockQuantity);
-        _dbContext.Products.Add(createProduct);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return createProduct;
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var product = Product.Create(request.Name, request.Description, request.Price, request.StockQuantity);
+            _dbContext.Products.Add(product);
+            foreach (var prodImg in request.ImagesDto)
+            {
+                product.AddImage(prodImg.Location, prodImg.IsPrimary);
+            }
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return product;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Maps the list of product images into the equivalent ReadProductImageDto list. 
+    /// </summary>
+    /// <param name="productImages"></param>
+    /// <returns></returns>
+    private IReadOnlyCollection<ReadProductImageDto> MapProductImagesToDto(IReadOnlyCollection<ProductImage> productImages)
+    {
+        return productImages.Select(pi => new ReadProductImageDto(
+            pi.ProductImageId,
+            pi.Location,
+            pi.IsPrimary
+        )).ToList();
     }
 
     /// <summary>
@@ -77,7 +107,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     /// </summary>
     /// <param name="product"></param>
     /// <returns></returns>
-    private static ReadProductDto MapToReadProductDto(Product product)
+    private static ReadProductDto MapToReadProductDto(Product product, IReadOnlyCollection<ReadProductImageDto> images)
     {
         return new ReadProductDto(
             product.ProductId,
@@ -86,7 +116,8 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             product.Price,
             product.StockQuantity,
             product.AddedDate,
-            product.LastModified);
+            product.LastModified,
+            images);
     }
 }
 
@@ -98,5 +129,8 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
         RuleFor(p => p.Description).NotEmpty().WithMessage("Description is required.");
         RuleFor(p => p.Price).GreaterThan(0).WithMessage("Price must be greater than zero.");
         RuleFor(p => p.StockQuantity).GreaterThan(0).WithMessage("Stock Quantity must be greater than zero.");
+        RuleFor(p => p.ImagesDto).NotNull().WithMessage("At least one image must be present.")
+        .Must(images => images.Any()).WithMessage("At least one image must be provided.")
+        .Must(images => images.Any(img => img.IsPrimary == true)).WithMessage("At least one image must be set as primary.");
     }
 }

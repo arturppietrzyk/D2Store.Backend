@@ -31,7 +31,8 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
         {
             return Result.Failure<ReadProductDto>(productResult.Error);
         }
-        return Result.Success(MapToReadProductDto(productResult.Value));
+        var productImageDtos = MapProductImagesToDto(productResult.Value.Images);
+        return Result.Success(MapToReadProductDto(productResult.Value, productImageDtos));
     }
 
     /// <summary>
@@ -43,14 +44,28 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
     private async Task<Result<Product>> GetProductAsync(Guid productId, CancellationToken cancellationToken)
     {
         var product = await _dbContext.Products
+            .AsNoTracking()
+            .Include(p => p.Images)
             .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
         if (product is null)
         {
-            return Result.Failure<Product>(new Error(
-            "GetProductById.Validation",
-            "The product with the specified Product Id was not found."));
+            return Result.Failure<Product>(Error.NotFound);
         }
         return Result.Success(product);
+    }
+    
+    /// <summary>
+    /// Maps the list of product images into the equivalent ReadProductImageDto list. 
+    /// </summary>
+    /// <param name="productImages"></param>
+    /// <returns></returns>
+    private IReadOnlyCollection<ReadProductImageDto> MapProductImagesToDto(IReadOnlyCollection<ProductImage> productImages)
+    {
+        return productImages.Select(pi => new ReadProductImageDto(
+            pi.ProductImageId,
+            pi.Location,
+            pi.IsPrimary
+        )).ToList();
     }
 
     /// <summary>
@@ -58,15 +73,16 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
     /// </summary>
     /// <param name="product"></param>
     /// <returns></returns>
-    private static ReadProductDto MapToReadProductDto(Product product)
+    private static ReadProductDto MapToReadProductDto(Product product, IReadOnlyCollection<ReadProductImageDto> images)
     {
         return new ReadProductDto(
-            product.ProductId, 
-            product.Name, 
-            product.Description, 
+            product.ProductId,
+            product.Name,
+            product.Description,
             product.Price,
-            product.StockQuantity, 
-            product.AddedDate, 
-            product.LastModified);
+            product.StockQuantity,
+            product.AddedDate,
+            product.LastModified,
+            images.ToList());
     }
 }

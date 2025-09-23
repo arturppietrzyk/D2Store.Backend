@@ -6,6 +6,18 @@ public class WriteProductDtoCreate
     public required string Description { get; set; }
     public required decimal Price { get; set; }
     public required int StockQuantity { get; set; }
+    public required List<WriteProductImageDtoCreate> Images { get; set; }
+}
+
+public class WriteProductImageDtoCreate
+{
+    public required string Location { get; set; }
+    public required bool IsPrimary { get; set; }
+}
+
+public class WriteProductImageDtoDelete
+{
+    public required List<Guid> ProductImageIds { get; set; }
 }
 
 public class WriteProductDtoUpdate
