@@ -21,4 +21,9 @@ public class ProductImage
         var productImage = new ProductImage(productId, location, isPrimary);
         return productImage;
     }
+
+    public void SetPrimary(bool isPrimary)
+    {
+        IsPrimary = isPrimary;
+    }
 }

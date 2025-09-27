@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
-public record AddProductImagesCommand(Guid ProductId, List<WriteProductImageDtoCreate> Images, bool IsAdmin) : IRequest<Result>;
+public record AddProductImagesCommand(Guid ProductId, IReadOnlyCollection<WriteProductImageDtoCreate> Images, bool IsAdmin) : IRequest<Result>;
 
 public class AddProductImagesHandler : IRequestHandler<AddProductImagesCommand, Result>
 {
@@ -21,6 +21,12 @@ public class AddProductImagesHandler : IRequestHandler<AddProductImagesCommand, 
         _validator = validator;
     }
 
+    /// <summary>
+    /// Coordinates validation, retrieval and the addition of new images to an existing product.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async ValueTask<Result> Handle(AddProductImagesCommand request, CancellationToken cancellationToken)
     {
         if (!request.IsAdmin)
@@ -30,7 +36,7 @@ public class AddProductImagesHandler : IRequestHandler<AddProductImagesCommand, 
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure(validationResult.Error);  
+            return Result.Failure(validationResult.Error);
         }
         var productResult = await GetProductAsync(request.ProductId, cancellationToken);
         if (productResult.IsFailure)
@@ -41,6 +47,12 @@ public class AddProductImagesHandler : IRequestHandler<AddProductImagesCommand, 
         return Result.Success();
     }
 
+    /// <summary>
+    /// Validates the input.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<Result> ValidateRequestAsync(AddProductImagesCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
@@ -51,6 +63,12 @@ public class AddProductImagesHandler : IRequestHandler<AddProductImagesCommand, 
         return Result.Success();
     }
 
+    /// <summary>
+    /// Loads a product object along with its images, based on the ProductId.
+    /// </summary>
+    /// <param name="productId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<Result<Product>> GetProductAsync(Guid productId, CancellationToken cancellationToken)
     {
         var product = await _dbContext.Products
@@ -63,6 +81,13 @@ public class AddProductImagesHandler : IRequestHandler<AddProductImagesCommand, 
         return Result.Success(product);
     }
 
+    /// <summary>
+    /// Adds the new product images to an existing product and presists the changes to the db tables.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="product"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task AddProductImagesAsync(AddProductImagesCommand request, Product product, CancellationToken cancellationToken)
     {
         foreach (var prodImg in request.Images)
@@ -77,11 +102,8 @@ public class AddProductImagesCommandValidator : AbstractValidator<AddProductImag
 {
     public AddProductImagesCommandValidator()
     {
-        RuleFor(request => request.Images).NotEmpty().WithMessage("At least one image is required.");
-        RuleForEach(request => request.Images).ChildRules(images =>
-        {
-            images.RuleFor(img => img.Location).NotEmpty().WithMessage("location value is required");
-            images.RuleFor(img => img.Location).NotEmpty().WithMessage("IsPrimary value is required.");
-        });
+        RuleFor(request => request.Images).NotNull().NotEmpty().WithMessage("At least one image is required.");
+        RuleFor(request => request.Images).Must(images => images.All(img => !string.IsNullOrEmpty(img.Location))).WithMessage("All images must have a location specified.");
+        RuleFor(request => request.Images).Must(images => images.All(img => img.IsPrimary == false)).WithMessage("A primary image cannot be added through this endpoint.");
     }
 }

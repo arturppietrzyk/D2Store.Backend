@@ -22,7 +22,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval and mapping of the specific products into response DTO.
+    /// Coordinates validation, retrieval and mapping of the specific products into a collection of response DTOs.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -56,7 +56,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
     }
 
     /// <summary>
-    /// Loads the product objects based on the Pagination parameters..
+    /// Loads the product objects along side its images, based on the Pagination parameters.
     /// </summary>
     /// <param name="pageNumber"></param>
     /// <param name="pageSize"></param>
@@ -74,7 +74,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
     }
 
     /// <summary>
-    /// Maps an Product entity into a ReadProductDto. 
+    /// Maps an Product entity along side its images into a ReadProductDto. 
     /// </summary>
     /// <param name="product"></param>
     /// <returns></returns>
@@ -93,8 +93,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
             product.StockQuantity,
             product.AddedDate,
             product.LastModified,
-            productImageDto
-            );
+            productImageDto);
     }
 }
 

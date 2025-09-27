@@ -36,7 +36,7 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
     }
 
     /// <summary>
-    /// Loads a product object based on the ProductId.
+    /// Loads a product object along with its images, based on the ProductId.
     /// </summary>
     /// <param name="productId"></param>
     /// <param name="cancellationToken"></param>
@@ -55,7 +55,7 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
     }
     
     /// <summary>
-    /// Maps the list of product images into the equivalent ReadProductImageDto list. 
+    /// Maps the collection of product images into the equivalent ReadProductImageDto collection. 
     /// </summary>
     /// <param name="productImages"></param>
     /// <returns></returns>
@@ -73,7 +73,7 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
     /// </summary>
     /// <param name="product"></param>
     /// <returns></returns>
-    private static ReadProductDto MapToReadProductDto(Product product, IReadOnlyCollection<ReadProductImageDto> images)
+    private static ReadProductDto MapToReadProductDto(Product product, IReadOnlyCollection<ReadProductImageDto> productImagesDto)
     {
         return new ReadProductDto(
             product.ProductId,
@@ -83,6 +83,6 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
             product.StockQuantity,
             product.AddedDate,
             product.LastModified,
-            images.ToList());
+            productImagesDto.ToList());
     }
 }

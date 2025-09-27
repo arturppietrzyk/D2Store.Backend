@@ -30,22 +30,22 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     {
         if (!request.IsAdmin)
         {
-            return Result.Failure<Guid>(Error.Forbidden);
+            return Result.Failure(Error.Forbidden);
         }
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<Guid>(validationResult.Error);
+            return Result.Failure(validationResult.Error);
         }
         var productResult = await GetProductAsync(request.ProductId, cancellationToken);
         if (productResult.IsFailure)
         {
-            return Result.Failure<Guid>(productResult.Error);
+            return Result.Failure(productResult.Error);
         }
         var updateProduct = await UpdateProductAsync(productResult.Value, request, cancellationToken);
         if (updateProduct.IsFailure)
         {
-            return Result.Failure<Guid>(updateProduct.Error);
+            return Result.Failure(updateProduct.Error);
         }
         return Result.Success();
     }
@@ -61,7 +61,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<Guid>(new Error("UpdateProduct.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("UpdateProduct.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -92,13 +92,13 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     /// <returns></returns>
     private async Task<Result> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        var isUpdated = product.Update(request.Name, request.Description, request.Price, request.StockQuantity);
-        if (!isUpdated)
+        var isUpdatedResult = product.Update(request.Name, request.Description, request.Price, request.StockQuantity);
+        if (isUpdatedResult.IsFailure)
         {
-            return Result.Failure<Guid>(new Error("UpdateProduct.Validation", "The changes are no different to what is currently there."));
+            return Result.Failure(isUpdatedResult.Error);
         }
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(product.ProductId);
+        return Result.Success();
     }
 }
 

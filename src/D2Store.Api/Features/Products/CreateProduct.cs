@@ -8,7 +8,7 @@ using System.Data;
 
 namespace D2Store.Api.Features.Products;
 
-public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, List<WriteProductImageDtoCreate> ImagesDto, bool IsAdmin) : IRequest<Result<ReadProductDto>>;
+public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, IReadOnlyCollection<WriteProductImageDtoCreate> ImagesDto, bool IsAdmin) : IRequest<Result<ReadProductDto>>;
 
 public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result<ReadProductDto>>
 {
@@ -22,7 +22,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     }
 
     /// <summary>
-    /// Coordinates validation, mapping and creating of an product. Returns the created product in a response DTO.
+    /// Coordinates validation, mapping and creating of an product. Returns the created product in a form of a response DTO. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -89,7 +89,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     }
 
     /// <summary>
-    /// Maps the list of product images into the equivalent ReadProductImageDto list. 
+    /// Maps the collection of product images into the equivalent ReadProductImageDto collection. 
     /// </summary>
     /// <param name="productImages"></param>
     /// <returns></returns>
@@ -125,12 +125,13 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
 {
     public CreateProductCommandValidator()
     {
-        RuleFor(p => p.Name).NotEmpty().WithMessage("Name is required.");
-        RuleFor(p => p.Description).NotEmpty().WithMessage("Description is required.");
-        RuleFor(p => p.Price).GreaterThan(0).WithMessage("Price must be greater than zero.");
-        RuleFor(p => p.StockQuantity).GreaterThan(0).WithMessage("Stock Quantity must be greater than zero.");
-        RuleFor(p => p.ImagesDto).NotNull().WithMessage("At least one image must be present.")
-        .Must(images => images.Any()).WithMessage("At least one image must be provided.")
-        .Must(images => images.Any(img => img.IsPrimary == true)).WithMessage("At least one image must be set as primary.");
+        RuleFor(p => p.Name).NotNull().NotEmpty().WithMessage("Name is required.");
+        RuleFor(p => p.Description).NotNull().NotEmpty().WithMessage("Description is required.");
+        RuleFor(p => p.Price).NotNull().GreaterThan(0).WithMessage("Price is required and must be greater than zero.");
+        RuleFor(p => p.StockQuantity).NotNull().GreaterThan(0).WithMessage("Stock Quantity is required and must be greater than zero.");
+        RuleFor(p => p.ImagesDto).NotNull().NotEmpty().WithMessage("At least one image must be present.")
+            .Must(images => images.Any()).WithMessage("At least one image must be provided.")
+            .Must(images => images.All(img => !string.IsNullOrEmpty(img.Location))).WithMessage("All images must have a location specified.")
+            .Must(images => images.Count(img => img.IsPrimary == true) == 1).WithMessage("One image must be set as primary.");
     }
 }
