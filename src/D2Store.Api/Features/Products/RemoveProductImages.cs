@@ -103,6 +103,6 @@ public class RemoveProductImagesCommandValidator : AbstractValidator<RemoveProdu
 {
     public RemoveProductImagesCommandValidator()
     {
-        RuleFor(request => request.ProductImageIds).NotNull().NotEmpty().WithMessage("At least one productId must be provided.");
+        RuleFor(request => request.ProductImageIds).NotEmpty().WithMessage("At least one productId must be provided.");
     }
 }

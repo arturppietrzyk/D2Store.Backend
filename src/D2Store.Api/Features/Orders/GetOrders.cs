@@ -7,9 +7,9 @@ using Mediator;
 using Microsoft.EntityFrameworkCore;
 namespace D2Store.Api.Features.Orders;
 
-public record GetOrdersQuery(int PageNumber, int PageSize, bool IsAdmin) : IRequest<Result<List<ReadOrderDto>>>;
+public record GetOrdersQuery(int PageNumber, int PageSize, bool IsAdmin) : IRequest<Result<IReadOnlyCollection<ReadOrderDto>>>;
 
-public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<ReadOrderDto>>>
+public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<IReadOnlyCollection<ReadOrderDto>>>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<GetOrdersQuery> _validator;
@@ -26,20 +26,20 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<List<ReadOrderDto>>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
+    public async ValueTask<Result<IReadOnlyCollection<ReadOrderDto>>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
     {
         if (!request.IsAdmin)
         {
-            return Result.Failure<List<ReadOrderDto>>(Error.Forbidden);
+            return Result.Failure<IReadOnlyCollection<ReadOrderDto>>(Error.Forbidden);
         }
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<List<ReadOrderDto>>(validationResult.Error);
+            return Result.Failure<IReadOnlyCollection<ReadOrderDto>>(validationResult.Error);
         }
         var orders = await GetPaginatedOrdersWithProductsAsync(request.PageNumber, request.PageSize, cancellationToken);
-        var orderDtos = orders.Select(MapToReadOrderDto).ToList();
-        return Result.Success(orderDtos);
+        var ordersDto = orders.Select(MapToReadOrderDto).ToList();
+        return Result.Success<IReadOnlyCollection<ReadOrderDto>>(ordersDto);
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<List<ReadOrderDto>>(new Error("GetOrders.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("GetOrders.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -65,7 +65,7 @@ public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, Result<List<Read
     /// <param name="pageSize"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<List<Order>> GetPaginatedOrdersWithProductsAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
+    private async Task<IReadOnlyCollection<Order>> GetPaginatedOrdersWithProductsAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
     {
         return await _dbContext.Orders
             .AsNoTracking()

@@ -21,11 +21,11 @@ public class OrderController : ControllerBase
 
     [Authorize]
     [HttpPost("order")]
-    public async Task<IActionResult> CreateOrder([FromBody] WriteOrderDtoCreate writeOrderDto)
+    public async Task<IActionResult> CreateOrder([FromBody] WriteOrderDtoCreate dtoCreate)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new CreateOrderCommand(writeOrderDto.UserId, writeOrderDto.Products, Guid.Parse(authenticatedUserId!), isAdmin));
+        var result = await _mediator.Send(new CreateOrderCommand(dtoCreate.UserId, dtoCreate.Products, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
@@ -34,7 +34,7 @@ public class OrderController : ControllerBase
             }
             return BadRequest(result.Error);
         }
-        return Ok(result.Value);
+        return CreatedAtAction(nameof(GetOrder), new { orderId = result.Value.OrderId }, result.Value);
     }
 
     [Authorize]
@@ -49,6 +49,10 @@ public class OrderController : ControllerBase
             if (result.Error == Error.Forbidden)
             {
                 return StatusCode(403, Error.Forbidden);
+            }
+            if (result.Error == Error.NotFound)
+            {
+                return StatusCode(404, Error.NotFound);
             }
             return BadRequest(result.Error);
         }
@@ -92,20 +96,24 @@ public class OrderController : ControllerBase
 
     [Authorize]
     [HttpPatch("order/{orderId}")]
-    public async Task<IActionResult> UpdateOrder(Guid orderId, [FromBody] WriteOrderDtoUpdate writeOrderDto)
+    public async Task<IActionResult> UpdateOrder(Guid orderId, [FromBody] WriteOrderDtoUpdate dtoUpdate)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new UpdateOrderCommand(orderId, writeOrderDto.Status, Guid.Parse(authenticatedUserId!), isAdmin));
+        var result = await _mediator.Send(new UpdateOrderCommand(orderId, dtoUpdate.Status, Guid.Parse(authenticatedUserId!), isAdmin));
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
             {
                 return StatusCode(403, Error.Forbidden);
             }
+            if (result.Error == Error.NotFound)
+            {
+                return StatusCode(404, Error.NotFound);
+            }
             return BadRequest(result.Error);
         }
-        return Ok(result.Value);
+        return NoContent();
     }
 
     [Authorize]
@@ -120,9 +128,13 @@ public class OrderController : ControllerBase
             if (result.Error == Error.Forbidden)
             {
                 return StatusCode(403, Error.Forbidden);
-            }  
+            }
+            if (result.Error == Error.NotFound)
+            {
+                return StatusCode(404, Error.NotFound);
+            }
             return BadRequest(result.Error);
         }
-        return Ok(result.Value);
+        return NoContent();
     }
 }

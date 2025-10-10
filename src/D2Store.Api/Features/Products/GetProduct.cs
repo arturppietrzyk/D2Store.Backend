@@ -31,8 +31,8 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
         {
             return Result.Failure<ReadProductDto>(productResult.Error);
         }
-        var productImageDtos = MapProductImagesToDto(productResult.Value.Images);
-        return Result.Success(MapToReadProductDto(productResult.Value, productImageDtos));
+        var productImagesDto = MapProductImagesToDto(productResult.Value.Images);
+        return Result.Success(MapToReadProductDto(productResult.Value, productImagesDto));
     }
 
     /// <summary>

@@ -102,7 +102,7 @@ public class AddProductImagesCommandValidator : AbstractValidator<AddProductImag
 {
     public AddProductImagesCommandValidator()
     {
-        RuleFor(request => request.Images).NotNull().NotEmpty().WithMessage("At least one image is required.");
+        RuleFor(request => request.Images).NotEmpty().WithMessage("At least one image is required.");
         RuleFor(request => request.Images).Must(images => images.All(img => !string.IsNullOrEmpty(img.Location))).WithMessage("All images must have a location specified.");
         RuleFor(request => request.Images).Must(images => images.All(img => img.IsPrimary == false)).WithMessage("A primary image cannot be added through this endpoint.");
     }

@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record UpdateOrderCommand(Guid OrderId, OrderStatus Status, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
+public record UpdateOrderCommand(Guid OrderId, OrderStatus Status, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result>;
 
-public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Guid>>
+public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
 {
     private readonly AppDbContext _dbContext;
 
@@ -19,29 +19,29 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval and updating of a specific order. Returns the Guid of the updated order if successful.
+    /// Coordinates retrieval and updating of a specific order.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<Guid>> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
     {
         var orderResult = await GetOrderAsync(request.OrderId, cancellationToken);
         if (orderResult.IsFailure)
         {
-            return Result.Failure<Guid>(orderResult.Error);
+            return Result.Failure(orderResult.Error);
         }
         var order = orderResult.Value;
         if (!request.IsAdmin && order.UserId != request.AuthenticatedUserId)
         {
-            return Result.Failure<Guid>(Error.Forbidden);
+            return Result.Failure(Error.Forbidden);
         }
         var updateOrder = await UpdateOrderAsync(orderResult.Value, request, cancellationToken);
         if (updateOrder.IsFailure)
         {
-            return Result.Failure<Guid>(updateOrder.Error);
+            return Result.Failure(updateOrder.Error);
         }
-        return Result.Success(updateOrder.Value);
+        return Result.Success();
     }
 
     /// <summary>
@@ -53,15 +53,13 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
     /// <returns></returns>
     private async Task<Result<Order>> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
-        var order =  await _dbContext.Orders
+        var order = await _dbContext.Orders
             .Include(o => o.Products)
             .ThenInclude(op => op.Product)
             .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
         if (order is null)
         {
-            return Result.Failure<Order>(new Error(
-            "UpdateOrder.Validation",
-            "The order with the specified Order Id was not found."));
+            return Result.Failure<Order>(Error.NotFound);
         }
         return Result.Success(order);
     }
@@ -73,12 +71,12 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result<Gui
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> UpdateOrderAsync(Order order, UpdateOrderCommand request, CancellationToken cancellationToken)
+    private async Task<Result> UpdateOrderAsync(Order order, UpdateOrderCommand request, CancellationToken cancellationToken)
     {
-        var isUpdated = order.Update(request.Status);
-        if (!isUpdated)
+        var isUpdatedResult = order.Update(request.Status);
+        if (isUpdatedResult.IsFailure)
         {
-            return Result.Failure<Guid>(new Error("UpdateOrder.Validation", "The changes are no different to what is currently there."));
+            return Result.Failure(isUpdatedResult.Error);
         }
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success(order.OrderId);

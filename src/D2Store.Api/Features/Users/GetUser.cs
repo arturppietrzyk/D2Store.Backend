@@ -51,9 +51,7 @@ public class GetUserHandler : IRequestHandler<GetUserQuery, Result<ReadUserDto>>
             .FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
         if (user is null)
         {
-            return Result.Failure<User>(new Error(
-            "GetUser.Validation",
-            "The user with the specified User Id was not found."));
+            return Result.Failure<User>(Error.NotFound);
         }
         return Result.Success(user);
     }

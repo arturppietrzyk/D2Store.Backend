@@ -35,7 +35,7 @@ public class User
         return user;
     }
 
-    public bool Update(string? firstName, string? lastName, string? email, string? phoneNumber, string? address)
+    public Result Update(string? firstName, string? lastName, string? email, string? phoneNumber, string? address)
     {
         bool isUpdated = false;
         if (!string.IsNullOrEmpty(firstName) && firstName != FirstName)
@@ -63,20 +63,22 @@ public class User
             Address = address;
             isUpdated = true;
         }
-        if (isUpdated)
+        if (isUpdated == true)
         {
             LastModified = DateTime.UtcNow;
+            return Result.Success();
         }
-        return isUpdated;
+        else
+        {
+            return Result.Failure(new Error("User.Validation", "The changes are no different to what is currently there."));
+        }
     }
 
     public static Result AssertUserEmailIsUnique(bool emailInUse)
     {
         if (emailInUse)
         {
-            return Result.Failure(new Error(
-                "User.Validation",
-                "User email already in use."));
+            return Result.Failure(new Error("User.Validation", "User email already in use."));
         }
         return Result.Success();
     }
@@ -85,9 +87,7 @@ public class User
     {
         if (hasOrders)
         {
-            return Result.Failure(new Error(
-                "User.Validation",
-                "User cannot be deleted because they have orders."));
+            return Result.Failure(new Error("User.Validation", "User cannot be deleted because they have orders."));
         }
         return Result.Success();
     }

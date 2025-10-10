@@ -32,11 +32,11 @@ public class ProductController : ControllerBase
             }
             return BadRequest(result.Error);
         }
-        return CreatedAtAction(nameof(GetProductById), new { productId = result.Value.ProductId }, result.Value);
+        return CreatedAtAction(nameof(GetProduct), new { productId = result.Value.ProductId }, result.Value);
     }
 
     [HttpGet("product/{productId}")]
-    public async Task<IActionResult> GetProductById(Guid productId)
+    public async Task<IActionResult> GetProduct(Guid productId)
     {
         var result = await _mediator.Send(new GetProductQuery(productId));
         if (result.IsFailure)

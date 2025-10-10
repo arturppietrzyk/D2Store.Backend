@@ -8,7 +8,7 @@ using System.Data;
 
 namespace D2Store.Api.Features.Products;
 
-public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, IReadOnlyCollection<WriteProductImageDtoCreate> ImagesDto, bool IsAdmin) : IRequest<Result<ReadProductDto>>;
+public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, IReadOnlyCollection<WriteProductImageDtoCreate> Images, bool IsAdmin) : IRequest<Result<ReadProductDto>>;
 
 public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result<ReadProductDto>>
 {
@@ -39,8 +39,8 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             return Result.Failure<ReadProductDto>(validationResult.Error);
         }
         var createProduct = await CreateProductAsync(request, cancellationToken);
-        var productImageDtos = MapProductImagesToDto(createProduct.Images.ToList());
-        var productDto = MapToReadProductDto(createProduct, productImageDtos);
+        var productImagesDto = MapProductImagesToDto(createProduct.Images.ToList());
+        var productDto = MapToReadProductDto(createProduct, productImagesDto);
         return Result.Success(productDto);
     }
 
@@ -55,7 +55,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<Product>(new Error("CreateProduct.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("CreateProduct.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -73,7 +73,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
         {
             var product = Product.Create(request.Name, request.Description, request.Price, request.StockQuantity);
             _dbContext.Products.Add(product);
-            foreach (var prodImg in request.ImagesDto)
+            foreach (var prodImg in request.Images)
             {
                 product.AddImage(prodImg.Location, prodImg.IsPrimary);
             }
@@ -125,12 +125,11 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
 {
     public CreateProductCommandValidator()
     {
-        RuleFor(p => p.Name).NotNull().NotEmpty().WithMessage("Name is required.");
-        RuleFor(p => p.Description).NotNull().NotEmpty().WithMessage("Description is required.");
-        RuleFor(p => p.Price).NotNull().GreaterThan(0).WithMessage("Price is required and must be greater than zero.");
-        RuleFor(p => p.StockQuantity).NotNull().GreaterThan(0).WithMessage("Stock Quantity is required and must be greater than zero.");
-        RuleFor(p => p.ImagesDto).NotNull().NotEmpty().WithMessage("At least one image must be present.")
-            .Must(images => images.Any()).WithMessage("At least one image must be provided.")
+        RuleFor(p => p.Name).NotEmpty().WithMessage("Name is required.");
+        RuleFor(p => p.Description).NotEmpty().WithMessage("Description is required.");
+        RuleFor(p => p.Price).GreaterThan(0).WithMessage("Price is required and must be greater than zero.");
+        RuleFor(p => p.StockQuantity).GreaterThan(0).WithMessage("Stock Quantity is required and must be greater than zero.");
+        RuleFor(p => p.Images).NotEmpty().WithMessage("At least one image must be present.")
             .Must(images => images.All(img => !string.IsNullOrEmpty(img.Location))).WithMessage("All images must have a location specified.")
             .Must(images => images.Count(img => img.IsPrimary == true) == 1).WithMessage("One image must be set as primary.");
     }

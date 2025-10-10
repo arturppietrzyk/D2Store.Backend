@@ -54,28 +54,30 @@ public class Order
         LastModified = DateTime.UtcNow;
     }
 
-    public bool Update(OrderStatus status)
+    public Result Update(OrderStatus status)
     {
         bool isUpdated = false;
-        if(status != Status)
+        if (status != Status)
         {
             Status = status;
             isUpdated = true;
         }
-        if (isUpdated)
+        if (isUpdated == true)
         {
             LastModified = DateTime.UtcNow;
+            return Result.Success();
         }
-        return isUpdated;
+        else
+        {
+            return Result.Failure(new Error("Order.Validation", "The changes are no different to what is currently there."));
+        }
     }
 
     public static Result AssertCustomerExsistance(bool customerExists)
     {
         if (!customerExists)
         {
-            return Result.Failure(new Error(
-                "Order.Validation",
-                "Customer does not exist."));
+            return Result.Failure(new Error("Order.Validation", "Customer does not exist."));
         }
         return Result.Success();
     }
@@ -86,9 +88,7 @@ public class Order
         {
             if (!productsDict.ContainsKey(product.ProductId))
             {
-                return Result.Failure(new Error(
-                    "Order.Validation",
-                    $"Product with ProductId '{product.ProductId}' does not exist."));
+                return Result.Failure(new Error("Order.Validation", $"Product with ProductId '{product.ProductId}' does not exist."));
             }
         }
         return Result.Success();

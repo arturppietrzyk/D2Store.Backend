@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record CreateOrderCommand(Guid UserId, List<WriteOrderProductDtoCreate> Products, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<ReadOrderDto>>;
+public record CreateOrderCommand(Guid UserId, IReadOnlyCollection<WriteOrderProductDtoCreate> Products, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<ReadOrderDto>>;
 
 public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<ReadOrderDto>>
 {
@@ -57,8 +57,8 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             return Result.Failure<ReadOrderDto>(assertStockAvailabilityResult.Error);
         }
         var createOrder = await CreateOrderAsync(request, productsDict, cancellationToken);
-        var productDtos = MapOrderProductsToDto(createOrder.Products.ToList());
-        var orderDto = MapToReadOrderDto(createOrder, productDtos);
+        var productsDto = MapOrderProductsToDto(createOrder.Products.ToList());
+        var orderDto = MapToReadOrderDto(createOrder, productsDto);
         return Result.Success(orderDto);
     }
 
@@ -87,6 +87,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     private async Task<Dictionary<Guid, Product>> GetProductsDictionaryAsync(List<Guid> productIds, CancellationToken cancellationToken)
     {
         return await _dbContext.Products
+            .AsNoTracking()
             .Where(p => productIds
             .Contains(p.ProductId))
             .ToDictionaryAsync(p => p.ProductId, cancellationToken);
@@ -129,7 +130,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     /// </summary>
     /// <param name="orderProducts"></param>
     /// <returns></returns>
-    private List<ReadOrderProductDto> MapOrderProductsToDto(List<OrderProduct> orderProducts)
+    private IReadOnlyCollection<ReadOrderProductDto> MapOrderProductsToDto(IReadOnlyCollection<OrderProduct> orderProducts)
     {
         return orderProducts.Select(op => new ReadOrderProductDto(
             op.Product.ProductId,
@@ -146,7 +147,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     /// <param name="order"></param>
     /// <param name="products"></param>
     /// <returns></returns>
-    private static ReadOrderDto MapToReadOrderDto(Order order, List<ReadOrderProductDto> products)
+    private static ReadOrderDto MapToReadOrderDto(Order order, IReadOnlyCollection<ReadOrderProductDto> products)
     {
         return new ReadOrderDto(
             order.OrderId,
@@ -163,10 +164,7 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 {
     public CreateOrderCommandValidator()
     {
-        RuleFor(c => c.Products).NotEmpty().WithMessage("At least one product must be provided.");
-        RuleForEach(c => c.Products).ChildRules(products =>
-        {
-            products.RuleFor(p => p.Quantity).GreaterThan(0).WithMessage("Quantity must be greater than zero.");
-        });
+        RuleFor(c => c.Products).NotEmpty().WithMessage("At least one product must be provided.")
+            .Must(products => products.All(product => product.Quantity > 0)).WithMessage("All products must have a quantity greater than 0.");
     }
 }

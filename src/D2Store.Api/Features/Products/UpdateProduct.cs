@@ -21,7 +21,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, mapping and updating of a specific product. Returns the Guid of the deleted product if successful. 
+    /// Coordinates validation, retrieval, mapping and updating of a specific product. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -42,10 +42,10 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         {
             return Result.Failure(productResult.Error);
         }
-        var updateProduct = await UpdateProductAsync(productResult.Value, request, cancellationToken);
-        if (updateProduct.IsFailure)
+        var updateProductResult = await UpdateProductAsync(productResult.Value, request, cancellationToken);
+        if (updateProductResult.IsFailure)
         {
-            return Result.Failure(updateProduct.Error);
+            return Result.Failure(updateProductResult.Error);
         }
         return Result.Success();
     }

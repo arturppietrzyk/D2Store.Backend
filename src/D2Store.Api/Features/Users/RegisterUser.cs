@@ -17,11 +17,17 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
     private readonly IValidator<RegisterUserCommand> _validator;
 
     public RegisterUserHandler(AppDbContext dbContext, IValidator<RegisterUserCommand> validator)
-    { 
+    {
         _dbContext = dbContext;
         _validator = validator;
     }
 
+    /// <summary>
+    /// Coordinates validation, mapping and registration of a user. Returns the registered user in a form of a response DTO. 
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async ValueTask<Result<ReadUserDto>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
@@ -40,25 +46,42 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
         return Result.Success(userDto);
     }
 
+    /// <summary>
+    /// Validates the input.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<Result> ValidateRequestAsync(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<User>(new Error("RegisterUser.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("RegisterUser.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
 
+    /// <summary>
+    /// Registers (creates) the user and pressists it to the database.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<User> RegisterUserAsync(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         var hashedPassword = new PasswordHasher<User>().HashPassword(null!, request.Password);
-        var registerUser = User.Register(request.FirstName, request.LastName, request.Email, hashedPassword, request.PhoneNumber, request.Address);
-        _dbContext.Users.Add(registerUser);
+        var user = User.Register(request.FirstName, request.LastName, request.Email, hashedPassword, request.PhoneNumber, request.Address);
+        _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return registerUser;
+        return user;
     }
 
+    /// <summary>
+    /// Maps the user object to the equvilant ReadUserDto. 
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns></returns>
     private static ReadUserDto MapToReadUserDto(User user)
     {
         return new ReadUserDto(

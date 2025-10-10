@@ -18,7 +18,7 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
     }
 
     /// <summary>
-    /// Coordinates retrieval, mapping and deletion of a specific product. Returns the Guid of the deleted product if successful. 
+    /// Coordinates retrieval, mapping and deletion of a specific product.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -27,18 +27,18 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
     {
         if (!request.IsAdmin)
         {
-            return Result.Failure<Guid>(Error.Forbidden);
+            return Result.Failure(Error.Forbidden);
         }
         var productResult = await GetProductAsync(request.ProductId, cancellationToken);
         if (productResult.IsFailure)
         {
-            return Result.Failure<Guid>(productResult.Error);
+            return Result.Failure(productResult.Error);
         }
         var hasOrderProducts = await _dbContext.OrderProducts.AsNoTracking().AnyAsync(op => op.ProductId == request.ProductId, cancellationToken);
         var assertOrderProductExistanceResult = Product.AssertOrderProductExistance(hasOrderProducts);
         if (assertOrderProductExistanceResult.IsFailure)
         {
-            return Result.Failure<Guid>(assertOrderProductExistanceResult.Error);
+            return Result.Failure(assertOrderProductExistanceResult.Error);
         }
         await DeleteProductAsync(productResult.Value, cancellationToken);
         return Result.Success();

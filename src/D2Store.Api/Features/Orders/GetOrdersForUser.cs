@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record GetOrdersForUserQuery(Guid UserId, int PageNumber, int PageSize, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<List<ReadOrderDto>>>;
+public record GetOrdersForUserQuery(Guid UserId, int PageNumber, int PageSize, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<IReadOnlyCollection<ReadOrderDto>>>;
 
-public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Result<List<ReadOrderDto>>>
+public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Result<IReadOnlyCollection<ReadOrderDto>>>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<GetOrdersForUserQuery> _validator;
@@ -27,20 +27,20 @@ public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Re
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<List<ReadOrderDto>>> Handle(GetOrdersForUserQuery request, CancellationToken cancellationToken)
+    public async ValueTask<Result<IReadOnlyCollection<ReadOrderDto>>> Handle(GetOrdersForUserQuery request, CancellationToken cancellationToken)
     {
         if (!request.IsAdmin && request.UserId != request.AuthenticatedUserId)
         {
-            return Result.Failure<List<ReadOrderDto>>(Error.Forbidden);
+            return Result.Failure<IReadOnlyCollection<ReadOrderDto>>(Error.Forbidden);
         }
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<List<ReadOrderDto>>(validationResult.Error);
+            return Result.Failure<IReadOnlyCollection<ReadOrderDto>>(validationResult.Error);
         }
         var orders = await GetPaginatedOrdersWithProductsAsync(request.UserId, request.PageNumber, request.PageSize, cancellationToken);
-        var orderDtos = orders.Select(MapToReadOrderDto).ToList();
-        return Result.Success(orderDtos);
+        var ordersDto = orders.Select(MapToReadOrderDto).ToList();
+        return Result.Success<IReadOnlyCollection<ReadOrderDto>>(ordersDto);
     }
 
     /// <summary>
@@ -75,7 +75,7 @@ public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Re
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<List<ReadOrderDto>>(new Error("GetOrdersForUser.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("GetOrdersForUser.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }

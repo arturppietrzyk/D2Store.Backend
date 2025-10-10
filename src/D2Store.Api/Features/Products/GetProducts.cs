@@ -35,8 +35,8 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
             return Result.Failure<IReadOnlyCollection<ReadProductDto>>(validationResult.Error);
         }
         var products = await GetPaginatedProductsAsync(request.PageNumber, request.PageSize, cancellationToken);
-        var productDtos = products.Select(MapToReadProductDto).ToList();
-         return Result.Success<IReadOnlyCollection<ReadProductDto>>(productDtos);
+        var productsDto = products.Select(MapToReadProductDto).ToList();
+        return Result.Success<IReadOnlyCollection<ReadProductDto>>(productsDto);
     }
 
     /// <summary>
@@ -50,7 +50,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<IReadOnlyCollection<ReadProductDto>>(new Error("GetProducts.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("GetProducts.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -65,8 +65,8 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
     private async Task<IReadOnlyCollection<Product>> GetPaginatedProductsAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
     {
         return await _dbContext.Products
-            .Include(p => p.Images)
             .AsNoTracking()
+            .Include(p => p.Images)
             .OrderByDescending(p => p.AddedDate)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -80,7 +80,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
     /// <returns></returns>
     private static ReadProductDto MapToReadProductDto(Product product)
     {
-        var productImageDto = product.Images.Select(pi => new ReadProductImageDto(
+        var productImages = product.Images.Select(pi => new ReadProductImageDto(
             pi.ProductImageId,
             pi.Location,
             pi.IsPrimary
@@ -93,7 +93,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
             product.StockQuantity,
             product.AddedDate,
             product.LastModified,
-            productImageDto);
+            productImages);
     }
 }
 
