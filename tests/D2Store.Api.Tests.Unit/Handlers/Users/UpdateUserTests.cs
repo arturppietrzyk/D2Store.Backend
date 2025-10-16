@@ -1,6 +1,7 @@
 ﻿using D2Store.Api.Features.Users;
 using D2Store.Api.Features.Users.Domain;
 using D2Store.Api.Infrastructure;
+using D2Store.Api.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Tests.Unit.Handlers.Users;
@@ -18,6 +19,31 @@ public class UpdateUserTests
         _dbContext = new AppDbContext(dbContextOptions);
         var validator = new UpdateUserCommandValidator();
         _sut = new UpdateUserHandler(_dbContext, validator);
+    }
+
+    [Fact]
+    public async Task Handle_ReturnsFailure_WhenUserSendingUpdateCommandNotAuthorized()
+    {
+        // Arrange
+        var cancellationToken = CancellationToken.None;
+        var existingUserId = Guid.CreateVersion7();
+        var authenticatedUserId = Guid.CreateVersion7();
+        var isAdmin = false;
+        var command = new UpdateUserCommand(
+             existingUserId,
+             FirstName: "John",
+             LastName: "Doe",
+             Email: "john@example.com",
+             PhoneNumber: "1234567890",
+             Address: "123 Street",
+             authenticatedUserId,
+             isAdmin);
+        // Act
+        var result = await _sut.Handle(command, cancellationToken);
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.Equal(Error.Forbidden.Code, result.Error.Code);
+        Assert.Equal(Error.Forbidden.Message, result.Error.Message);
     }
 
     [Fact]
@@ -107,8 +133,8 @@ public class UpdateUserTests
         var result = await _sut.Handle(command, cancellationToken);
         // Assert
         Assert.True(result.IsFailure);
-        Assert.Equal("UpdateUser.Validation", result.Error.Code);
-        Assert.Equal("The user with the specified User Id was not found.", result.Error.Message);
+        Assert.Equal(Error.NotFound.Code, result.Error.Code);
+        Assert.Equal(Error.NotFound.Message, result.Error.Message);
     }
 
     [Fact]
@@ -181,7 +207,7 @@ public class UpdateUserTests
         var result = await _sut.Handle(command, cancellationToken);
         // Assert
         Assert.True(result.IsFailure);
-        Assert.Equal("UpdateUser.Validation", result.Error.Code);
+        Assert.Equal("User.Validation", result.Error.Code);
         Assert.Equal("The changes are no different to what is currently there.", result.Error.Message);
     }
 
@@ -214,6 +240,5 @@ public class UpdateUserTests
         var result = await _sut.Handle(command, cancellationToken);
         // Assert
         Assert.True(result.IsSuccess);
-        Assert.Equal(existingUser.UserId.ToString(), result.Value.ToString());
     }
-}
+ }

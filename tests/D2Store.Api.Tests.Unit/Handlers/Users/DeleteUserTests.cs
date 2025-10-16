@@ -2,6 +2,7 @@
 using D2Store.Api.Features.Users;
 using D2Store.Api.Features.Users.Domain;
 using D2Store.Api.Infrastructure;
+using D2Store.Api.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Tests.Unit.Handlers.Users;
@@ -13,11 +14,28 @@ public class DeleteUserTests
 
     public DeleteUserTests()
     {
-       DbContextOptions<AppDbContext> dbContextOptions = new DbContextOptionsBuilder<AppDbContext>()
-      .UseInMemoryDatabase(databaseName: Guid.CreateVersion7().ToString())
-      .Options;
+        DbContextOptions<AppDbContext> dbContextOptions = new DbContextOptionsBuilder<AppDbContext>()
+       .UseInMemoryDatabase(databaseName: Guid.CreateVersion7().ToString())
+       .Options;
         _dbContext = new AppDbContext(dbContextOptions);
         _sut = new DeleteUserHandler(_dbContext);
+    }
+    
+    [Fact]
+    public async Task Handle_ReturnsFailure_WhenUserSendingDeleteCommandIsNotAuthorized()
+    {
+        // Arrange
+        var cancellationToken = CancellationToken.None;
+        var existingUserId = Guid.CreateVersion7();
+        var authenticatedUserId = Guid.CreateVersion7();
+        var isAdmin = false;
+        var command = new DeleteUserCommand(existingUserId, authenticatedUserId, isAdmin);
+        // Act
+        var result = await _sut.Handle(command, cancellationToken);
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.Equal(Error.Forbidden.Code, result.Error.Code);
+        Assert.Equal(Error.Forbidden.Message, result.Error.Message);
     }
 
     [Fact]
@@ -33,8 +51,8 @@ public class DeleteUserTests
         var result = await _sut.Handle(command, cancellationToken);
         // Assert
         Assert.True(result.IsFailure);
-        Assert.Equal("DeleteUser.Validation", result.Error.Code);
-        Assert.Equal("The user with the specified User Id was not found.", result.Error.Message);
+        Assert.Equal(Error.NotFound.Code, result.Error.Code);
+        Assert.Equal(Error.NotFound.Message, result.Error.Message);
     }
 
     [Fact]
@@ -87,6 +105,5 @@ public class DeleteUserTests
         var result = await _sut.Handle(command, cancellationToken);
         // Assert
         Assert.True(result.IsSuccess);
-        Assert.Equal(existingUser.UserId.ToString(), result.Value.ToString());
     }
-}
+ }
