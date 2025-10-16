@@ -1,6 +1,7 @@
 ﻿using D2Store.Api.Features.Users;
 using D2Store.Api.Features.Users.Domain;
 using D2Store.Api.Infrastructure;
+using D2Store.Api.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Tests.Unit.Handlers.Users;
@@ -35,6 +36,23 @@ public class GetUsersTests
         Assert.True(result.IsFailure);
         Assert.Equal("GetUsers.Validation", result.Error.Code);
         Assert.Equal("Page Number must be greater than 0.\nPage Size must be greater than 0.", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task Handle_ReturnsFailure_WhenUserQueryingIsNotAdmin()
+    {
+        // Arrange
+        var cancellationToken = CancellationToken.None;
+        var pageNumber = 1;
+        var pageSize = 10;
+        var isAdmin = false;
+        var query = new GetUsersQuery(pageNumber, pageSize, isAdmin);
+        // Act
+        var result = await _sut.Handle(query, cancellationToken);
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.Equal(Error.Forbidden.Code, result.Error.Code);
+        Assert.Equal(Error.Forbidden.Message, result.Error.Message);
     }
 
     [Fact]
@@ -84,4 +102,4 @@ public class GetUsersTests
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Count);
     }
-}
+ }

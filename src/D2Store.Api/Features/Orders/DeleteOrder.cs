@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Orders;
 
-public record DeleteOrderCommand(Guid OrderId, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
+public record DeleteOrderCommand(Guid OrderId, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result>;
 
-public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid>>
+public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result>
 {
     private readonly AppDbContext _dbContext;
 
@@ -23,20 +23,19 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<Guid>> Handle(DeleteOrderCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result> Handle(DeleteOrderCommand request, CancellationToken cancellationToken)
     {
         var orderResult = await GetOrderAsync(request.OrderId, cancellationToken);
         if (orderResult.IsFailure)
         {
-            return Result.Failure<Guid>(orderResult.Error);
+            return Result.Failure(orderResult.Error);
         }
-        var order = orderResult.Value;
-        if (!request.IsAdmin && order.UserId != request.AuthenticatedUserId)
+        if (!request.IsAdmin && orderResult.Value.UserId != request.AuthenticatedUserId)
         {
-            return Result.Failure<Guid>(Error.Forbidden);
+            return Result.Failure(Error.Forbidden);
         }
-        var deleteOrder = await DeleteOrderAsync(orderResult.Value, cancellationToken);
-        return Result.Success(deleteOrder);
+        await DeleteOrderAsync(orderResult.Value, cancellationToken);
+        return Result.Success();
     }
 
     /// <summary>
@@ -51,40 +50,22 @@ public class DeleteOrderHander : IRequestHandler<DeleteOrderCommand, Result<Guid
          .Include(o => o.Products)
          .ThenInclude(op => op.Product)
          .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
-        if(order is null)
+        if (order is null)
         {
-            return Result.Failure<Order>(new Error(
-            "DeleteOrder.Validation",
-            "The order with the specified Order Id was not found."));
+            return Result.Failure<Order>(Error.NotFound);
         }
         return Result.Success(order);
     }
 
     /// <summary>
-    /// Wraps the deletion of order products of a specific order as well as the order itself in a transaction so everything can be rolled back if an error occurs.
+    /// Deletes the specified order persisting the changes to the database table. 
     /// </summary>
-    /// <param name="order"></param>
+    /// <param name="product"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Guid> DeleteOrderAsync(Order order, CancellationToken cancellationToken)
+    private async Task DeleteOrderAsync(Order order, CancellationToken cancellationToken)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            if (order.Products is not null && order.Products.Any())
-            {
-                _dbContext.OrderProducts.RemoveRange(order.Products);
-                await _dbContext.SaveChangesAsync();
-            }
-            _dbContext.Orders.Remove(order);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return order.OrderId;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+        _dbContext.Orders.Remove(order);
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

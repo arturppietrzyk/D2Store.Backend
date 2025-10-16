@@ -10,9 +10,11 @@ public class Product
     public decimal Price { get; private set; }
     public int StockQuantity { get; private set; }
     public DateTime AddedDate { get; private set; }
-    public DateTime LastModified {  get; private set; }
+    public DateTime LastModified { get; private set; }
+    private readonly List<ProductImage> _images = new List<ProductImage>();
+    public IReadOnlyCollection<ProductImage> Images => _images.AsReadOnly();
 
-    public Product(string name, string description, decimal price, int stockQuantity)
+    private Product(string name, string description, decimal price, int stockQuantity)
     {
         ProductId = Guid.CreateVersion7();
         Name = name;
@@ -29,7 +31,7 @@ public class Product
         return product;
     }
 
-    public bool Update(string? name, string? description, decimal? price, int? stockQuantity)
+    public Result Update(string? name, string? description, decimal? price, int? stockQuantity)
     {
         bool isUpdated = false;
         if (!string.IsNullOrEmpty(name) && name != Name)
@@ -52,11 +54,15 @@ public class Product
             StockQuantity = stockQuantity.Value;
             isUpdated = true;
         }
-        if (isUpdated)
+        if (isUpdated == true)
         {
             LastModified = DateTime.UtcNow;
+            return Result.Success();
         }
-        return isUpdated;
+        else
+        {
+            return Result.Failure(new Error("Product.Validation", "The changes are no different to what is currently there."));
+        }
     }
 
     public Result ReduceStock(int quantity)
@@ -75,9 +81,7 @@ public class Product
     {
         if (StockQuantity < requestedQuantity)
         {
-            return Result.Failure(new Error(
-                "Product.Validation",
-                $"Insufficient stock for product '{Name}'. Available: {StockQuantity}, Requested: {requestedQuantity}"));
+            return Result.Failure(new Error("Product.Validation", $"Insufficient stock for product '{Name}'. Available: {StockQuantity}, Requested: {requestedQuantity}"));
         }
         return Result.Success();
     }
@@ -86,9 +90,56 @@ public class Product
     {
         if (hasOrderProducts)
         {
-            return Result.Failure(new Error(
-             "Product.Validation",
-             "Product cannot be deleted because it's part of an order."));
+            return Result.Failure(new Error("Product.Validation", "Product cannot be deleted because it's part of an order."));
+        }
+        return Result.Success();
+    }
+
+    public void AddImage(string location, bool isPrimary)
+    {
+        var productImage = ProductImage.Create(this.ProductId, location, isPrimary);
+        _images.Add(productImage);
+    }
+
+    public void RemoveImages(IEnumerable<Guid> productImageIds)
+    {
+        _images.RemoveAll(img => productImageIds.Contains(img.ProductImageId));
+    }
+
+    public Result ChangePrimaryImage(Guid productImageId)
+    {
+        var isUpdated = false;
+        var currentPrimary = _images.SingleOrDefault(i => i.IsPrimary == true);
+        if (currentPrimary is not null && currentPrimary.ProductImageId == productImageId)
+        {
+            return Result.Failure(new Error("Product.Validation", "The new primary image is no different to what is currently set as the primary image."));
+        }
+        if (currentPrimary is not null)
+        {
+            currentPrimary.SetPrimary(false);
+            isUpdated = true;
+        }
+        var newPrimaryImage = _images.SingleOrDefault(i => i.ProductImageId == productImageId);
+        if (newPrimaryImage is not null)
+        {
+            newPrimaryImage.SetPrimary(true);
+            isUpdated = true;
+        }
+        if (isUpdated == true)
+        {
+            LastModified = DateTime.UtcNow;
+        }
+        return Result.Success();
+    }
+
+    public Result AssertProductImageBeingRemovedIsNotAPrimaryImage(IEnumerable<Guid> productImageIds)
+    {
+        var primaryImageBeingRemoved = _images
+            .Where(i => productImageIds.Contains(i.ProductImageId))
+            .Any(i => i.IsPrimary);
+        if (primaryImageBeingRemoved)
+        {
+            return Result.Failure(new Error("Product.Validation", "Product images cannot be removed because one of the images attempted to be removed is currently set as the primary image."));
         }
         return Result.Success();
     }

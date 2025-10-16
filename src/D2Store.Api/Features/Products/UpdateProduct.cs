@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
-public record UpdateProductCommand(Guid ProductId, string? Name, string? Description, decimal? Price, int? StockQuantity, bool IsAdmin) : IRequest<Result<Guid>>;
+public record UpdateProductCommand(Guid ProductId, string? Name, string? Description, decimal? Price, int? StockQuantity, bool IsAdmin) : IRequest<Result>;
 
-public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result<Guid>>
+public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<UpdateProductCommand> _validator;
@@ -21,33 +21,33 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, mapping and updating of a specific product. Returns the Guid of the deleted product if successful. 
+    /// Coordinates validation, retrieval, mapping and updating of a specific product. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<Guid>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
         if (!request.IsAdmin)
         {
-            return Result.Failure<Guid>(Error.Forbidden);
+            return Result.Failure(Error.Forbidden);
         }
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<Guid>(validationResult.Error);
+            return Result.Failure(validationResult.Error);
         }
         var productResult = await GetProductAsync(request.ProductId, cancellationToken);
         if (productResult.IsFailure)
         {
-            return Result.Failure<Guid>(productResult.Error);
+            return Result.Failure(productResult.Error);
         }
-        var updateProduct = await UpdateProductAsync(productResult.Value, request, cancellationToken);
-        if (updateProduct.IsFailure)
+        var updateProductResult = await UpdateProductAsync(productResult.Value, request, cancellationToken);
+        if (updateProductResult.IsFailure)
         {
-            return Result.Failure<Guid>(updateProduct.Error);
+            return Result.Failure(updateProductResult.Error);
         }
-        return Result.Success(updateProduct.Value);
+        return Result.Success();
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<Guid>(new Error("UpdateProduct.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("UpdateProduct.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -78,9 +78,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
             .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
         if (product is null)
         {
-            return Result.Failure<Product>(new Error(
-            "UpdateProduct.Validation",
-            "The product with the specified Product Id was not found."));
+            return Result.Failure<Product>(Error.NotFound);
         }
         return Result.Success(product);
     }
@@ -92,15 +90,15 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
+    private async Task<Result> UpdateProductAsync(Product product, UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        var isUpdated = product.Update(request.Name, request.Description, request.Price, request.StockQuantity);
-        if (!isUpdated)
+        var isUpdatedResult = product.Update(request.Name, request.Description, request.Price, request.StockQuantity);
+        if (isUpdatedResult.IsFailure)
         {
-            return Result.Failure<Guid>(new Error("UpdateProduct.Validation", "The changes are no different to what is currently there."));
+            return Result.Failure(isUpdatedResult.Error);
         }
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(product.ProductId);
+        return Result.Success();
     }
 }
 

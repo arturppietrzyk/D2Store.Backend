@@ -1,5 +1,6 @@
 ﻿using D2Store.Api.Config;
 using D2Store.Api.Features.Users.Domain;
+using D2Store.Api.Features.Users.Dto;
 using D2Store.Api.Infrastructure;
 using D2Store.Api.Shared;
 using FluentValidation;
@@ -14,9 +15,9 @@ using System.Text;
 
 namespace D2Store.Api.Features.Users;
 
-public record LoginUserCommand(string Email, string Password) : IRequest<Result<string>>;
+public record LoginUserCommand(string Email, string Password) : IRequest<Result<ReadAuthDto>>;
 
-public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>>
+public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<ReadAuthDto>>
 {
     private readonly JwtSettingsConfig _jwtSettingsConfig;
     private readonly AppDbContext _dbContext;
@@ -29,60 +30,87 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>
         _dbContext = dbContext;
     }
 
-    public async ValueTask<Result<string>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
+    /// <summary>
+    /// Coordinates validation, mapping and login of a user. Returns the auth object in a form of a response DTO.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async ValueTask<Result<ReadAuthDto>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<string>(validationResult.Error);
+            return Result.Failure<ReadAuthDto>(validationResult.Error);
         }
         var userResult = await GetUserAsync(request.Email, cancellationToken);
         if (userResult.IsFailure)
         {
-            return Result.Failure<string>(userResult.Error);
+            return Result.Failure<ReadAuthDto>(userResult.Error);
         }
-        var loginUser = LoginUser(userResult.Value, request);
-        if (loginUser.IsFailure)
+        var loginUserResult = LoginUser(userResult.Value, request);
+        if (loginUserResult.IsFailure)
         {
-            return Result.Failure<string>(loginUser.Error);
+            return Result.Failure<ReadAuthDto>(loginUserResult.Error);
         }
-        return Result.Success(loginUser.Value);
+        var authDto = MapToReadAuthDto(loginUserResult.Value);
+        return Result.Success(authDto);
     }
 
+    /// <summary>
+    /// Validates the input. 
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<Result> ValidateRequestAsync(LoginUserCommand request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<User>(new Error("LoginUser.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("LoginUser.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
 
+    /// <summary>
+    /// Loads a user object based on the email.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     private async Task<Result<User>> GetUserAsync(string email, CancellationToken cancellationToken)
     {
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
         if (user is null)
         {
-            return Result.Failure<User>(new Error(
-           "LoginUser.Validation",
-           "The user with the specified Email is not found."));
+            return Result.Failure<User>(Error.NotFound);
         }
         return Result.Success(user);
     }
 
-    private Result<string> LoginUser(User user, LoginUserCommand request)
+    /// <summary>
+    /// Orchastres the login process.
+    /// </summary>
+    /// <param name="user"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    private Result<Auth> LoginUser(User user, LoginUserCommand request)
     {
-        if(new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password) == PasswordVerificationResult.Failed)
+        if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password) == PasswordVerificationResult.Failed)
         {
-            return Result.Failure<string>(new Error(
-                "LoginUser.Validation",
-                "The Password is wrong."));
+            return Result.Failure<Auth>(new Error("LoginUser.Validation", "The Password is wrong."));
         }
         string jwt = CreateJwt(user);
-        return Result.Success(jwt);
+        var auth = Auth.Login(jwt, DateTime.UtcNow.AddMinutes(_jwtSettingsConfig.ExpiryMinutes));
+        return Result.Success(auth);
     }
 
+    /// <summary>
+    /// Creates the JWT token. 
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns></returns>
     private string CreateJwt(User user)
     {
         var claims = new Claim[]
@@ -101,6 +129,18 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, Result<string>
             signingCredentials: creds
         );
         return new JwtSecurityTokenHandler().WriteToken(jwtDescriptor);
+    }
+
+    /// <summary>
+    /// Maps the auth object to the equvilant ReadAuthDto. 
+    /// </summary>
+    /// <param name="auth"></param>
+    /// <returns></returns>
+    private static ReadAuthDto MapToReadAuthDto(Auth auth)
+    {
+        return new ReadAuthDto(
+            auth.AccessToken,
+            auth.ExpiresAt);
     }
 }
 

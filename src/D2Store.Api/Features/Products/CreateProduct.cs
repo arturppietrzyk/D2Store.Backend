@@ -4,10 +4,11 @@ using D2Store.Api.Shared;
 using FluentValidation;
 using Mediator;
 using D2Store.Api.Features.Products.Dto;
+using System.Data;
 
 namespace D2Store.Api.Features.Products;
 
-public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, bool IsAdmin) : IRequest<Result<ReadProductDto>>;
+public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, IReadOnlyCollection<WriteProductImageDtoCreate> Images, bool IsAdmin) : IRequest<Result<ReadProductDto>>;
 
 public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result<ReadProductDto>>
 {
@@ -21,7 +22,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     }
 
     /// <summary>
-    /// Coordinates validation, mapping and creating of an product. Returns the created product in a response DTO.
+    /// Coordinates validation, mapping and creating of an product. Returns the created product in a form of a response DTO. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -38,8 +39,9 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             return Result.Failure<ReadProductDto>(validationResult.Error);
         }
         var createProduct = await CreateProductAsync(request, cancellationToken);
-        var productDto = MapToReadProductDto(createProduct);
-        return Result.Success(productDto); 
+        var productImagesDto = MapProductImagesToDto(createProduct.Images.ToList());
+        var productDto = MapToReadProductDto(createProduct, productImagesDto);
+        return Result.Success(productDto);
     }
 
     /// <summary>
@@ -53,7 +55,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<Product>(new Error("CreateProduct.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("CreateProduct.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -66,10 +68,38 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     /// <returns></returns>
     private async Task<Product> CreateProductAsync(CreateProductCommand request, CancellationToken cancellationToken)
     {
-        var createProduct = Product.Create(request.Name, request.Description, request.Price, request.StockQuantity);
-        _dbContext.Products.Add(createProduct);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return createProduct;
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var product = Product.Create(request.Name, request.Description, request.Price, request.StockQuantity);
+            _dbContext.Products.Add(product);
+            foreach (var prodImg in request.Images)
+            {
+                product.AddImage(prodImg.Location, prodImg.IsPrimary);
+            }
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return product;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Maps the collection of product images into the equivalent ReadProductImageDto collection. 
+    /// </summary>
+    /// <param name="productImages"></param>
+    /// <returns></returns>
+    private IReadOnlyCollection<ReadProductImageDto> MapProductImagesToDto(IReadOnlyCollection<ProductImage> productImages)
+    {
+        return productImages.Select(pi => new ReadProductImageDto(
+            pi.ProductImageId,
+            pi.Location,
+            pi.IsPrimary
+        )).ToList();
     }
 
     /// <summary>
@@ -77,7 +107,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     /// </summary>
     /// <param name="product"></param>
     /// <returns></returns>
-    private static ReadProductDto MapToReadProductDto(Product product)
+    private static ReadProductDto MapToReadProductDto(Product product, IReadOnlyCollection<ReadProductImageDto> images)
     {
         return new ReadProductDto(
             product.ProductId,
@@ -86,7 +116,8 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             product.Price,
             product.StockQuantity,
             product.AddedDate,
-            product.LastModified);
+            product.LastModified,
+            images);
     }
 }
 
@@ -96,7 +127,10 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
     {
         RuleFor(p => p.Name).NotEmpty().WithMessage("Name is required.");
         RuleFor(p => p.Description).NotEmpty().WithMessage("Description is required.");
-        RuleFor(p => p.Price).GreaterThan(0).WithMessage("Price must be greater than zero.");
-        RuleFor(p => p.StockQuantity).GreaterThan(0).WithMessage("Stock Quantity must be greater than zero.");
+        RuleFor(p => p.Price).GreaterThan(0).WithMessage("Price is required and must be greater than zero.");
+        RuleFor(p => p.StockQuantity).GreaterThan(0).WithMessage("Stock Quantity is required and must be greater than zero.");
+        RuleFor(p => p.Images).NotEmpty().WithMessage("At least one image must be present.")
+            .Must(images => images.All(img => !string.IsNullOrEmpty(img.Location))).WithMessage("All images must have a location specified.")
+            .Must(images => images.Count(img => img.IsPrimary == true) == 1).WithMessage("One image must be set as primary.");
     }
 }

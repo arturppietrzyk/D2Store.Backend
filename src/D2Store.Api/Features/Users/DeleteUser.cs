@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Users;
 
-public record DeleteUserCommand(Guid UserId, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
+public record DeleteUserCommand(Guid UserId, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result>;
 
-public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, Result<Guid>>
+public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, Result>
 {
     private readonly AppDbContext _dbContext;
 
@@ -18,30 +18,30 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, Result<Guid>
     }
 
     /// <summary>
-    /// Coordinates retrieval, validation and deletion of a specific user. Returns the Guid of the deleted user if successful. 
+    /// Coordinates retrieval, validation and deletion of a specific user.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<Guid>> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
     {
         if (!request.IsAdmin && request.UserId != request.AuthenticatedUserId)
         {
-            return Result.Failure<Guid>(Error.Forbidden);
+            return Result.Failure(Error.Forbidden);
         }
         var userResult = await GetUserAsync(request.UserId, cancellationToken);
         if (userResult.IsFailure)
         {
-            return Result.Failure<Guid>(userResult.Error);
+            return Result.Failure(userResult.Error);
         }
         var hasOrders = await _dbContext.Orders.AsNoTracking().AnyAsync(o => o.UserId == request.UserId, cancellationToken);
         var assertUserHasNoOrdersResult = User.AssertUserHasNoOrders(hasOrders);
         if (assertUserHasNoOrdersResult.IsFailure)
         {
-            return Result.Failure<Guid>(assertUserHasNoOrdersResult.Error);
+            return Result.Failure(assertUserHasNoOrdersResult.Error);
         }
-        var deleteUser = await DeleteUserAsync(userResult.Value, cancellationToken);
-        return Result.Success(deleteUser);
+        await DeleteUserAsync(userResult.Value, cancellationToken);
+        return Result.Success();
     }
 
     /// <summary>
@@ -56,9 +56,7 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, Result<Guid>
             .FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
         if (user is null)
         {
-            return Result.Failure<User>(new Error(
-           "DeleteUser.Validation",
-           "The user with the specified User Id was not found."));
+            return Result.Failure<User>(Error.NotFound);
         }
         return Result.Success(user);
     }
@@ -69,10 +67,9 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, Result<Guid>
     /// <param name="user"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Guid> DeleteUserAsync(User user, CancellationToken cancellationToken)
+    private async Task DeleteUserAsync(User user, CancellationToken cancellationToken)
     {
         _dbContext.Users.Remove(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return user.UserId;
     }
 }

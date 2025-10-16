@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Users;
 
-public record GetUsersQuery(int PageNumber, int PageSize, bool IsAdmin) : IRequest<Result<List<ReadUserDto>>>;
+public record GetUsersQuery(int PageNumber, int PageSize, bool IsAdmin) : IRequest<Result<IReadOnlyCollection<ReadUserDto>>>;
 
-public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<List<ReadUserDto>>>
+public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<IReadOnlyCollection<ReadUserDto>>>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<GetUsersQuery> _validator;
@@ -27,20 +27,20 @@ public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<List<ReadUs
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<List<ReadUserDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
+    public async ValueTask<Result<IReadOnlyCollection<ReadUserDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
         if (!request.IsAdmin)
         {
-            return Result.Failure<List<ReadUserDto>>(Error.Forbidden);
+            return Result.Failure<IReadOnlyCollection<ReadUserDto>>(Error.Forbidden);
         }
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<List<ReadUserDto>>(validationResult.Error);
+            return Result.Failure<IReadOnlyCollection<ReadUserDto>>(validationResult.Error);
         }
         var users = await GetPaginatedUsersAsync(request.PageNumber, request.PageSize, cancellationToken);
-        var userDtos = users.Select(MapToReadUserDto).ToList();
-        return Result.Success(userDtos);
+        var usersDto = users.Select(MapToReadUserDto).ToList();
+        return Result.Success<IReadOnlyCollection<ReadUserDto>>(usersDto);
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<List<ReadUs
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<List<ReadUserDto>>(new Error("GetUsers.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("GetUsers.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -66,7 +66,7 @@ public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<List<ReadUs
     /// <param name="pageSize"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<List<User>> GetPaginatedUsersAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
+    private async Task<IReadOnlyCollection<User>> GetPaginatedUsersAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
     {
         return await _dbContext.Users
             .AsNoTracking()

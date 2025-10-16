@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Users;
 
-public record UpdateUserCommand(Guid UserId, string? FirstName, string? LastName, string? Email, string? PhoneNumber, string? Address, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result<Guid>>;
+public record UpdateUserCommand(Guid UserId, string? FirstName, string? LastName, string? Email, string? PhoneNumber, string? Address, Guid AuthenticatedUserId, bool IsAdmin) : IRequest<Result>;
 
-public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>>
+public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result>
 {
     private readonly AppDbContext _dbContext;
     private readonly IValidator<UpdateUserCommand> _validator;
@@ -21,26 +21,26 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval, and updating of a specific user. Returns the Guid of the deleted user if successful.
+    /// Coordinates validation, retrieval, and updating of a specific user.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<Guid>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
         if (!request.IsAdmin && request.UserId != request.AuthenticatedUserId)
         {
-            return Result.Failure<Guid>(Error.Forbidden);
+            return Result.Failure(Error.Forbidden);
         }
         var validationResult = await ValidateRequestAsync(request, cancellationToken);
         if (validationResult.IsFailure)
         {
-            return Result.Failure<Guid>(validationResult.Error);
+            return Result.Failure(validationResult.Error);
         }
         var userResult = await GetUserAsync(request.UserId, cancellationToken);
         if (userResult.IsFailure)
         {
-            return Result.Failure<Guid>(userResult.Error);
+            return Result.Failure(userResult.Error);
         }
         if (request.Email is not null)
         {
@@ -48,15 +48,15 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>
             var assertUserEmailIsUniqueResult = User.AssertUserEmailIsUnique(emailInUse);
             if (assertUserEmailIsUniqueResult.IsFailure)
             {
-                return Result.Failure<Guid>(assertUserEmailIsUniqueResult.Error);
+                return Result.Failure(assertUserEmailIsUniqueResult.Error);
             }
         }
-        var updateUser = await UpdateUserAsync(userResult.Value, request, cancellationToken);
-        if (updateUser.IsFailure)
+        var updateUserResult = await UpdateUserAsync(userResult.Value, request, cancellationToken);
+        if (updateUserResult.IsFailure)
         {
-            return Result.Failure<Guid>(updateUser.Error);
+            return Result.Failure(updateUserResult.Error);
         }
-        return Result.Success(updateUser.Value);
+        return Result.Success();
     }
 
     /// <summary>
@@ -70,7 +70,7 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return Result.Failure<Guid>(new Error("UpdateUser.Validation", validationResult.ToString()));
+            return Result.Failure(new Error("UpdateUser.Validation", validationResult.ToString()));
         }
         return Result.Success();
     }
@@ -87,9 +87,7 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>
             .FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
         if (user is null)
         {
-            return Result.Failure<User>(new Error(
-           "UpdateUser.Validation",
-           "The user with the specified User Id was not found."));
+            return Result.Failure<User>(Error.NotFound);
         }
         return Result.Success(user);
     }
@@ -101,15 +99,15 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<Guid>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Result<Guid>> UpdateUserAsync(User user, UpdateUserCommand request, CancellationToken cancellationToken)
+    private async Task<Result> UpdateUserAsync(User user, UpdateUserCommand request, CancellationToken cancellationToken)
     {
-        var isUpdated = user.Update(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        if (!isUpdated)
+        var isUpdatedResult = user.Update(request.FirstName, request.LastName, request.Email, request.PhoneNumber, request.Address);
+        if (isUpdatedResult.IsFailure)
         {
-            return Result.Failure<Guid>(new Error("UpdateUser.Validation", "The changes are no different to what is currently there."));
+            return Result.Failure(isUpdatedResult.Error);    
         }
-        return Result.Success(user.UserId);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success();
     }
 }
 

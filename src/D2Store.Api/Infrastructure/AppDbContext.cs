@@ -16,26 +16,53 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<OrderProduct> OrderProducts { get; set; }
+    public DbSet<ProductImage> ProductImages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Order>()
-       .Property(o => o.Status)
-       .HasConversion<string>();
+            .Property(o => o.Status)
+            .HasConversion<string>();
 
         modelBuilder.Entity<Order>()
             .Property(o => o.TotalAmount)
             .HasColumnType("decimal(18,2)");
 
         modelBuilder.Entity<Order>()
-      .HasMany(o => o.Products)
-      .WithOne(op => op.Order)
-      .HasForeignKey(op => op.OrderId)
-      .OnDelete(DeleteBehavior.Cascade);
+            .HasMany(o => o.Products)
+            .WithOne(o => o.Order)
+            .HasForeignKey(op => op.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Order>()
+            .Property(o => o.OrderId)
+            .ValueGeneratedNever();
 
         modelBuilder.Entity<Product>()
            .Property(p => p.Price)
            .HasColumnType("decimal(18,2)");
+
+        modelBuilder.Entity<Product>()
+            .Property(p => p.ProductId)
+            .ValueGeneratedNever();
+
+        modelBuilder.Entity<Product>()
+            .HasMany(p => p.Images)
+            .WithOne(p =>p.Product)
+            .HasForeignKey(pi => pi.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.UserId)
+            .ValueGeneratedNever();
+
+        modelBuilder.Entity<OrderProduct>()
+            .Property(op => op.OrderProductId)
+            .ValueGeneratedNever();
+
+        modelBuilder.Entity<ProductImage>()
+            .Property(pi => pi.ProductImageId)
+            .ValueGeneratedNever();
 
         base.OnModelCreating(modelBuilder);
     }

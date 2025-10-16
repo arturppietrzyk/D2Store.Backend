@@ -5,7 +5,7 @@ namespace D2Store.Api.Features.Orders.Dto;
 public class WriteOrderDtoCreate
 {
     public required Guid UserId { get; set; }
-    public required List<WriteOrderProductDtoCreate> Products { get; set; }
+    public required IReadOnlyCollection<WriteOrderProductDtoCreate> Products { get; set; }
 }
 
 public class WriteOrderProductDtoCreate

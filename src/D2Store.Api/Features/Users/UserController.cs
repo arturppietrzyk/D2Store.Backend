@@ -20,22 +20,26 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("register-user")]
-    public async Task<IActionResult> RegisterUser([FromBody] WriteUserDtoRegister writeUserDto)
+    public async Task<IActionResult> RegisterUser([FromBody] WriteUserDtoRegister dtoRegister)
     {
-        var result = await _mediator.Send(new RegisterUserCommand(writeUserDto.FirstName, writeUserDto.LastName, writeUserDto.Email, writeUserDto.Password, writeUserDto.PhoneNumber, writeUserDto.Address));
+        var result = await _mediator.Send(new RegisterUserCommand(dtoRegister.FirstName, dtoRegister.LastName, dtoRegister.Email, dtoRegister.Password, dtoRegister.PhoneNumber, dtoRegister.Address));
         if (result.IsFailure)
         {
             return BadRequest(result.Error);
         }
-        return Ok(result.Value);
+        return CreatedAtAction(nameof(GetUser), new { userId = result.Value.UserId }, result.Value);
     }
 
     [HttpPost("login-user")]
-    public async Task<IActionResult> LoginUser([FromBody] WriteUserDtoLogin writeUserDto)
+    public async Task<IActionResult> LoginUser([FromBody] WriteUserDtoLogin dtoLogin)
     {
-        var result = await _mediator.Send(new LoginUserCommand(writeUserDto.Email, writeUserDto.Password));
+        var result = await _mediator.Send(new LoginUserCommand(dtoLogin.Email, dtoLogin.Password));
         if (result.IsFailure)
         {
+            if (result.Error == Error.NotFound)
+            {
+                return StatusCode(404, Error.NotFound);
+            }
             return BadRequest(result.Error);
         }
         return Ok(result.Value);
@@ -53,6 +57,10 @@ public class UserController : ControllerBase
             if (result.Error == Error.Forbidden)
             {
                 return StatusCode(403, Error.Forbidden);
+            }
+            if (result.Error == Error.NotFound)
+            {
+                return StatusCode(404, Error.NotFound);    
             }
             return BadRequest(result.Error);
         }
@@ -77,6 +85,28 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
+    [HttpPatch("user/{userId}")]
+    public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] WriteUserDtoUpdate dtoUpdate)
+    {
+        var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
+        var result = await _mediator.Send(new UpdateUserCommand(userId, dtoUpdate.FirstName, dtoUpdate.LastName, dtoUpdate.Email, dtoUpdate.PhoneNumber, dtoUpdate.Address, Guid.Parse(authenticatedUserId!), isAdmin));
+        if (result.IsFailure)
+        {
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
+            if (result.Error == Error.NotFound)
+            {
+                return StatusCode(404, Error.NotFound);
+            }
+            return BadRequest(result.Error);
+        }
+        return NoContent();
+    }
+
+    [Authorize]
     [HttpDelete("user/{userId}")]
     public async Task<IActionResult> DeleteUser(Guid userId)
     {
@@ -89,25 +119,12 @@ public class UserController : ControllerBase
             {
                 return StatusCode(403, Error.Forbidden);
             }
-            return BadRequest(result.Error);
-        }
-        return Ok(result.Value);
-    }
-
-    [HttpPatch("user/{userId}")]
-    public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] WriteUserDtoUpdate writeUserDto)
-    {
-        var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new UpdateUserCommand(userId, writeUserDto.FirstName, writeUserDto.LastName, writeUserDto.Email, writeUserDto.PhoneNumber, writeUserDto.Address, Guid.Parse(authenticatedUserId!), isAdmin));
-        if (result.IsFailure)
-        {
-            if (result.Error == Error.Forbidden)
+            if(result.Error == Error.NotFound)
             {
-                return StatusCode(403, Error.Forbidden);
+                return StatusCode(404, Error.NotFound);
             }
             return BadRequest(result.Error);
         }
-        return Ok(result.Value);
+        return NoContent();
     }
 }

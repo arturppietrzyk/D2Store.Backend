@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D2Store.Api.Features.Products;
 
-public record DeleteProductCommand(Guid ProductId, bool IsAdmin) : IRequest<Result<Guid>>;
+public record DeleteProductCommand(Guid ProductId, bool IsAdmin) : IRequest<Result>;
 
-public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result<Guid>>
+public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result>
 {
     private readonly AppDbContext _dbContext;
 
@@ -18,30 +18,30 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
     }
 
     /// <summary>
-    /// Coordinates retrieval, mapping and deletion of a specific product. Returns the Guid of the deleted product if successful. 
+    /// Coordinates retrieval, mapping and deletion of a specific product.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async ValueTask<Result<Guid>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Result> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
     {
         if (!request.IsAdmin)
         {
-            return Result.Failure<Guid>(Error.Forbidden);
+            return Result.Failure(Error.Forbidden);
         }
         var productResult = await GetProductAsync(request.ProductId, cancellationToken);
         if (productResult.IsFailure)
         {
-            return Result.Failure<Guid>(productResult.Error);
+            return Result.Failure(productResult.Error);
         }
         var hasOrderProducts = await _dbContext.OrderProducts.AsNoTracking().AnyAsync(op => op.ProductId == request.ProductId, cancellationToken);
         var assertOrderProductExistanceResult = Product.AssertOrderProductExistance(hasOrderProducts);
         if (assertOrderProductExistanceResult.IsFailure)
         {
-            return Result.Failure<Guid>(assertOrderProductExistanceResult.Error);
+            return Result.Failure(assertOrderProductExistanceResult.Error);
         }
-        var deleteProduct = await DeleteProductAsync(productResult.Value, cancellationToken);
-        return Result.Success(deleteProduct);
+        await DeleteProductAsync(productResult.Value, cancellationToken);
+        return Result.Success();
     }
 
     /// <summary>
@@ -56,9 +56,7 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
             .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
         if(product is null)
         {
-            return Result.Failure<Product>(new Error(
-            "DeleteProduct.Validation",
-            "The product with the specified Product Id was not found."));
+            return Result.Failure<Product>(Error.NotFound);
         }
         return Result.Success(product);
     }
@@ -69,10 +67,9 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Result
     /// <param name="product"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<Guid> DeleteProductAsync(Product product, CancellationToken cancellationToken)
+    private async Task DeleteProductAsync(Product product, CancellationToken cancellationToken)
     {
         _dbContext.Products.Remove(product);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return product.ProductId;
     }
 }

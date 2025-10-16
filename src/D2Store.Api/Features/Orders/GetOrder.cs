@@ -31,13 +31,12 @@ public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDt
         {
             return Result.Failure<ReadOrderDto>(orderResult.Error);
         }
-        var order = orderResult.Value;
-        if (!request.IsAdmin && order.UserId != request.AuthenticatedUserId)
+        if (!request.IsAdmin && orderResult.Value.UserId != request.AuthenticatedUserId)
         {
             return Result.Failure<ReadOrderDto>(Error.Forbidden);
         }
-        var orderProductDtos = MapOrderProductsToDto(orderResult.Value.Products);
-        return Result.Success(MapToReadOrderDto(orderResult.Value, orderProductDtos));
+        var orderProductsDto = MapOrderProductsToDto(orderResult.Value.Products);
+        return Result.Success(MapToReadOrderDto(orderResult.Value, orderProductsDto));
     }
 
     /// <summary>
@@ -49,14 +48,13 @@ public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDt
     private async Task<Result<Order>> GetOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
         var orderExists = await _dbContext.Orders
+         .AsNoTracking()
          .Include(o => o.Products)
          .ThenInclude(op => op.Product)
          .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
         if (orderExists is null)
         {
-            return Result.Failure<Order>(new Error(
-            "GetOrderById.Validation",
-            "The order with the specified Order Id was not found."));
+            return Result.Failure<Order>(Error.NotFound);
         }
         return Result.Success(orderExists);
     }
@@ -66,7 +64,7 @@ public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDt
     /// </summary>
     /// <param name="orderProducts"></param>
     /// <returns></returns>
-    private List<ReadOrderProductDto> MapOrderProductsToDto(IReadOnlyCollection<OrderProduct> orderProducts)
+    private IReadOnlyCollection<ReadOrderProductDto> MapOrderProductsToDto(IReadOnlyCollection<OrderProduct> orderProducts)
     {
         return orderProducts.Select(op => new ReadOrderProductDto(
             op.Product.ProductId,
@@ -83,7 +81,7 @@ public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDt
     /// <param name="order"></param>
     /// <param name="products"></param>
     /// <returns></returns>
-    private static ReadOrderDto MapToReadOrderDto(Order order, List<ReadOrderProductDto> products)
+    private static ReadOrderDto MapToReadOrderDto(Order order, IReadOnlyCollection<ReadOrderProductDto> products)
     {
         return new ReadOrderDto(
             order.OrderId,

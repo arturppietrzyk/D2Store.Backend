@@ -2,6 +2,7 @@
 using D2Store.Api.Features.Users;
 using D2Store.Api.Features.Users.Domain;
 using D2Store.Api.Infrastructure;
+using D2Store.Api.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -69,8 +70,8 @@ public class LoginUserTests
         var result = await _sut.Handle(command, cancellationToken);
         // Assert
         Assert.True(result.IsFailure);
-        Assert.Equal("LoginUser.Validation", result.Error.Code);
-        Assert.Equal("The user with the specified Email is not found.", result.Error.Message);
+        Assert.Equal(Error.NotFound.Code, result.Error.Code);
+        Assert.Equal(Error.NotFound.Message, result.Error.Message);
     }
 
     [Fact]
@@ -142,7 +143,7 @@ public class LoginUserTests
         var result = await _sut.Handle(command, cancellationToken);
         // Assert
         Assert.True(result.IsSuccess);
-        var token = result.Value;
+        var token = result.Value.AccessToken;
         Assert.False(string.IsNullOrWhiteSpace(token));
         var handler = new JwtSecurityTokenHandler();
         var jwt = handler.ReadJwtToken(token);
