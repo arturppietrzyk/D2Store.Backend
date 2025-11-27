@@ -6,6 +6,7 @@ using Mediator;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using Serilog;
 using System.Text;
 using System.Text.Json;
@@ -64,8 +65,6 @@ builder.Services.AddControllers()
          options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
      });
 builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen();
-
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connectionString));
 builder.Services.AddCors(options =>
 {
@@ -79,11 +78,7 @@ app.UseCors("AllowReactApp");
 
 app.MapOpenApi();
 
-if(app.Environment.IsDevelopment())
-{   
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.MapScalarApiReference();
 
 app.UseSerilogRequestLogging();
 
