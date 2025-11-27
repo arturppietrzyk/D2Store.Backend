@@ -22,5 +22,5 @@ Built as a demonstration of modern .NET backend development practices.
 - xUnit & NSubstitute (unit tests)
 - Integration tests using Docker SQL container
 - Open API specification (Swagger UI added)
-- 
+  
 This project demonstrates clean architecture, maintainability, and real-world production patterns.
