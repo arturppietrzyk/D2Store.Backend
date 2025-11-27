@@ -21,6 +21,7 @@ Built as a demonstration of modern .NET backend development practices.
 - Docker Compose for both database and published API
 - xUnit & NSubstitute (unit tests)
 - Integration tests using Docker SQL container
-- Open API specification (Swagger UI added)
+- Open API specification
+- Scalar UI added to expose Open API specification
   
 This project demonstrates clean architecture, maintainability, and real-world production patterns.
