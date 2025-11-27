@@ -64,6 +64,8 @@ builder.Services.AddControllers()
          options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
      });
 builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen();
+
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connectionString));
 builder.Services.AddCors(options =>
 {
@@ -75,9 +77,12 @@ var app = builder.Build();
 
 app.UseCors("AllowReactApp");
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
+app.MapOpenApi();
+
+if(app.Environment.IsDevelopment())
+{   
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseSerilogRequestLogging();
