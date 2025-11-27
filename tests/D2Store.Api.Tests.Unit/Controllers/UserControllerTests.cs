@@ -403,7 +403,7 @@ public class UserControllerTests
     }
 
     [Fact]
-    public async Task GetUsers_ReturnsBadRequestAndError_GetUsersFails()
+    public async Task GetUsers_ReturnsBadRequestAndError_WhenGetUsersFails()
     {
         // Arrange
         int pageNumber = 0;
@@ -534,7 +534,7 @@ public class UserControllerTests
     }
 
     [Fact]
-    public async Task UpdateUser_ReturnsBadRequestAndError_UpdateUserFails()
+    public async Task UpdateUser_ReturnsBadRequestAndError_WhenUpdateUserFails()
     {
         // Arrange
         var writeUserDto = new WriteUserDtoUpdate
@@ -650,7 +650,7 @@ public class UserControllerTests
     }
 
     [Fact]
-    public async Task DeleteUser_ReturnsBadRequestAndError_DeleteUserFails()
+    public async Task DeleteUser_ReturnsBadRequestAndError_WhenDeleteUserFails()
     {
         // Arrange
         var userId = Guid.CreateVersion7();
