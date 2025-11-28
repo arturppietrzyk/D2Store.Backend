@@ -22,6 +22,7 @@ Built as a demonstration of modern .NET backend development practices.
 - xUnit & NSubstitute (unit tests)
 - Integration tests using Docker SQL container
 - Open API specification
+- CI pipeline with GitHub Actions
 - Scalar UI added to expose Open API specification
   
 This project demonstrates clean architecture, maintainability, and real-world production patterns.
