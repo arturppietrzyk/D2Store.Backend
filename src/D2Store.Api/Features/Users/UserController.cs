@@ -20,9 +20,9 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("register-user")]
-    public async Task<IActionResult> RegisterUser([FromBody] WriteUserDtoRegister dtoRegister)
+    public async Task<IActionResult> RegisterUser([FromBody] WriteUserDtoRegister dtoRegister, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new RegisterUserCommand(dtoRegister.FirstName, dtoRegister.LastName, dtoRegister.Email, dtoRegister.Password, dtoRegister.PhoneNumber, dtoRegister.Address));
+        var result = await _mediator.Send(new RegisterUserCommand(dtoRegister.FirstName, dtoRegister.LastName, dtoRegister.Email, dtoRegister.Password, dtoRegister.PhoneNumber, dtoRegister.Address), cancellationToken);
         if (result.IsFailure)
         {
             return BadRequest(result.Error);
@@ -31,9 +31,9 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("login-user")]
-    public async Task<IActionResult> LoginUser([FromBody] WriteUserDtoLogin dtoLogin)
+    public async Task<IActionResult> LoginUser([FromBody] WriteUserDtoLogin dtoLogin, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new LoginUserCommand(dtoLogin.Email, dtoLogin.Password));
+        var result = await _mediator.Send(new LoginUserCommand(dtoLogin.Email, dtoLogin.Password), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.NotFound)
@@ -47,11 +47,11 @@ public class UserController : ControllerBase
 
     [Authorize]
     [HttpGet("user/{userId}")]
-    public async Task<IActionResult> GetUser(Guid userId)
+    public async Task<IActionResult> GetUser(Guid userId, CancellationToken cancellationToken)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new GetUserQuery(userId, Guid.Parse(authenticatedUserId!), isAdmin));
+        var result = await _mediator.Send(new GetUserQuery(userId, Guid.Parse(authenticatedUserId!), isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
@@ -69,10 +69,10 @@ public class UserController : ControllerBase
 
     [Authorize]
     [HttpGet("users")]
-    public async Task<IActionResult> GetUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
+    public async Task<IActionResult> GetUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5, CancellationToken cancellationToken = default)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new GetUsersQuery(pageNumber, pageSize, isAdmin));
+        var result = await _mediator.Send(new GetUsersQuery(pageNumber, pageSize, isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
@@ -86,11 +86,11 @@ public class UserController : ControllerBase
 
     [Authorize]
     [HttpPatch("user/{userId}")]
-    public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] WriteUserDtoUpdate dtoUpdate)
+    public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] WriteUserDtoUpdate dtoUpdate, CancellationToken cancellationToken)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new UpdateUserCommand(userId, dtoUpdate.FirstName, dtoUpdate.LastName, dtoUpdate.Email, dtoUpdate.PhoneNumber, dtoUpdate.Address, Guid.Parse(authenticatedUserId!), isAdmin));
+        var result = await _mediator.Send(new UpdateUserCommand(userId, dtoUpdate.FirstName, dtoUpdate.LastName, dtoUpdate.Email, dtoUpdate.PhoneNumber, dtoUpdate.Address, Guid.Parse(authenticatedUserId!), isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
@@ -108,11 +108,11 @@ public class UserController : ControllerBase
 
     [Authorize]
     [HttpDelete("user/{userId}")]
-    public async Task<IActionResult> DeleteUser(Guid userId)
+    public async Task<IActionResult> DeleteUser(Guid userId, CancellationToken cancellationToken)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new DeleteUserCommand(userId, Guid.Parse(authenticatedUserId!), isAdmin));
+        var result = await _mediator.Send(new DeleteUserCommand(userId, Guid.Parse(authenticatedUserId!), isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
