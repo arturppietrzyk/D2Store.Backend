@@ -24,6 +24,7 @@ public class UserControllerTests
     public async Task RegisterUser_ReturnsCreatedAtActionAndObject_WhenRegisterUserSucceeds()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var dtoRegister = new WriteUserDtoRegister
         {
@@ -54,7 +55,7 @@ public class UserControllerTests
         cmd.PhoneNumber == dtoRegister.PhoneNumber &&
         cmd.Address == dtoRegister.Address), Arg.Any<CancellationToken>()).Returns(result);
         // Act
-        var actionResult = await _sut.RegisterUser(dtoRegister);
+        var actionResult = await _sut.RegisterUser(dtoRegister, cancellationToken);
         // Assert
         var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult);
         Assert.Equal(nameof(_sut.GetUser), createdAtActionResult.ActionName);
@@ -66,6 +67,7 @@ public class UserControllerTests
     public async Task RegisterUser_ReturnsBadRequestAndError_WhenRegisterUserFails()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var dtoRegister = new WriteUserDtoRegister
         {
             FirstName = "",
@@ -85,7 +87,7 @@ public class UserControllerTests
         cmd.PhoneNumber == dtoRegister.PhoneNumber &&
         cmd.Address == dtoRegister.Address), Arg.Any<CancellationToken>()).Returns(result);
         // Act
-        var actionResult = await _sut.RegisterUser(dtoRegister);
+        var actionResult = await _sut.RegisterUser(dtoRegister, cancellationToken);
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult);
         Assert.Equal(400, badRequestResult.StatusCode);
@@ -97,6 +99,7 @@ public class UserControllerTests
     public async Task LoginUser_ReturnsOkAndObject_WhenLoginUserSucceeds()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
         var dtoLogin = new WriteUserDtoLogin
@@ -125,7 +128,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.LoginUser(dtoLogin);
+        var actionResult = await _sut.LoginUser(dtoLogin, cancellationToken);
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(actionResult);
         var returnedToken = Assert.IsType<ReadAuthDto>(okResult.Value);
@@ -136,6 +139,7 @@ public class UserControllerTests
     public async Task LoginUser_ReturnsNotFoundAndError_WhenUserNotFound()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
         var dtoLogin = new WriteUserDtoLogin
@@ -159,7 +163,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.LoginUser(dtoLogin);
+        var actionResult = await _sut.LoginUser(dtoLogin, cancellationToken);
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult);
         Assert.Equal(404, statusCodeResult.StatusCode);
@@ -170,6 +174,7 @@ public class UserControllerTests
     public async Task LoginUser_ReturnsBadRequestAndError_WhenLoginUserFails()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
         var dtoLogin = new WriteUserDtoLogin
@@ -194,7 +199,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.LoginUser(dtoLogin);
+        var actionResult = await _sut.LoginUser(dtoLogin, cancellationToken);
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult);
         Assert.Equal(400, badRequestResult.StatusCode);
@@ -206,6 +211,7 @@ public class UserControllerTests
     public async Task GetUser_ReturnsOkAndObject_WhenGetUserSucceeds()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
         var dtoUser = new ReadUserDto(
@@ -236,7 +242,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.GetUser(userId);
+        var actionResult = await _sut.GetUser(userId, cancellationToken);
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(actionResult);
         var returnedUser = Assert.IsType<ReadUserDto>(okResult.Value);
@@ -247,6 +253,7 @@ public class UserControllerTests
     public async Task GetUser_ReturnsForbiddenAndError_WhenUserNotAuthorized()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = Guid.CreateVersion7();
         var result = Result.Failure<ReadUserDto>(Error.Forbidden);
@@ -263,7 +270,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.GetUser(userId);
+        var actionResult = await _sut.GetUser(userId, cancellationToken);
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult);
         Assert.Equal(403, statusCodeResult.StatusCode);
@@ -274,6 +281,7 @@ public class UserControllerTests
     public async Task GetUser_ReturnsNotFoundAndError_WhenUserNotFound()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
         var result = Result.Failure<ReadUserDto>(Error.NotFound);
@@ -290,7 +298,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.GetUser(userId);
+        var actionResult = await _sut.GetUser(userId, cancellationToken);
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult);
         Assert.Equal(404, statusCodeResult.StatusCode);
@@ -301,6 +309,7 @@ public class UserControllerTests
     public async Task GetUser_ReturnsBadRequestAndError_WhenGetUserFails()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
         var error = new Error("GetUser", "Some Generic Error.");
@@ -318,7 +327,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.GetUser(userId);
+        var actionResult = await _sut.GetUser(userId, cancellationToken);
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult);
         Assert.Equal(400, badRequestResult.StatusCode);
@@ -330,6 +339,7 @@ public class UserControllerTests
     public async Task GetUsers_ReturnsOkAndObject_WhenGetUsersSucceeds()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         int pageNumber = 1;
         int pageSize = 2;
         var readUserDto1 = new ReadUserDto(
@@ -369,7 +379,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.GetUsers(pageNumber, pageSize);
+        var actionResult = await _sut.GetUsers(pageNumber, pageSize, cancellationToken);
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(actionResult);
         var returnedUsers = Assert.IsType<List<ReadUserDto>>(okResult.Value);
@@ -380,6 +390,7 @@ public class UserControllerTests
     public async Task GetUsers_ReturnsForbiddenAndError_WhenUserNotAuthorized()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         int pageNumber = 1;
         int pageSize = 2;
         var result = Result.Failure<IReadOnlyCollection<ReadUserDto>>(Error.Forbidden);
@@ -395,7 +406,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.GetUsers(pageNumber, pageSize);
+        var actionResult = await _sut.GetUsers(pageNumber, pageSize, cancellationToken);
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult);
         Assert.Equal(403, statusCodeResult.StatusCode);
@@ -406,6 +417,7 @@ public class UserControllerTests
     public async Task GetUsers_ReturnsBadRequestAndError_WhenGetUsersFails()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         int pageNumber = 0;
         int pageSize = 2;
         var error = new Error("GetUsers.Validation", "Page Number must be greater than 0.");
@@ -422,7 +434,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.GetUsers(pageNumber, pageSize);
+        var actionResult = await _sut.GetUsers(pageNumber, pageSize, cancellationToken);
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult);
         Assert.Equal(400, badRequestResult.StatusCode);
@@ -434,6 +446,7 @@ public class UserControllerTests
     public async Task Update_ReturnsNoContent_WhenUpdateUserSucceeds()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var writeUserDto = new WriteUserDtoUpdate
         {
             FirstName = "John",
@@ -458,7 +471,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.UpdateUser(userId, writeUserDto);
+        var actionResult = await _sut.UpdateUser(userId, writeUserDto, cancellationToken);
         // Assert
         Assert.IsType<NoContentResult>(actionResult);
     }
@@ -467,6 +480,7 @@ public class UserControllerTests
     public async Task UpdateUser_ReturnsForbiddenAndError_WhenUserUnauthorized()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var writeUserDto = new WriteUserDtoUpdate
         {
             FirstName = "John",
@@ -491,7 +505,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.UpdateUser(userId, writeUserDto);
+        var actionResult = await _sut.UpdateUser(userId, writeUserDto, cancellationToken);
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult);
         Assert.Equal(403, statusCodeResult.StatusCode);
@@ -502,6 +516,7 @@ public class UserControllerTests
     public async Task UpdateUser_ReturnsNotFoundAndError_WhenUserNotFound()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var writeUserDto = new WriteUserDtoUpdate
         {
             FirstName = "John",
@@ -526,7 +541,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.UpdateUser(userId, writeUserDto);
+        var actionResult = await _sut.UpdateUser(userId, writeUserDto, cancellationToken);
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult);
         Assert.Equal(404, statusCodeResult.StatusCode);
@@ -537,6 +552,7 @@ public class UserControllerTests
     public async Task UpdateUser_ReturnsBadRequestAndError_WhenUpdateUserFails()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var writeUserDto = new WriteUserDtoUpdate
         {
             FirstName = "John",
@@ -562,7 +578,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.UpdateUser(userId, writeUserDto);
+        var actionResult = await _sut.UpdateUser(userId, writeUserDto, cancellationToken);
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult);
         Assert.Equal(400, badRequestResult.StatusCode);
@@ -574,6 +590,7 @@ public class UserControllerTests
     public async Task DeleteUser_ReturnsOkAndObject_WhenDeleteUserSucceeds()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
         var result = Result.Success();
@@ -590,7 +607,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.DeleteUser(userId);
+        var actionResult = await _sut.DeleteUser(userId, cancellationToken);
         // Assert
         Assert.IsType<NoContentResult>(actionResult);
     }
@@ -599,6 +616,7 @@ public class UserControllerTests
     public async Task DeleteUser_ReturnsForbiddenAndError_WhenUserNotAuthorized()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
         var result = Result.Failure<Guid>(Error.Forbidden);
@@ -615,7 +633,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.DeleteUser(userId);
+        var actionResult = await _sut.DeleteUser(userId, cancellationToken);
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult);
         Assert.Equal(403, statusCodeResult.StatusCode);
@@ -626,6 +644,7 @@ public class UserControllerTests
     public async Task DeleteUser_ReturnsNotFoundAndError_WhenUserNotFound()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
         var result = Result.Failure<Guid>(Error.NotFound);
@@ -642,7 +661,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.DeleteUser(userId);
+        var actionResult = await _sut.DeleteUser(userId, cancellationToken);
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult);
         Assert.Equal(404, statusCodeResult.StatusCode);
@@ -653,6 +672,7 @@ public class UserControllerTests
     public async Task DeleteUser_ReturnsBadRequestAndError_WhenDeleteUserFails()
     {
         // Arrange
+        var cancellationToken = CancellationToken.None;
         var userId = Guid.CreateVersion7();
         var authenticatedUserId = userId;
         var error = new Error("DeleteUser", "Some Generic Error.");
@@ -670,7 +690,7 @@ public class UserControllerTests
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
         // Act
-        var actionResult = await _sut.DeleteUser(userId);
+        var actionResult = await _sut.DeleteUser(userId, cancellationToken);
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult);
         Assert.Equal(400, badRequestResult.StatusCode);

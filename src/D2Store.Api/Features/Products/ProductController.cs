@@ -20,10 +20,10 @@ public class ProductController : ControllerBase
 
     [Authorize]
     [HttpPost("product")]
-    public async Task<IActionResult> CreateProduct([FromBody] WriteProductDtoCreate dtoCreate)
+    public async Task<IActionResult> CreateProduct([FromBody] WriteProductDtoCreate dtoCreate, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new CreateProductCommand(dtoCreate.Name, dtoCreate.Description, dtoCreate.Price, dtoCreate.StockQuantity, dtoCreate.Images, isAdmin));
+        var result = await _mediator.Send(new CreateProductCommand(dtoCreate.Name, dtoCreate.Description, dtoCreate.Price, dtoCreate.StockQuantity, dtoCreate.Images, isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
@@ -36,9 +36,9 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet("product/{productId}")]
-    public async Task<IActionResult> GetProduct(Guid productId)
+    public async Task<IActionResult> GetProduct(Guid productId, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetProductQuery(productId));
+        var result = await _mediator.Send(new GetProductQuery(productId), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.NotFound)
@@ -51,9 +51,9 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet("products")]
-    public async Task<IActionResult> GetProducts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetProducts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetProductsQuery(pageNumber, pageSize));
+        var result = await _mediator.Send(new GetProductsQuery(pageNumber, pageSize), cancellationToken);
         if (result.IsFailure)
         {
             return BadRequest(result.Error);
@@ -63,10 +63,10 @@ public class ProductController : ControllerBase
 
     [Authorize]
     [HttpPatch("product/{productId}")]
-    public async Task<IActionResult> UpdateProduct(Guid productId, [FromBody] WriteProductDtoUpdate dtoUpdate)
+    public async Task<IActionResult> UpdateProduct(Guid productId, [FromBody] WriteProductDtoUpdate dtoUpdate, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new UpdateProductCommand(productId, dtoUpdate.Name, dtoUpdate.Description, dtoUpdate.Price, dtoUpdate.StockQuantity, isAdmin));
+        var result = await _mediator.Send(new UpdateProductCommand(productId, dtoUpdate.Name, dtoUpdate.Description, dtoUpdate.Price, dtoUpdate.StockQuantity, isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
@@ -84,10 +84,10 @@ public class ProductController : ControllerBase
 
     [Authorize]
     [HttpDelete("product/{productId}")]
-    public async Task<IActionResult> DeleteProduct(Guid productId)
+    public async Task<IActionResult> DeleteProduct(Guid productId, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new DeleteProductCommand(productId, isAdmin));
+        var result = await _mediator.Send(new DeleteProductCommand(productId, isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
@@ -105,10 +105,10 @@ public class ProductController : ControllerBase
 
     [Authorize]
     [HttpPost("product/{productId}/images")]
-    public async Task<IActionResult> AddProductImages(Guid productId, [FromBody] WriteProductImagesDtoAdd dtoAddImages)
+    public async Task<IActionResult> AddProductImages(Guid productId, [FromBody] WriteProductImagesDtoAdd dtoAddImages, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new AddProductImagesCommand(productId, dtoAddImages.Images, isAdmin));
+        var result = await _mediator.Send(new AddProductImagesCommand(productId, dtoAddImages.Images, isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
@@ -127,10 +127,10 @@ public class ProductController : ControllerBase
 
     [Authorize]
     [HttpDelete("product/{productId}/images")]
-    public async Task<IActionResult> RemoveProductImages(Guid productId, [FromBody] WriteProductImagesDtoRemove dtoRemoveImages)
+    public async Task<IActionResult> RemoveProductImages(Guid productId, [FromBody] WriteProductImagesDtoRemove dtoRemoveImages, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new RemoveProductImagesCommand(productId, dtoRemoveImages.ProductImageIds, isAdmin));
+        var result = await _mediator.Send(new RemoveProductImagesCommand(productId, dtoRemoveImages.ProductImageIds, isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
@@ -148,10 +148,10 @@ public class ProductController : ControllerBase
 
     [Authorize]
     [HttpPatch("product/{productId}/images/{productImageId}/primary")]
-    public async Task<IActionResult> ChangePrimaryImage(Guid productId, Guid productImageId)
+    public async Task<IActionResult> ChangePrimaryImage(Guid productId, Guid productImageId, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new ChangePrimaryImageCommand(productId, productImageId, isAdmin));
+        var result = await _mediator.Send(new ChangePrimaryImageCommand(productId, productImageId, isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
