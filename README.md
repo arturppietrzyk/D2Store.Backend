@@ -6,7 +6,7 @@ Built as a demonstration of modern .NET backend development practices.
 
 🚀 Overview
 
-- This project is a fully structured .NET API designed using:
+This project is a fully structured .NET API designed using:
 - Vertical Slice Architecture (feature-first organization)
 - CQRS (clear separation between commands and queries)
 - Mediator Pattern (request/response handling)
