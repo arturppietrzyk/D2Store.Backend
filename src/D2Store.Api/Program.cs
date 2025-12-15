@@ -80,6 +80,8 @@ app.MapOpenApi();
 
 app.MapScalarApiReference();
 
+app.UseStaticFiles();
+
 app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
