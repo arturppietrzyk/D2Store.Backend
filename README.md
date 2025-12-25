@@ -9,8 +9,9 @@ Built as a demonstration of modern .NET backend development practices.
 This project is a fully structured .NET API designed using:
 - Vertical Slice Architecture (feature-first organization)
 - CQRS (clear separation between commands and queries)
+- FluentValidation (strongly typed validation rules)
 - Mediator Pattern (request/response handling)
-- Pipeline Behaviours (central logging, validation, and cross-cutting concerns)
+- Pipeline Behaviours (central logging)
 - Serilog (structured file/log output)
 - IOptions Pattern (strongly typed configuration)
 - Result Pattern (clean error handling for expected failures)
