@@ -1,6 +1,6 @@
 ﻿namespace D2Store.Api.Features.Products.Dto;
 
-public class WriteProductDtoCreate
+public record WriteProductDtoCreate
 {
     public required string Name { get; set; }
     public required string Description { get; set; }
@@ -9,7 +9,7 @@ public class WriteProductDtoCreate
     public required IReadOnlyCollection<WriteProductImageDtoCreate> Images { get; set; }
 }
 
-public class WriteProductDtoUpdate
+public record WriteProductDtoUpdate
 {
     public string? Name { get; set; }
     public string? Description { get; set; }
@@ -17,17 +17,17 @@ public class WriteProductDtoUpdate
     public int? StockQuantity { get; set; }
 }
 
-public class WriteProductImagesDtoAdd
+public record WriteProductImagesDtoAdd
 {
     public required IReadOnlyCollection<WriteProductImageDtoCreate> Images { get; set; }
 }
 
-public class WriteProductImagesDtoRemove
+public record WriteProductImagesDtoRemove
 {
     public required IReadOnlyCollection<Guid> ProductImageIds { get; set; }
 }
 
-public class WriteProductImageDtoCreate
+public record WriteProductImageDtoCreate
 {
     public required string Location { get; set; }
     public required bool IsPrimary { get; set; }
