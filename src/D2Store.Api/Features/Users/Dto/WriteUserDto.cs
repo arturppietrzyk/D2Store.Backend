@@ -1,6 +1,6 @@
 ﻿namespace D2Store.Api.Features.Users.Dto;
 
-public class WriteUserDtoRegister
+public record WriteUserDtoRegister
 {
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
@@ -10,13 +10,13 @@ public class WriteUserDtoRegister
     public required string Address { get; set; }
 }
 
-public class WriteUserDtoLogin
+public record WriteUserDtoLogin
 {
     public required string Email { get; set; }
     public required string Password { get; set; }
 }
 
-public class WriteUserDtoUpdate
+public record WriteUserDtoUpdate
 {
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
