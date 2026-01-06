@@ -56,7 +56,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
     }
 
     /// <summary>
-    /// Loads the product objects along side its images, based on the Pagination parameters.
+    /// Loads the product objects along side its images and categories, based on the Pagination parameters.
     /// </summary>
     /// <param name="pageNumber"></param>
     /// <param name="pageSize"></param>
@@ -67,6 +67,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
         return await _dbContext.Products
             .AsNoTracking()
             .Include(p => p.Images)
+            .Include(p => p.Categories)
             .OrderByDescending(p => p.AddedDate)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -74,7 +75,7 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
     }
 
     /// <summary>
-    /// Maps an Product entity along side its images into a ReadProductDto. 
+    /// Maps an Product entity along side its images and categories into a ReadProductDto. 
     /// </summary>
     /// <param name="product"></param>
     /// <returns></returns>
@@ -85,6 +86,10 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
             pi.Location,
             pi.IsPrimary
         )).ToList();
+        var productCategories = product.Categories.Select(pc => new ReadProductCategoryDto(
+            pc.ProductId,
+            pc.CategoryId
+        )).ToList();
         return new ReadProductDto(
             product.ProductId,
             product.Name,
@@ -93,7 +98,9 @@ public class GetProductsHandler : IRequestHandler<GetProductsQuery, Result<IRead
             product.StockQuantity,
             product.AddedDate,
             product.LastModified,
-            productImages);
+            productImages,
+            productCategories
+            );
     }
 }
 

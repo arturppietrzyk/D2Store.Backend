@@ -8,7 +8,7 @@ using System.Data;
 
 namespace D2Store.Api.Features.Products;
 
-public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, IReadOnlyCollection<WriteProductImageDtoCreate> Images, bool IsAdmin) : IRequest<Result<ReadProductDto>>;
+public record CreateProductCommand(string Name, string Description, decimal Price, int StockQuantity, IReadOnlyCollection<WriteProductImageDtoCreate> Images, IReadOnlyCollection<WriteProductCategoryDtoCreate>? Categories, bool IsAdmin) : IRequest<Result<ReadProductDto>>;
 
 public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result<ReadProductDto>>
 {
@@ -22,7 +22,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     }
 
     /// <summary>
-    /// Coordinates validation, mapping and creating of an product. Returns the created product in a form of a response DTO. 
+    /// Coordinates validation, mapping and creating of a product. Returns the created product in a form of a response DTO. 
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -40,7 +40,8 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
         }
         var createProduct = await CreateProductAsync(request, cancellationToken);
         var productImagesDto = MapProductImagesToDto(createProduct.Images.ToList());
-        var productDto = MapToReadProductDto(createProduct, productImagesDto);
+        var productCategoriesDto = MapProductCategoriesToDto(createProduct.Categories.ToList());
+        var productDto = MapToReadProductDto(createProduct, productImagesDto, productCategoriesDto);
         return Result.Success(productDto);
     }
 
@@ -77,6 +78,13 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             {
                 product.AddImage(prodImg.Location, prodImg.IsPrimary);
             }
+            if (request.Categories is not null)
+            {
+                foreach (var prodCat in request.Categories)
+                {
+                    product.AddCategory(prodCat.CategoryId);
+                }
+            }
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return product;
@@ -103,11 +111,24 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
     }
 
     /// <summary>
+    ///  Maps the collection of product categories into the equivalent ReadProductCategoryDto collection. 
+    /// </summary>
+    /// <param name="productCategories"></param>
+    /// <returns></returns>
+    private IReadOnlyCollection<ReadProductCategoryDto> MapProductCategoriesToDto(IReadOnlyCollection<ProductCategory> productCategories)
+    {
+        return productCategories.Select(pc => new ReadProductCategoryDto(
+            pc.ProductId,
+            pc.CategoryId
+        )).ToList();
+    }
+
+    /// <summary>
     /// Maps the retrieved product into the ReadProductDto which is returned as the response. 
     /// </summary>
     /// <param name="product"></param>
     /// <returns></returns>
-    private static ReadProductDto MapToReadProductDto(Product product, IReadOnlyCollection<ReadProductImageDto> images)
+    private static ReadProductDto MapToReadProductDto(Product product, IReadOnlyCollection<ReadProductImageDto> images, IReadOnlyCollection<ReadProductCategoryDto> categories)
     {
         return new ReadProductDto(
             product.ProductId,
@@ -117,7 +138,9 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             product.StockQuantity,
             product.AddedDate,
             product.LastModified,
-            images);
+            images,
+            categories
+            );
     }
 }
 

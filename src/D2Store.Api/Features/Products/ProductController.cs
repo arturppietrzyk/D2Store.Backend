@@ -23,7 +23,7 @@ public class ProductController : ControllerBase
     public async Task<IActionResult> CreateProduct([FromBody] WriteProductDtoCreate dtoCreate, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
-        var result = await _mediator.Send(new CreateProductCommand(dtoCreate.Name, dtoCreate.Description, dtoCreate.Price, dtoCreate.StockQuantity, dtoCreate.Images, isAdmin), cancellationToken);
+        var result = await _mediator.Send(new CreateProductCommand(dtoCreate.Name, dtoCreate.Description, dtoCreate.Price, dtoCreate.StockQuantity, dtoCreate.Images, dtoCreate.Categories, isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)
@@ -152,6 +152,48 @@ public class ProductController : ControllerBase
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
         var result = await _mediator.Send(new ChangePrimaryImageCommand(productId, productImageId, isAdmin), cancellationToken);
+        if (result.IsFailure)
+        {
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
+            if (result.Error == Error.NotFound)
+            {
+                return StatusCode(404, Error.NotFound);
+            }
+            return BadRequest(result.Error);
+        }
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPost("products/{productId}/categories")]
+    public async Task<IActionResult> AddProductCategories(Guid productId, [FromBody] WriteProductCategoriesDtoAdd dtoAddCategories, CancellationToken cancellationToken)
+    {
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
+        var result = await _mediator.Send(new AddProductCategoriesCommand(productId, dtoAddCategories.Categories, isAdmin), cancellationToken);
+        if (result.IsFailure)
+        {
+            if (result.Error == Error.Forbidden)
+            {
+                return StatusCode(403, Error.Forbidden);
+            }
+            if (result.Error == Error.NotFound)
+            {
+                return StatusCode(404, Error.NotFound);
+            }
+            return BadRequest(result.Error);
+        }
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpDelete("products/{productId}/categories")]
+    public async Task<IActionResult> RemoveProductCategories(Guid productId, [FromBody] WriteProductCategoriesDtoRemove dtoRemoveCategories, CancellationToken cancellationToken)
+    {
+        var isAdmin = User.IsInRole(Role.ADMIN.ToString());
+        var result = await _mediator.Send(new RemoveProductCategoriesCommand(productId, dtoRemoveCategories.ProductCategoryIds, isAdmin), cancellationToken);
         if (result.IsFailure)
         {
             if (result.Error == Error.Forbidden)

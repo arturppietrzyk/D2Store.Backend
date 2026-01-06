@@ -1,4 +1,5 @@
-﻿using D2Store.Api.Features.Orders.Domain;
+﻿using D2Store.Api.Features.Categories;
+using D2Store.Api.Features.Orders.Domain;
 using D2Store.Api.Features.Products.Domain;
 using D2Store.Api.Features.Users.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,8 @@ public class AppDbContext : DbContext
     public DbSet<Product> Products { get; set; }
     public DbSet<OrderProduct> OrderProducts { get; set; }
     public DbSet<ProductImage> ProductImages { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<ProductCategory> ProductCategories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,7 +51,7 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Product>()
             .HasMany(p => p.Images)
-            .WithOne(p =>p.Product)
+            .WithOne(p => p.Product)
             .HasForeignKey(pi => pi.ProductId)
             .OnDelete(DeleteBehavior.Cascade);
 
@@ -64,6 +67,23 @@ public class AppDbContext : DbContext
             .Property(pi => pi.ProductImageId)
             .ValueGeneratedNever();
 
-        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<Category>()
+        .Property(c => c.CategoryId)
+        .ValueGeneratedNever();
+
+        modelBuilder.Entity<ProductCategory>(entity =>
+        {
+            entity.HasKey(pc => new { pc.ProductId, pc.CategoryId });
+
+            entity.HasOne(pc => pc.Product)
+                .WithMany(p => p.Categories)
+                .HasForeignKey(pc => pc.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(pc => pc.Category)
+                .WithMany(c => c.Categories)
+                .HasForeignKey(pc => pc.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }
