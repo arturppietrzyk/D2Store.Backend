@@ -13,6 +13,8 @@ public class Product
     public DateTime LastModified { get; private set; }
     private readonly List<ProductImage> _images = new List<ProductImage>();
     public IReadOnlyCollection<ProductImage> Images => _images.AsReadOnly();
+    private readonly List<ProductCategory> _categories = new List<ProductCategory>();
+    public IReadOnlyCollection<ProductCategory> Categories => _categories.AsReadOnly();
 
     private Product(string name, string description, decimal price, int stockQuantity)
     {
@@ -142,5 +144,26 @@ public class Product
             return Result.Failure(new Error("Product.Validation", "Product images cannot be removed because one of the images attempted to be removed is currently set as the primary image."));
         }
         return Result.Success();
+    }
+
+    public void AddCategory(Guid categoryId)
+    {
+        var productCategory = ProductCategory.Create(this.ProductId, categoryId);
+        _categories.Add(productCategory);
+    }
+
+    public Result AssertProductCategoriesDoNotExist(IEnumerable<Guid> incomingCategoryIds)
+    {
+        var duplicateExists = _categories.Any(existing => incomingCategoryIds.Contains(existing.CategoryId));
+        if (duplicateExists)
+        {
+            return Result.Failure(new Error("Product.Validation", "One or more categories are already assigned to this product."));
+        }
+        return Result.Success();
+    }
+
+    public void RemoveCategories(IEnumerable<Guid> productCategoryIds)
+    {
+        _categories.RemoveAll(pc => productCategoryIds.Contains(pc.CategoryId));
     }
 }

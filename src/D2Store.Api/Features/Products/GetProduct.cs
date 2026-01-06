@@ -32,11 +32,12 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
             return Result.Failure<ReadProductDto>(productResult.Error);
         }
         var productImagesDto = MapProductImagesToDto(productResult.Value.Images);
-        return Result.Success(MapToReadProductDto(productResult.Value, productImagesDto));
+        var productCategoriesDto = MapProductCategoriesToDto(productResult.Value.Categories);
+        return Result.Success(MapToReadProductDto(productResult.Value, productImagesDto, productCategoriesDto));
     }
 
     /// <summary>
-    /// Loads a product object along with its images, based on the ProductId.
+    /// Loads a product object along with its images and categories, based on the ProductId.
     /// </summary>
     /// <param name="productId"></param>
     /// <param name="cancellationToken"></param>
@@ -46,6 +47,7 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
         var product = await _dbContext.Products
             .AsNoTracking()
             .Include(p => p.Images)
+            .Include(p => p.Categories)
             .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
         if (product is null)
         {
@@ -69,11 +71,24 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
     }
 
     /// <summary>
+    /// Maps the collection of product categories into the equivalent ReadProductCategoryDto collection. 
+    /// </summary>
+    /// <param name="productCategories"></param>
+    /// <returns></returns>
+    private IReadOnlyCollection<ReadProductCategoryDto> MapProductCategoriesToDto(IReadOnlyCollection<ProductCategory> productCategories)
+    {
+        return productCategories.Select(pc => new ReadProductCategoryDto(
+            pc.ProductId,
+            pc.CategoryId
+        )).ToList();
+    }
+
+    /// <summary>
     /// Maps the retrieved product into the ReadProductDto which is returned as the response. 
     /// </summary>
     /// <param name="product"></param>
     /// <returns></returns>
-    private static ReadProductDto MapToReadProductDto(Product product, IReadOnlyCollection<ReadProductImageDto> productImagesDto)
+    private static ReadProductDto MapToReadProductDto(Product product, IReadOnlyCollection<ReadProductImageDto> productImagesDto, IReadOnlyCollection<ReadProductCategoryDto> productCategoriesDto)
     {
         return new ReadProductDto(
             product.ProductId,
@@ -83,6 +98,8 @@ public class GetProductHandler : IRequestHandler<GetProductQuery, Result<ReadPro
             product.StockQuantity,
             product.AddedDate,
             product.LastModified,
-            productImagesDto.ToList());
+            productImagesDto.ToList(),
+            productCategoriesDto.ToList()
+            );
     }
 }

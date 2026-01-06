@@ -4,17 +4,17 @@ namespace D2Store.Api.Features.Orders.Dto;
 
 public record WriteOrderDtoCreate
 {
-    public required Guid UserId { get; set; }
-    public required IReadOnlyCollection<WriteOrderProductDtoCreate> Products { get; set; }
+    public required Guid UserId { get; init; }
+    public required IReadOnlyCollection<WriteOrderProductDtoCreate> Products { get; init; }
 }
 
 public record WriteOrderProductDtoCreate()
 {
-    public required Guid ProductId { get; set; }
-    public required int Quantity { get; set; }
+    public required Guid ProductId { get; init; }
+    public required int Quantity { get; init; }
 }
 
 public record WriteOrderDtoUpdate
 {
-    public required OrderStatus Status { get; set; }
+    public required OrderStatus Status { get; init; }
 }

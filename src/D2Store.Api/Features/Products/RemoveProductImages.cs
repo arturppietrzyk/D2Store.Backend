@@ -21,7 +21,7 @@ public class RemoveProductImagesHandler : IRequestHandler<RemoveProductImagesCom
     }
 
     /// <summary>
-    /// Coordinates validation, retrieval and the removal of new images of an existing product.
+    /// Coordinates validation, retrieval and the removal of images of an existing product.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
@@ -95,7 +95,7 @@ public class RemoveProductImagesHandler : IRequestHandler<RemoveProductImagesCom
     private async Task RemoveProductImagesAsync(RemoveProductImagesCommand request, Product product, CancellationToken cancellationToken)
     {
         product.RemoveImages(request.ProductImageIds);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }
 
