@@ -9,17 +9,17 @@ namespace D2Store.Api.Features.Products;
 
 [ApiController]
 [Route("api/")]
-public class ProductController : ControllerBase
+public class ProductsController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public ProductController(IMediator mediator)
+    public ProductsController(IMediator mediator)
     {
         _mediator = mediator;
     }
 
     [Authorize]
-    [HttpPost("product")]
+    [HttpPost("products")]
     public async Task<IActionResult> CreateProduct([FromBody] WriteProductDtoCreate dtoCreate, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
@@ -35,7 +35,7 @@ public class ProductController : ControllerBase
         return CreatedAtAction(nameof(GetProduct), new { productId = result.Value.ProductId }, result.Value);
     }
 
-    [HttpGet("product/{productId}")]
+    [HttpGet("products/{productId}")]
     public async Task<IActionResult> GetProduct(Guid productId, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetProductQuery(productId), cancellationToken);
@@ -62,7 +62,7 @@ public class ProductController : ControllerBase
     }
 
     [Authorize]
-    [HttpPatch("product/{productId}")]
+    [HttpPatch("products/{productId}")]
     public async Task<IActionResult> UpdateProduct(Guid productId, [FromBody] WriteProductDtoUpdate dtoUpdate, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
@@ -83,7 +83,7 @@ public class ProductController : ControllerBase
     }
 
     [Authorize]
-    [HttpDelete("product/{productId}")]
+    [HttpDelete("products/{productId}")]
     public async Task<IActionResult> DeleteProduct(Guid productId, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
@@ -104,7 +104,7 @@ public class ProductController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("product/{productId}/images")]
+    [HttpPost("products/{productId}/images")]
     public async Task<IActionResult> AddProductImages(Guid productId, [FromBody] WriteProductImagesDtoAdd dtoAddImages, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
@@ -126,7 +126,7 @@ public class ProductController : ControllerBase
 
 
     [Authorize]
-    [HttpDelete("product/{productId}/images")]
+    [HttpDelete("products/{productId}/images")]
     public async Task<IActionResult> RemoveProductImages(Guid productId, [FromBody] WriteProductImagesDtoRemove dtoRemoveImages, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());
@@ -147,7 +147,7 @@ public class ProductController : ControllerBase
     }
 
     [Authorize]
-    [HttpPatch("product/{productId}/images/{productImageId}/primary")]
+    [HttpPatch("products/{productId}/images/{productImageId}/primary")]
     public async Task<IActionResult> ChangePrimaryImage(Guid productId, Guid productImageId, CancellationToken cancellationToken)
     {
         var isAdmin = User.IsInRole(Role.ADMIN.ToString());

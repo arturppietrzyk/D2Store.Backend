@@ -9,11 +9,11 @@ namespace D2Store.Api.Features.Categories;
 
 [ApiController]
 [Route("api/")]
-public class CategoryController : ControllerBase
+public class CategoriesController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public CategoryController(IMediator mediator)
+    public CategoriesController(IMediator mediator)
     {
         _mediator = mediator;
     }
