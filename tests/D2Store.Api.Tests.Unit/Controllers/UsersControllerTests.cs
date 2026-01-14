@@ -9,14 +9,14 @@ using System.Security.Claims;
 
 namespace D2Store.Api.Tests.Unit.Controllers;
 
-public class UserControllerTests
+public class UsersControllerTests
 {
-    private readonly UserController _sut;
+    private readonly UsersController _sut;
     private readonly IMediator _mediator = Substitute.For<IMediator>();
 
-    public UserControllerTests()
+    public UsersControllerTests()
     {
-        _sut = new UserController(_mediator);
+        _sut = new UsersController(_mediator);
     }
 
     // RegisterUser Tests

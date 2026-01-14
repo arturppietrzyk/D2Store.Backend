@@ -7,11 +7,11 @@ using D2Store.Api.Features.Users.Dto;
 
 namespace D2Store.Api.Tests.Integration.Controllers;
 
-public class UserControllerTests : IClassFixture<D2StoreApiFactory>
+public class UsersControllerTests : IClassFixture<D2StoreApiFactory>
 {
     private readonly D2StoreApiFactory _apiFactory;
 
-    public UserControllerTests(D2StoreApiFactory apiFactory)
+    public UsersControllerTests(D2StoreApiFactory apiFactory)
     {
         _apiFactory = apiFactory;
     }
@@ -32,7 +32,7 @@ public class UserControllerTests : IClassFixture<D2StoreApiFactory>
             Address = "Address"
         };
         // Act
-        var response = await client.PostAsJsonAsync("http://localhost:5000/api/register-user", dtoRegister);
+        var response = await client.PostAsJsonAsync("http://localhost:5000/api/users", dtoRegister);
         // Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
@@ -49,7 +49,7 @@ public class UserControllerTests : IClassFixture<D2StoreApiFactory>
             Password = "Password"
         };
         // Act
-        var response = await client.PostAsJsonAsync("http://localhost:5000/api/login-user", dtoLogin);
+        var response = await client.PostAsJsonAsync("http://localhost:5000/api/users/login", dtoLogin);
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -69,20 +69,20 @@ public class UserControllerTests : IClassFixture<D2StoreApiFactory>
             PhoneNumber = "1234567890",
             Address = "123 Test Street"
         };
-        await client.PostAsJsonAsync("http://localhost:5000/api/register-user", dtoRegister);
+        await client.PostAsJsonAsync("http://localhost:5000/api/users", dtoRegister);
         var dtoLogin = new WriteUserDtoLogin
         {
             Email = dtoRegister.Email,
             Password = dtoRegister.Password
         };
-        var loginResponse = await client.PostAsJsonAsync("http://localhost:5000/api/login-user", dtoLogin);
+        var loginResponse = await client.PostAsJsonAsync("http://localhost:5000/api/users/login", dtoLogin);
         var authResponse = await loginResponse.Content.ReadFromJsonAsync<ReadAuthDto>();
         var handler = new JwtSecurityTokenHandler();
         var jwt = handler.ReadJwtToken(authResponse!.AccessToken);
         var userId = jwt.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authResponse.AccessToken);
         // Act
-        var response = await client.GetAsync($"http://localhost:5000/api/user/{userId}");
+        var response = await client.GetAsync($"http://localhost:5000/api/users/{userId}");
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var userDto = await response.Content.ReadFromJsonAsync<ReadUserDto>();
@@ -105,13 +105,13 @@ public class UserControllerTests : IClassFixture<D2StoreApiFactory>
             PhoneNumber = "1234567890",
             Address = "123 Test Street"
         };
-        await client.PostAsJsonAsync("http://localhost:5000/api/register-user", dtoRegister);
+        await client.PostAsJsonAsync("http://localhost:5000/api/users", dtoRegister);
         var loginDto = new WriteUserDtoLogin
         {
             Email = dtoRegister.Email,
             Password = dtoRegister.Password
         };
-        var loginResponse = await client.PostAsJsonAsync("http://localhost:5000/api/login-user", loginDto);
+        var loginResponse = await client.PostAsJsonAsync("http://localhost:5000/api/users/login", loginDto);
         var authResponse = await loginResponse.Content.ReadFromJsonAsync<ReadAuthDto>();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authResponse!.AccessToken);
         // Act
@@ -135,13 +135,13 @@ public class UserControllerTests : IClassFixture<D2StoreApiFactory>
             PhoneNumber = "1234567890",
             Address = "Old Address"
         };
-        await client.PostAsJsonAsync("http://localhost:5000/api/register-user", writeUserDto);
+        await client.PostAsJsonAsync("http://localhost:5000/api/users", writeUserDto);
         var writeUserDtoLogin = new WriteUserDtoLogin
         {
             Email = writeUserDto.Email,
             Password = writeUserDto.Password
         };
-        var loginResponse = await client.PostAsJsonAsync("http://localhost:5000/api/login-user", writeUserDtoLogin);
+        var loginResponse = await client.PostAsJsonAsync("http://localhost:5000/api/users/login", writeUserDtoLogin);
         loginResponse.EnsureSuccessStatusCode();
         var authResponse = await loginResponse.Content.ReadFromJsonAsync<ReadAuthDto>();
         var handler = new JwtSecurityTokenHandler();
@@ -153,7 +153,7 @@ public class UserControllerTests : IClassFixture<D2StoreApiFactory>
             Address = "New Updated Address"
         };
         // Act
-        var response = await client.PatchAsJsonAsync($"http://localhost:5000/api/user/{userId}", updateDto);
+        var response = await client.PatchAsJsonAsync($"http://localhost:5000/api/users/{userId}", updateDto);
         // Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
@@ -173,20 +173,20 @@ public class UserControllerTests : IClassFixture<D2StoreApiFactory>
             PhoneNumber = "1234567890",
             Address = "Test Street"
         };
-        await client.PostAsJsonAsync("http://localhost:5000/api/register-user", dtoRegister);
+        await client.PostAsJsonAsync("http://localhost:5000/api/users", dtoRegister);
         var dtoLogin = new WriteUserDtoLogin
         {
             Email = dtoRegister.Email,
             Password = dtoRegister.Password
         };
-        var loginResponse = await client.PostAsJsonAsync("http://localhost:5000/api/login-user", dtoLogin);
+        var loginResponse = await client.PostAsJsonAsync("http://localhost:5000/api/users/login", dtoLogin);
         var authResponse = await loginResponse.Content.ReadFromJsonAsync<ReadAuthDto>();
         var handler = new JwtSecurityTokenHandler();
         var jwt = handler.ReadJwtToken(authResponse!.AccessToken);
         var userId = jwt.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authResponse.AccessToken);
         // Act
-        var response = await client.DeleteAsync($"http://localhost:5000/api/user/{userId}");
+        var response = await client.DeleteAsync($"http://localhost:5000/api/users/{userId}");
         // Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }

@@ -10,17 +10,17 @@ namespace D2Store.Api.Features.Orders;
 
 [ApiController]
 [Route("api/")]
-public class OrderController : ControllerBase
+public class OrdersController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public OrderController(IMediator mediator)
+    public OrdersController(IMediator mediator)
     {
         _mediator = mediator;
     }
 
     [Authorize]
-    [HttpPost("order")]
+    [HttpPost("orders")]
     public async Task<IActionResult> CreateOrder([FromBody] WriteOrderDtoCreate dtoCreate, CancellationToken cancellationToken)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -38,7 +38,7 @@ public class OrderController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("order/{orderId}")]
+    [HttpGet("orders/{orderId}")]
     public async Task<IActionResult> GetOrder(Guid orderId, CancellationToken cancellationToken)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -60,7 +60,7 @@ public class OrderController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("orders/{userId}")]
+    [HttpGet("users/{userId}/orders")]
     public async Task<IActionResult> GetOrdersForUser(Guid userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -95,7 +95,7 @@ public class OrderController : ControllerBase
     }
 
     [Authorize]
-    [HttpPatch("order/{orderId}")]
+    [HttpPatch("orders/{orderId}")]
     public async Task<IActionResult> UpdateOrder(Guid orderId, [FromBody] WriteOrderDtoUpdate dtoUpdate, CancellationToken cancellationToken)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -117,7 +117,7 @@ public class OrderController : ControllerBase
     }
 
     [Authorize]
-    [HttpDelete("order/{orderId}")]
+    [HttpDelete("orders/{orderId}")]
     public async Task<IActionResult> DeleteOrder(Guid orderId, CancellationToken cancellationToken)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);

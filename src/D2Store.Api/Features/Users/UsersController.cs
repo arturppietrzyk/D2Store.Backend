@@ -10,16 +10,16 @@ namespace D2Store.Api.Features.Users;
 
 [ApiController]
 [Route("api/")]
-public class UserController : ControllerBase
+public class UsersController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public UserController(IMediator mediator)
+    public UsersController(IMediator mediator)
     {
         _mediator = mediator;
     }
 
-    [HttpPost("register-user")]
+    [HttpPost("users")]
     public async Task<IActionResult> RegisterUser([FromBody] WriteUserDtoRegister dtoRegister, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new RegisterUserCommand(dtoRegister.FirstName, dtoRegister.LastName, dtoRegister.Email, dtoRegister.Password, dtoRegister.PhoneNumber, dtoRegister.Address), cancellationToken);
@@ -30,7 +30,7 @@ public class UserController : ControllerBase
         return CreatedAtAction(nameof(GetUser), new { userId = result.Value.UserId }, result.Value);
     }
 
-    [HttpPost("login-user")]
+    [HttpPost("users/login")]
     public async Task<IActionResult> LoginUser([FromBody] WriteUserDtoLogin dtoLogin, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new LoginUserCommand(dtoLogin.Email, dtoLogin.Password), cancellationToken);
@@ -46,7 +46,7 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("user/{userId}")]
+    [HttpGet("users/{userId}")]
     public async Task<IActionResult> GetUser(Guid userId, CancellationToken cancellationToken)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -85,7 +85,7 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
-    [HttpPatch("user/{userId}")]
+    [HttpPatch("users/{userId}")]
     public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] WriteUserDtoUpdate dtoUpdate, CancellationToken cancellationToken)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -107,7 +107,7 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
-    [HttpDelete("user/{userId}")]
+    [HttpDelete("users/{userId}")]
     public async Task<IActionResult> DeleteUser(Guid userId, CancellationToken cancellationToken)
     {
         var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
