@@ -2,4 +2,4 @@
 
 public record ReadOrderDto(Guid OrderId, Guid UserId, IReadOnlyCollection<ReadOrderProductDto> Products, DateTime OrderDate, decimal TotalAmount, string Status, DateTime LastModified);
 
-public record ReadOrderProductDto(Guid ProductId, string Name, string Description, decimal Price, int Quantity);
+public record ReadOrderProductDto(Guid ProductId, string Name, string Description, decimal Price, int Quantity, Guid ProductImageId, string Location);

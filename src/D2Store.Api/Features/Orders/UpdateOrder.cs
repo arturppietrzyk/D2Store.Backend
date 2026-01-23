@@ -56,6 +56,7 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
         var order = await _dbContext.Orders
             .Include(o => o.Products)
             .ThenInclude(op => op.Product)
+            .ThenInclude(p => p.Images)
             .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
         if (order is null)
         {

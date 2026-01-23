@@ -51,6 +51,7 @@ public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDt
          .AsNoTracking()
          .Include(o => o.Products)
          .ThenInclude(op => op.Product)
+         .ThenInclude(p => p.Images)
          .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
         if (orderExists is null)
         {
@@ -71,7 +72,9 @@ public class GetOrderHandler : IRequestHandler<GetOrderQuery, Result<ReadOrderDt
             op.Product.Name,
             op.Product.Description,
             op.Product.Price,
-            op.Quantity
+            op.Quantity,
+            op.Product.Images.First(i => i.IsPrimary).ProductImageId,
+            op.Product.Images.First(i => i.IsPrimary).Location
         )).ToList();
     }
 

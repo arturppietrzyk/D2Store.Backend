@@ -58,6 +58,7 @@ public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Re
             .Where(o => o.UserId == userId)
             .Include(o => o.Products)
             .ThenInclude(op => op.Product)
+            .ThenInclude(p => p.Images)
             .OrderByDescending(o => o.OrderDate)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -92,7 +93,10 @@ public class GetOrdersForUserHandler : IRequestHandler<GetOrdersForUserQuery, Re
             op.Product.Name,
             op.Product.Description,
             op.Product.Price,
-            op.Quantity)).ToList();
+            op.Quantity,
+            op.Product.Images.First(i => i.IsPrimary).ProductImageId,
+            op.Product.Images.First(i => i.IsPrimary).Location
+            )).ToList();
         return new ReadOrderDto(
             order.OrderId,
             order.UserId,

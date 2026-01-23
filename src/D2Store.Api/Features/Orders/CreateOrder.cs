@@ -87,7 +87,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     private async Task<Dictionary<Guid, Product>> GetProductsDictionaryAsync(List<Guid> productIds, CancellationToken cancellationToken)
     {
         return await _dbContext.Products
-            .AsNoTracking()
+            .Include(p => p.Images)
             .Where(p => productIds
             .Contains(p.ProductId))
             .ToDictionaryAsync(p => p.ProductId, cancellationToken);
@@ -132,13 +132,18 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
     /// <returns></returns>
     private IReadOnlyCollection<ReadOrderProductDto> MapOrderProductsToDto(IReadOnlyCollection<OrderProduct> orderProducts)
     {
-        return orderProducts.Select(op => new ReadOrderProductDto(
-            op.Product.ProductId,
-            op.Product.Name,
-            op.Product.Description,
-            op.Product.Price,
-            op.Quantity
-        )).ToList();
+        return orderProducts.Select(op =>
+        {
+            return new ReadOrderProductDto(
+                op.Product.ProductId,
+                op.Product.Name,
+                op.Product.Description,
+                op.Product.Price,
+                op.Quantity,
+                op.Product.Images.First(i => i.IsPrimary).ProductImageId,
+                op.Product.Images.First(i => i.IsPrimary).Location
+            );
+        }).ToList();
     }
 
     /// <summary>
