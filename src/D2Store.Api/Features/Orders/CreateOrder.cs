@@ -40,10 +40,10 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Rea
             return Result.Failure<ReadOrderDto>(requestValidationResult.Error);
         }
         var userExists = await _dbContext.Users.AsNoTracking().AnyAsync(u => u.UserId == request.UserId, cancellationToken);
-        var assertCustomerExistanceResult = Order.AssertCustomerExsistance(userExists);
-        if (assertCustomerExistanceResult.IsFailure)
+        var assertUserExistanceResult = Order.AssertUserExsistance(userExists);
+        if (assertUserExistanceResult.IsFailure)
         {
-            return Result.Failure<ReadOrderDto>(assertCustomerExistanceResult.Error);
+            return Result.Failure<ReadOrderDto>(assertUserExistanceResult.Error);
         }
         var productsDict = await GetProductsDictionaryAsync(request.Products.Select(p => p.ProductId).Distinct().ToList(), cancellationToken);
         var assertProductsExistanceResult = Order.AssertProductsExistance(request, productsDict);

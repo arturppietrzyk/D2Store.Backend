@@ -48,12 +48,6 @@ public class Order
         return total;
     }
 
-    public void UpdateTotalAmount(decimal amount)
-    {
-        TotalAmount = amount;
-        LastModified = DateTime.UtcNow;
-    }
-
     public Result Update(OrderStatus status)
     {
         bool isUpdated = false;
@@ -73,11 +67,11 @@ public class Order
         }
     }
 
-    public static Result AssertCustomerExsistance(bool customerExists)
+    public static Result AssertUserExsistance(bool userExists)
     {
-        if (!customerExists)
+        if (!userExists)
         {
-            return Result.Failure(new Error("Order.Validation", "Customer does not exist."));
+            return Result.Failure(new Error("Order.Validation", "User does not exist."));
         }
         return Result.Success();
     }
