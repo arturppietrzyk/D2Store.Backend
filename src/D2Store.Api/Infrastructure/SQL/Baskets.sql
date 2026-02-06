@@ -1,0 +1,11 @@
+USE D2Store
+
+CREATE TABLE dbo.Baskets (
+    BasketId UNIQUEIDENTIFIER NOT NULL,
+    UserId UNIQUEIDENTIFIER NOT NULL,
+    CreatedAt DATETIME NOT NULL,
+    TotalAmount DECIMAL(18, 2) NOT NULL,
+    LastModified DATETIME NOT NULL,
+    CONSTRAINT PK_Baskets PRIMARY KEY CLUSTERED (BasketId ASC),
+    CONSTRAINT FK_Baskets_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
+);

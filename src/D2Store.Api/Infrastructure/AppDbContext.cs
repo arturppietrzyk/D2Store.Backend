@@ -1,4 +1,5 @@
-﻿using D2Store.Api.Features.Categories;
+﻿using D2Store.Api.Features.Baskets.Domain;
+using D2Store.Api.Features.Categories;
 using D2Store.Api.Features.Orders.Domain;
 using D2Store.Api.Features.Products.Domain;
 using D2Store.Api.Features.Users.Domain;
@@ -20,6 +21,8 @@ public class AppDbContext : DbContext
     public DbSet<ProductImage> ProductImages { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<ProductCategory> ProductCategories { get; set; }
+    public DbSet<Basket> Baskets { get; set; }
+    public DbSet<BasketProduct> BasketProducts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -85,5 +88,19 @@ public class AppDbContext : DbContext
                 .HasForeignKey(pc => pc.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<Basket>()
+           .Property(o => o.BasketId)
+           .ValueGeneratedNever();
+
+        modelBuilder.Entity<BasketProduct>()
+            .Property(op => op.BasketProductId)
+            .ValueGeneratedNever();
+
+        modelBuilder.Entity<Basket>()
+            .HasMany(b => b.Products)
+            .WithOne(bp => bp.Basket)
+            .HasForeignKey(bp => bp.BasketId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
